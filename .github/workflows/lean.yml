@@ -40,3 +40,7 @@ jobs:
 
       - name: The ask surface answers the default goal
         run: lake exe persona
+
+      - name: The A2A gate
+        # The persona as an A2A v1.0 peer: card, send, refusals and errors.
+        run: lake exe persona_a2a_witness

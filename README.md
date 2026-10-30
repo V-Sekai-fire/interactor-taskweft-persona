@@ -100,6 +100,33 @@ A Lean guest links static glibc, so the linker puts an ifunc trampoline in
 loads and its first call faults. That is the one thing between this ELF and the
 viewer; the translated-vs-interpreted gate lands with it.
 
+## Agent-to-Agent
+
+The persona is an [A2A v1.0](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a)
+peer. A caller sends a goal as the text of a `SendMessage`, and the reply is the
+persona's own answer, byte for byte what `persona_ask` returns, in one text part.
+
+    pixi run a2a-test      # the A2A gate: 22 invariants, positive and negative controls
+    lake exe persona_a2a --card [url]   # the Agent Card
+    lake exe persona_a2a                # JSON-RPC over stdio, one request a line
+
+`Persona/A2A.lean` is the protocol and nothing else: JSON-RPC text in, JSON-RPC
+text out. It opens no socket, so the host picks the transport and serves
+`agentCard` at `/.well-known/agent-card.json`.
+
+| Method | Answer |
+| --- | --- |
+| `SendMessage`, `message/send` | the goal's plan, or the refusal by name, as a Message |
+| `GetTask`, `CancelTask` | `-32001`: the persona keeps no task |
+| `SendStreamingMessage`, `SubscribeToTask` | `-32004`: nothing to stream |
+| anything else | `-32601`; a malformed body is `-32700`, a message with no text part `-32602` |
+
+A refusal is an answer, not a transport error: an undeclared goal comes back as
+`{"refused":"undeclared_goal"}` inside a successful reply.
+
+The guest ELF does not carry this surface. It links only `Init`, and the JSON
+parser lives in `Lean.Data`, so A2A is for the host executable.
+
 ## Licence
 
 MIT.

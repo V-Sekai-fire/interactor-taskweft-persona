@@ -11,3 +11,5 @@ build = "lake build"
 test = { cmd = "lake exe persona_witness", depends-on = ["build"] }
 ask = { cmd = "lake exe persona", depends-on = ["build"] }
 vocabulary = { cmd = "lake exe persona --vocabulary", depends-on = ["build"] }
+a2a = { cmd = "lake exe persona_a2a", depends-on = ["build"] }
+a2a-test = { cmd = "lake exe persona_a2a_witness", depends-on = ["build"] }
