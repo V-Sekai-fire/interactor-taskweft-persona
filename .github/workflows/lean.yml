@@ -1,0 +1,42 @@
+# The Lean build and the self-test gate: the persona's core must build, its ask
+# surface must answer, and the witness must pass -- the green gate.
+#
+# Mirrors the domain repos' `lean.yml` (elan + lake build + witness exe). The
+# planner and the character domain are vendored as subtrees, so this build also
+# proves the persona composes with both.
+
+name: Lean
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    name: Lean core + self-test
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean via elan
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain=leanprover/lean4:v4.34.1
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: lake build
+        run: lake build
+
+      - name: The witness gate
+        # Green gate: the witness must exit 0 and print "OK:". A refusal exits
+        # non-zero and fails the workflow.
+        run: lake exe persona_witness
+
+      - name: The ask surface answers the default goal
+        run: lake exe persona
