@@ -1,0 +1,97 @@
+# Build the character domain guest ELF for the RISC-V Linux sandbox.
+#
+# Mirrors the RECTGTN domain's `build_guest_elf.yml` so the artifact shape is
+# the same: a stripped (with --strip-debug, NOT --strip-all, so the host can
+# still read the guest API from .symtab) RISC-V64 Linux ELF that emits the
+# `.sandbox_variant` section (SBXV magic + 4-byte little-endian Variant size)
+# and exposes the character_* C-ABI symbols from api/character_api.h.
+
+name: Build Character Guest ELF
+
+on:
+  workflow_call:
+    inputs:
+      double_precision:
+        type: boolean
+        required: true
+        default: true
+  workflow_dispatch:
+    inputs:
+      double_precision:
+        type: boolean
+        required: false
+        default: true
+  push:
+    paths:
+      - guest/**
+      - api/**
+      - .github/workflows/build_guest_elf.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    name: Build ${{ matrix.elf }}
+    strategy:
+      matrix:
+        include:
+          - elf: character.elf
+            double_precision: ON
+            variant_size: 40
+            artifact: character-guest-elf
+          - elf: character.single.elf
+            double_precision: OFF
+            variant_size: 24
+            artifact: character-guest-elf-single
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install RISC-V cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-14-riscv64-linux-gnu cmake
+
+      - name: Configure
+        env:
+          CC: riscv64-linux-gnu-gcc-14
+        run: |
+          cmake -B build \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/guest/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=MinSizeRel \
+            -DSTRIPPED=ON \
+            -DDOUBLE_PRECISION=${{ matrix.double_precision }} \
+            -S guest
+
+      - name: Build
+        run: cmake --build build --parallel 4
+
+      - name: Rename artifact
+        run: mv build/character build/${{ matrix.elf }}
+
+      - name: Verify ELF
+        run: |
+          file build/${{ matrix.elf }}
+          riscv64-linux-gnu-objcopy -O binary --only-section=.sandbox_variant build/${{ matrix.elf }} variant.bin
+          python3 - variant.bin ${{ matrix.variant_size }} <<'EOF'
+          import struct, sys
+          data = open(sys.argv[1], "rb").read()
+          if data[:4] != b"SBXV":
+              sys.exit(f"no .sandbox_variant marker: {data[:8]!r}")
+          size = struct.unpack("<I", data[4:8])[0]
+          print(f".sandbox_variant: {size}-byte Variant")
+          if size != int(sys.argv[2]):
+              sys.exit(f"expected a {sys.argv[2]}-byte Variant")
+          EOF
+
+      - name: Verify character_* symbols in .symtab
+        run: |
+          for f in character_version character_roll_normalize character_harness_bones character_goal_to_gtn; do
+            riscv64-linux-gnu-objdump -t build/${{ matrix.elf }} | grep -q "character_${f}" || { echo "missing $f in .symtab"; exit 1; }
+          done
+          echo "all character_* functions resolvable by name"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/${{ matrix.elf }}
+          if-no-files-found: error
