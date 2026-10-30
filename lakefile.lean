@@ -13,6 +13,9 @@ require «taskweft» from "thirdparty/rectgtn-domain-c-abi"
 -- The character domain unions with the same planner, and is vendored beside it.
 require «character» from "thirdparty/character-domain-c-abi"
 
+-- The Agent-to-Agent server library is vendored beside them, so the build fetches nothing.
+require «a2a» from "thirdparty/a2a"
+
 @[default_target]
 lean_lib «Persona» where
   srcDir := "."
