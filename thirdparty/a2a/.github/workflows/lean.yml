@@ -1,0 +1,40 @@
+# The Lean build and the gate: the library must build and the witness must pass.
+name: Lean
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    name: Lean build + gate
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean via elan
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain=leanprover/lean4:v4.34.1
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: lake build
+        run: lake build
+
+      - name: The gate
+        run: lake exe a2a_witness
+
+      - name: A real socket, a real token
+        # The server must answer the card, refuse a missing token and accept the right one.
+        run: |
+          A2A_BEARER_TOKEN=ci-token lake exe a2a_demo --port 19900 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:19900/.well-known/agent-card.json >/dev/null && break; sleep 1; done
+          body='{"jsonrpc":"2.0","id":1,"method":"SendMessage","params":{"message":{"messageId":"m","role":"ROLE_USER","parts":[{"text":"hi"}]}}}'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:19900/ -H 'Content-Type: application/json' -d "$body")" = 401
+          curl -sf -X POST http://127.0.0.1:19900/ -H 'Content-Type: application/json' -H 'Authorization: Bearer ci-token' -d "$body" | grep -q '\\"echo\\":\\"hi\\"'
