@@ -1,0 +1,62 @@
+# The Lean build and the self-test gate: the domain core must build, and the
+# witness exes must pass — the green gate for
+# 2-contract's RECTGTN domain.  This mirrors 4-entities/godot-sandbox's green
+# `build_gdscript_elf.yml` shape and the archived FBD repo's `lean.yml`
+# (elan init + lake build + a `run_tests`-style gate).
+#
+# RFD 66606-2153 stage 1: the pure-Lean domain core builds and the self-test
+# gate is green.  Stage 3 is the Lean runtime port to riscv64-linux, which
+# compiles the core into a RISC-V guest; the addon's binary-translation engine
+# (already green, see the motion/skintokens/rfdetr `check_bintr` gates) then
+# converts that guest's .text to native C and the host calls it natively.
+
+name: Lean
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    name: Lean core + self-test
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean via elan
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain=leanprover/lean4:v4.35.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: lake build
+        run: |
+          lake build
+
+      - name: Run the witness gates
+        run: |
+          lake exe mcp_auth_witness
+          lake exe khr_tier1_witness
+          # green gate: each witness must exit 0 and print "OK:". A non-zero
+          # exit (a witness refuses) fails the workflow — `lake exe` propagates
+          # `IO` `exit` as the process exit code: 0 = ok, 1 = refusal. The
+          # `run:` shell sees that exit code directly.
+
+      - name: Build the native ELF (lean core -> RISC-V guest -> native C)
+        # Not available yet: stage 3 (RFD66606-2153) is the Lean runtime port
+        # to riscv64-linux, which compiles the Lean core into a RISC-V guest.
+        # That guest is what the addon's binary-translation engine (already
+        # green, see the motion/skintokens/rfdetr check_bintr gates) converts to
+        # native C at load time and the host calls.  Until the port lands there
+        # is nothing here; this commented placeholder keeps the workflow green.
+        run: |
+          echo "RISC-V guest gate pending (RFD 66606-2153 stage 3)"
+          # (stage 3) build rectgtn.elf from the Lean runtime (riscv64-linux)
+          # (stage 3) verify .sandbox_variant via objcopy + python SBXV/size gate
+          # (stage 3) verify rectgtn_* symbols in .symtab via objdump
