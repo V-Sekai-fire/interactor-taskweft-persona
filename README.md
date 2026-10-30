@@ -69,6 +69,37 @@ directory carries the same content with its planner reference moved from the
 archived URL to the sibling directory, in `lakefile.lean`, `lake-manifest.json`,
 `README.md`, `CITATION.cff`, `docs/domain.md` and `Character/GTN.lean`.
 
+## The guest ELF a viewer loads
+
+The persona also builds as a riscv64 guest for godot-sandbox: the model explorer
+loads `persona.elf` and calls it, so a viewer can ask a domain for a plan with no
+weights and no model. `guest/main.cpp` registers the surface, and the answer is
+JSON.
+
+    persona_version() -> String   the version of this surface
+    persona_ask(goal) -> String   the plan that reaches `goal`, as JSON, or the
+                                  refusal by name; an empty goal means the
+                                  domain's own default
+
+Build it with the goal manifest's siblings (`2-contract/guest-runtime` for
+`sandbox_api`, `3-interactor/lean-guest` for the Lean runtime and Init):
+
+    cmake -S guest -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_TOOLCHAIN_FILE=<workspace>/5-repository/riscv64-sysroot/toolchain.cmake \
+      -DGUEST_RUNTIME_ROOT=<workspace>/2-contract/guest-runtime \
+      -DLEAN_GUEST_DIR=<workspace>/3-interactor/lean-guest
+    cmake --build build --target persona
+    python3 tools/check_elf.py build/persona
+
+`guest.yml` publishes `persona-elf-<sha>`: the artifact the viewer's release
+pipeline downloads by that prefix.
+
+A Lean guest links static glibc, so the linker puts an ifunc trampoline in
+`.iplt`, outside `.text`. libriscv loads only `.text` unless
+`ignore_text_section` is set, and godot-sandbox does not set it yet, so the guest
+loads and its first call faults. That is the one thing between this ELF and the
+viewer; the translated-vs-interpreted gate lands with it.
+
 ## Licence
 
 MIT.
