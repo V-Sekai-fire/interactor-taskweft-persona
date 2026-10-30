@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: interactor-character-domain-c-abi
+message: If you use this software, please cite it as below.
+type: software
+license: MIT
+authors:
+  - family-names: Lee
+    given-names: K. S. Ernest (iFire)
+    orcid: https://orcid.org/0000-0001-7772-8085
+repository-code: https://github.com/V-Sekai-fire/interactor-character-domain-c-abi
+abstract: >-
+  The character domain C-ABI: a pure-Lean reference model for character work
+  (rig, skin, pose, roll-orientation normalization, harness-bone removal),
+  bridged to the RISC-V godot-sandbox guest through the rectgtn-style C-ABI.
+  The domain unions with the RECTGTN GTN planner by requiring the domain beside
+  it, so a character goal is an ordinary RECTGTN task node.

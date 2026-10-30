@@ -6,11 +6,12 @@ package «persona» where
     ⟨`autoImplicit, false⟩
   ]
 
--- The planner is a library, not a reference. The persona requires the RECTGTN
--- domain over GitHub, exactly as the character domain does, and composes its
--- answer in the shared GTN space.
-require «taskweft» from git
-  "https://github.com/V-Sekai-fire/interactor-rectgtn-domain-c-abi" @ "main"
+-- The planner is a library, not a reference. The RECTGTN domain is vendored as a
+-- subtree, so the build reads the planner from this tree rather than over the network.
+require «taskweft» from "thirdparty/rectgtn-domain-c-abi"
+
+-- The character domain unions with the same planner, and is vendored beside it.
+require «character» from "thirdparty/character-domain-c-abi"
 
 @[default_target]
 lean_lib «Persona» where
