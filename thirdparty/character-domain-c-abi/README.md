@@ -11,10 +11,10 @@ pose, roll-orientation normalization, harness-bone removal), bridged to the **RI
 guest** (godot-sandbox / libriscv) through the same C-ABI shape as the RECTGTN domain
 (`interactor-rectgtn-domain-c-abi`).
 
-The domain **unions with the RECTGTN GTN planner over GitHub**: it does not copy
-the planner kernel and does not reach it through a relative path. `lakefile.lean`
-requires the RECTGTN domain by URL, so the two Lean packages compose into one
-build and a character goal is an ordinary RECTGTN task node.
+The domain **unions with the RECTGTN GTN planner**: it does not copy the planner
+kernel. `lakefile.lean` requires the RECTGTN domain from the sibling directory, so
+the two Lean packages compose into one build and a character goal is an ordinary
+RECTGTN task node.
 
 So a character plan is a RECTGTN plan, and the RECTGTN planner solves it unchanged.
 `theorem toGTN_is_task` certifies the lift is total and closed.

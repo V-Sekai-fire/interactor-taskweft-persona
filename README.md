@@ -8,10 +8,10 @@ sampling.
 
 A language model answers by predicting the next token. A persona answers by
 searching a goal-task network. The planner is a library here, not a reference:
-the persona requires the RECTGTN domain over GitHub, exactly as the character
-domain does, and composes its answer in that shared GTN space. The state
-variable, the GTN node, the plan element and the goal test are the planner's;
-the search, the domain and the codebook are the persona's.
+the persona requires the RECTGTN domain, exactly as the character domain does,
+and composes its answer in that shared GTN space. The state variable, the GTN
+node, the plan element and the goal test are the planner's; the search, the
+domain and the codebook are the persona's.
 
     pixi run ask           # a domain, a goal, and the plan that reaches it
     pixi run vocabulary    # the codebook and the actions it composes from
@@ -42,9 +42,32 @@ Lean comes from elan; the `lean-toolchain` file pins v4.34.1.
     pixi run build
     pixi run test
 
-`lake build` fetches the planner from GitHub and compiles it as a dependency, so
-the persona is always built against a planner revision that is recorded in
-`lake-manifest.json`.
+`lake build` compiles the persona against the planner vendored in `thirdparty/`,
+so the build fetches no domain from GitHub.
+
+    lake exe persona_witness      # the persona's gate, 15 invariants
+    lake exe character_witness    # the character domain's gate, 11 invariants
+
+## Vendored domains
+
+Two repositories were vendored as git subtrees, each at the root of its own
+directory. Both sources are archived, so this tree is the live copy of them and a
+change lands here.
+
+| Path | Repository | Ref |
+| --- | --- | --- |
+| `thirdparty/rectgtn-domain-c-abi` | `V-Sekai-archive/interactor-rectgtn-domain-c-abi` | `main` at `ec03ba9` |
+| `thirdparty/character-domain-c-abi` | `V-Sekai-archive/interactor-character-domain-c-abi` | `main` at `42259d9` |
+
+The subtree link records where each tree came from, and a pull still reads:
+
+    git subtree pull --prefix=thirdparty/rectgtn-domain-c-abi https://github.com/V-Sekai-archive/interactor-rectgtn-domain-c-abi main --squash
+    git subtree pull --prefix=thirdparty/character-domain-c-abi https://github.com/V-Sekai-archive/interactor-character-domain-c-abi main --squash
+
+The rectgtn directory is content-identical to its source commit. The character
+directory carries the same content with its planner reference moved from the
+archived URL to the sibling directory, in `lakefile.lean`, `lake-manifest.json`,
+`README.md`, `CITATION.cff`, `docs/domain.md` and `Character/GTN.lean`.
 
 ## Licence
 

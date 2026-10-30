@@ -12,5 +12,5 @@ abstract: >-
   The character domain C-ABI: a pure-Lean reference model for character work
   (rig, skin, pose, roll-orientation normalization, harness-bone removal),
   bridged to the RISC-V godot-sandbox guest through the rectgtn-style C-ABI.
-  The domain unions with the RECTGTN GTN planner by requiring it over GitHub, so
-  a character goal is an ordinary RECTGTN task node.
+  The domain unions with the RECTGTN GTN planner by requiring the domain beside
+  it, so a character goal is an ordinary RECTGTN task node.

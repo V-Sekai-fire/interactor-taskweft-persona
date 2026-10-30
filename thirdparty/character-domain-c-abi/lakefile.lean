@@ -6,15 +6,10 @@ package «character» where
     ⟨`autoImplicit, false⟩
   ]
 
--- UNION with the RECTGTN domain, over GitHub.
---
--- The character domain does not copy the GTN planner kernel and does not reach
--- it through a relative path: it requires the RECTGTN domain by URL, so the two
--- Lean packages compose into one build and a character goal is a first-class GTN
--- node (see Character/GTN.lean). This is the "union" -- the shared Entity /
--- PlanElement / RECTGTNNode space, pulled in from GitHub.
-require «taskweft» from git
-  "https://github.com/V-Sekai-fire/interactor-rectgtn-domain-c-abi" @ "main"
+-- UNION with the RECTGTN domain, vendored in the sibling directory: the character
+-- domain requires the planner rather than copying its kernel, so a character goal
+-- is a first-class GTN node (see Character/GTN.lean).
+require «taskweft» from "../rectgtn-domain-c-abi"
 
 -- The character domain: rig, skin, pose, roll-orientation normalization, and the
 -- union of character goals with the shared GTN.

@@ -18,8 +18,7 @@ the character domain runs on the host.
 `lakefile.lean`:
 
 ```lean
-require «taskweft» from git
-  "https://github.com/V-Sekai-fire/interactor-rectgtn-domain-c-abi" @ "main"
+require «taskweft» from "../rectgtn-domain-c-abi"
 ```
 
 `Character/GTN.lean` then imports `Planner.Types` and lifts every character goal

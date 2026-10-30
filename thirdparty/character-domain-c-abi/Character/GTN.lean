@@ -1,7 +1,7 @@
 /-
 Character domain — the UNION with the RECTGTN GTN planner.
 
-`Planner.Types` (from the RECTGTN domain, required over GitHub in `lakefile.lean`)
+`Planner.Types` (from the RECTGTN domain, vendored in the sibling directory)
 defines the shared space: `Entity`, `PlanElement`, `RECTGTNNode`. This file lifts
 the character domain's goals and actions into that shared space, so a character
 plan is an ordinary GTN plan and the RECTGTN planner solves it unchanged.
