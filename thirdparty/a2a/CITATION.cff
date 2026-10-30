@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: interactor-a2a
+message: If you use this software, please cite it as below.
+type: software
+license: MIT
+authors:
+  - family-names: Lee
+    given-names: K. S. Ernest (iFire)
+    orcid: https://orcid.org/0000-0001-7772-8085
+repository-code: https://github.com/V-Sekai-fire/interactor-a2a
+abstract: >-
+  An Agent2Agent (A2A) v1.0 server library in Lean 4. An agent is a name, a list
+  of skills and a function from the text of a message to the text of a reply; the
+  library supplies the Agent Card, JSON-RPC 2.0, the A2A error codes and an
+  HTTP/1.1 server with bearer-token and browser-origin checks, all testable as
+  pure functions.

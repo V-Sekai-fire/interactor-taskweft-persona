@@ -3,6 +3,13 @@
  "packages":
  [{"type": "path",
    "scope": "",
+   "name": "a2a",
+   "manifestFile": "lake-manifest.json",
+   "inherited": false,
+   "dir": "thirdparty/a2a",
+   "configFile": "lakefile.lean"},
+  {"type": "path",
+   "scope": "",
    "name": "character",
    "manifestFile": "lake-manifest.json",
    "inherited": false,
