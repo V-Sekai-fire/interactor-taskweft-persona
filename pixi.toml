@@ -1,0 +1,18 @@
+# pixi manifest for the RECTGTN domain C-ABI repo.
+#
+# Mirrors 2-contract/drawing-lean/pixi.toml: Lean comes from elan (no
+# conda-forge build of Lean 4 on Windows), and the tasks `lake build` /
+# `lake exe` are the entry points.  `lean-toolchain` pins the exact toolchain
+# the CI uses (v4.35.0).
+[workspace]
+name = "rectgtn-domain-c-abi"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64", "win-64"]
+
+# elan-managed Lean (no conda-forge build of Lean 4; see
+# 2-contract/drawing-lean/pixi.toml). The `lean-toolchain` file pins the
+# version, so elan picks it up automatically.
+[tasks]
+build = "lake build"
+# The green gate: both witness exes must exit 0 and print "OK:".
+test = { cmd = "lake exe mcp_auth_witness && lake exe khr_tier1_witness", depends-on = ["build"] }
