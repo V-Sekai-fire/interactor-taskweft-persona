@@ -1,0 +1,13 @@
+# pixi manifest for the persona repo.
+# Mirrors the RECTGTN domain's pixi.toml: Lean comes from elan (no conda-forge
+# build of Lean 4), and `lake build` / `lake exe` are the entry points.
+[workspace]
+name = "persona"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64", "win-64"]
+
+[tasks]
+build = "lake build"
+test = { cmd = "lake exe persona_witness", depends-on = ["build"] }
+ask = { cmd = "lake exe persona", depends-on = ["build"] }
+vocabulary = { cmd = "lake exe persona --vocabulary", depends-on = ["build"] }

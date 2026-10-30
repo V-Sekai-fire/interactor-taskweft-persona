@@ -1,2 +1,4 @@
-persona
-*.o
+/.lake/
+/build/
+*.olean
+*.ilean

@@ -9,9 +9,9 @@ authors:
     orcid: https://orcid.org/0000-0001-7772-8085
 repository-code: https://github.com/V-Sekai-fire/interactor-taskweft-persona
 abstract: >-
-  The ask surface over the RECTGTN planner: a domain and a goal go in, an exact
-  plan comes out, and no neural network is involved. The domain is a JSON-LD
-  document of variables, actions and methods; the goal is a task list; the
-  answer carries the ordered plan, the temporal block, and a failure tree when
-  no plan exists. The engine is the planner's C++20 standalone headers, built
-  against a pinned planner revision.
+  A persona that answers from a planning domain instead of a neural network. It
+  requires the RECTGTN planner as a Lean library and composes its answer in the
+  planner's own GTN space: a domain declares state variables, a codebook
+  vocabulary and actions, a goal names a node, and the answer is the plan that
+  reaches it or a refusal by name. The vocabulary is a residual-FSQ-shaped
+  codebook, so a few small integers name a very large set of categories.
