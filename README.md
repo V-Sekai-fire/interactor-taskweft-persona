@@ -63,6 +63,26 @@ with `getrandom`, because a sandbox has no `/dev/urandom` (`interactor-lean-gues
 `patches/runtime-guest.patch`). A guest function returns a `Variant`, which is what `vmcall`
 reads back (`guest/main.cpp`).
 
+## Build the guest on a desk
+The guest builds from a workspace laid out as the goal manifest places it (`2-contract/guest-runtime`,
+`3-interactor/lean-guest`, `3-interactor/taskweft-persona`, `5-repository/riscv64-sysroot`). Three things
+go wrong on a fresh Mac:
+
+- **Compiler.** Apple's clang has no riscv64 backend. Take clang and lld from the sysroot repo's own
+  pixi environment (`pixi install` in `5-repository/riscv64-sysroot`, then put
+  `.pixi/envs/default/bin` first on `PATH`), as `guest.yml` does. Do not use a Homebrew LLVM.
+- **Lean.** Set `ELAN_TOOLCHAIN=leanprover/lean4:v4.34.1`. The generated C must match the runtime,
+  and configure stops with `host lean is 4.35.0, LEAN_VERSION is 4.34.1` otherwise.
+- **Clone URLs.** A desk with `url.git@github.com:.insteadOf https://github.com/` and no SSH key cannot
+  clone the sibling repos. Run the clones with `GIT_CONFIG_GLOBAL=/dev/null`.
+
+Measured 2026-11-01 on osx-arm64, from fresh clones with `interactor-lean-guest` at 28cfe4d
+(`getrandom`): configure took 78 s and `cmake --build <dir> --target persona` linked a 5.4 MB
+riscv64 `persona`. `tools/run_standalone.sh` then printed `persona_version: 0.1.0`, a plan
+`recharge, move_to_storage, pickup, move_to_shipping, dropoff` with `reached: true`, and
+`{"refused":"undeclared_goal"}`. Without the `getrandom` change the guest dies opening
+`/dev/urandom` (bad file descriptor) and `persona_ask` returns null.
+
 ## Vendored domains
 
 Two repositories were vendored as git subtrees, each at the root of its own
