@@ -9,11 +9,11 @@
 # and Init for riscv64).
 #
 # The gate here is the ELF a double-precision viewer loads, with a planted
-# single-precision control. The translated-vs-interpreted gate is not here yet:
-# it needs the add-on to load a guest whose static glibc puts an ifunc trampoline
-# outside .text (libriscv's `ignore_text_section`), which godot-sandbox does not
-# set. Until that ships, the guest loads and cannot be called, so a bintr gate
-# would be red on every push rather than proving anything.
+# single-precision control. The guest is also callable: tools/run_standalone.sh loads it in
+# a headless entities-godot host and checks that `persona_ask` returns a plan and refuses an
+# undeclared goal by name (verified on the Mac desk). It is not a job here yet because no
+# release publishes a Linux entities-godot editor binary for the runner to download; add the
+# job when one does.
 
 name: guest
 

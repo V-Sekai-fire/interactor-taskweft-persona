@@ -48,6 +48,21 @@ so the build fetches no domain from GitHub.
     lake exe persona_witness      # the persona's gate, 15 invariants
     lake exe character_witness    # the character domain's gate, 11 invariants
 
+## Run the guest standalone
+`persona.elf` runs with no viewer and no scene: a headless entities-godot host loads the
+godot-sandbox extension, libriscv emulates the guest, and `Sandbox.vmcall` reaches
+`persona_version` and `persona_ask`. The script exits non-zero unless the guest answers a
+goal with a plan and refuses an undeclared goal by name.
+
+    GODOT=<entities-godot editor binary, double precision> \
+    SANDBOX_ADDON=<godot_sandbox addon dir, with bin/godot-riscv.gdextension> \
+    tools/run_standalone.sh persona.elf [goal]
+
+Two things the guest needs from its siblings. The Lean runtime asks the host for random bytes
+with `getrandom`, because a sandbox has no `/dev/urandom` (`interactor-lean-guest`,
+`patches/runtime-guest.patch`). A guest function returns a `Variant`, which is what `vmcall`
+reads back (`guest/main.cpp`).
+
 ## Vendored domains
 
 Two repositories were vendored as git subtrees, each at the root of its own

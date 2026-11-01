@@ -52,23 +52,24 @@ static void persona_init()
 	}
 }
 
-// One answer: a Lean String out of the export, as a Godot String for the host.
-static String answer(lean_object *(*entry)(lean_object *), const String &request)
+// One answer: a Lean String out of the export, as a Godot String for the host. A guest
+// function returns a Variant, which is what the host's vmcall reads back.
+static Variant answer(lean_object *(*entry)(lean_object *), const String &request)
 {
 	persona_init();
 	const std::string in = request;
 	lean_object *value = entry(lean_mk_string_from_bytes(in.data(), in.size()));
 	const std::string out(lean_string_cstr(value), lean_string_size(value));
 	lean_dec_ref(value);
-	return String(out);
+	return Variant(String(out));
 }
 
-static String persona_version()
+static Variant persona_version()
 {
 	return answer(persona_version_text, String(""));
 }
 
-static String persona_ask(String goal)
+static Variant persona_ask(String goal)
 {
 	return answer(persona_ask_json, goal);
 }
