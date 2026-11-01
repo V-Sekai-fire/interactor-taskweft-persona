@@ -76,9 +76,12 @@ go wrong on a fresh Mac:
 - **Clone URLs.** A desk with `url.git@github.com:.insteadOf https://github.com/` and no SSH key cannot
   clone the sibling repos. Run the clones with `GIT_CONFIG_GLOBAL=/dev/null`.
 
-Measured 2026-11-01 on osx-arm64: configure took 75 s and `cmake --build <dir> --target persona` linked a
-5.4 MB riscv64 `persona` from `main` at 5510900. The standalone run itself was not yet repeated from a
-fresh clone; that is the open item from PR 6.
+Measured 2026-11-01 on osx-arm64, from fresh clones with `interactor-lean-guest` at 28cfe4d
+(`getrandom`): configure took 78 s and `cmake --build <dir> --target persona` linked a 5.4 MB
+riscv64 `persona`. `tools/run_standalone.sh` then printed `persona_version: 0.1.0`, a plan
+`recharge, move_to_storage, pickup, move_to_shipping, dropoff` with `reached: true`, and
+`{"refused":"undeclared_goal"}`. Without the `getrandom` change the guest dies opening
+`/dev/urandom` (bad file descriptor) and `persona_ask` returns null.
 
 ## Vendored domains
 
