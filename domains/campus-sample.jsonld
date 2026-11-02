@@ -1,7 +1,7 @@
 {
  "@context": {
-  "khr": "https://registry.khronos.org/glTF/extensions/2.0/KHR_interactivity/",
-  "domain": "khr:planning/domain/"
+  "vsk": "urn:oid:1.3.6.1.4.1.66606:",
+  "domain": "vsk:planning/domain/"
  },
  "@type": "domain:Problem",
  "name": "campus_sample",
