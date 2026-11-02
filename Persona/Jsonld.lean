@@ -12,6 +12,7 @@ inductive Task where
 structure Act where
   name  : String
   evals : List (String × String × String)
+  holds : List (String × Int)
   sets  : List (String × Int)
 
 structure Spec where
@@ -51,6 +52,11 @@ def parseAct (name : String) (j : Json) : Act :=
       if str (e.getObjValD "type") == "rebac/check" then
         some (str (e.getObjValD "subject"), str (e.getObjValD "rel"), str (e.getObjValD "object"))
       else none
+  , holds := body.filterMap fun b =>
+      let e := b.getObjValD "eval"
+      if str (e.getObjValD "type") == "pointer/ge" then
+        some (str (e.getObjValD "pointer"), ((e.getObjValD "value").getInt?.toOption).getD 1)
+      else none
   , sets := body.filterMap fun b =>
       match b.getObjVal? "pointer/set" with
       | .ok p => some (str p, ((b.getObjValD "value").getInt?.toOption).getD 0)
@@ -85,7 +91,7 @@ partial def run (sp : Spec) (fuel : Nat) : Task → St → Option St
     match sp.acts.find? (·.name == n) with
     | none => none
     | some a =>
-      if a.evals.all (fun e => s.edges.contains e) then
+      if a.evals.all (fun e => s.edges.contains e) && a.holds.all (fun h => lookup s.vals h.1 ≥ h.2) then
         some { s with vals := a.sets.foldl (fun v w => store v w.1 w.2) s.vals,
                       plan := s.plan ++ [n] }
       else none
@@ -98,12 +104,12 @@ partial def run (sp : Spec) (fuel : Nat) : Task → St → Option St
         | none => none
         | some m => m.2.findSome? fun alt => alt.foldlM (fun st t => run sp f t st) s
 
-/-- A request is `var NAME 0|1` facts, `edge S R O` graph edges and one `goal NAME`. -/
+/-- A request is `var POINTER 0|1` facts, `edge S R O` graph edges and one `goal POINTER`. -/
 def facts (spec : String) : List (String × Int) × List (String × String × String) × Option String :=
   let ls := ((spec.splitOn "\n").map fun l => (l.splitOn " ").filter (· != "")).filter (!·.isEmpty)
-  ( ls.filterMap fun | ["var", n, b] => b.toNat?.map fun x => ("/pull/" ++ n, (x : Int)) | _ => none
+  ( ls.filterMap fun | ["var", n, b] => b.toNat?.map fun x => (n, (x : Int)) | _ => none
   , ls.filterMap fun | ["edge", s, r, o] => some (s, r, o) | _ => none
-  , (ls.filterMap fun | ["goal", g] => some ("/pull/" ++ g) | _ => none).head? )
+  , (ls.filterMap fun | ["goal", g] => some g | _ => none).head? )
 
 /-- The plan to a goal, checked against the planner's own goal test on the final state. -/
 def planOf (domain spec : String) : String :=

@@ -67,34 +67,28 @@ def checks : List Check :=
       ok := domain.actions.all (fun a => a.writes.all fun w => domain.accepts w.2) }
   ]
 
-def staged : String := "var staged 1\nvar pushed 1\nvar clean 1\nvar open 1"
-
-/-- The pull-request domain is a document, `domains/pulls.jsonld`, and every check reads it. -/
-def pullChecks (dom : String) : List Check :=
+/-- The campus domain is a document, `domains/campus-sample.jsonld`, and every check reads it. -/
+def campusChecks (dom : String) : List Check :=
   let ask := fun (spec : String) => Persona.Jsonld.planOf dom spec
-  [ { name := "pulls: an open pull with no checks run is planned to its checks",
-      ok := ask (staged ++ "\ngoal checked")
-        == "{\"plan\":[\"run-lean-check\",\"run-elf-check\",\"collect-checks\"],\"reached\":true}" }
-  , { name := "pulls: a pull with nothing done is planned from the branch name",
-      ok := (ask "goal open").startsWith "{\"plan\":[\"name-branch-by-stage\",\"push-branch\"" }
-  , { name := "pulls: the plan to merge is refused until the graph holds operator approves pull",
-      ok := ask (staged ++ "\ngoal merged") == "{\"refused\":\"unreachable\"}" }
-  , { name := "pulls: the same plan is found once that edge is in the graph",
-      ok := (ask (staged ++ "\nedge operator approves pull\ngoal merged")).endsWith
-        "\"merge-pull\"],\"reached\":true}" }
-  , { name := "pulls: the document drives the plan, so renaming its approval edge refuses the merge",
-      ok := Persona.Jsonld.planOf (dom.replace "\"rel\": \"approves\"" "\"rel\": \"vetoes\"")
-        (staged ++ "\nedge operator approves pull\ngoal merged") == "{\"refused\":\"unreachable\"}" }
-  , { name := "pulls: a merged pull needs nothing more",
-      ok := ask (staged ++ "\nvar merged 1\ngoal merged") == "{\"plan\":[],\"reached\":true}" }
-  , { name := "pulls: a goal the domain does not declare is refused",
-      ok := ask "goal shipped" == "{\"refused\":\"undeclared_goal\"}" }
-  , { name := "pulls: a document that is not JSON is refused as a bad domain",
-      ok := (Persona.Jsonld.planOf "{" "goal open").startsWith "{\"refused\":\"bad_domain\"" } ]
+  let full := "[\"acquire-token-3\",\"settle-2\",\"acquire-token-B1\",\"settle-3\"]"
+  [ { name := "campus: skills and tokens are assembled in order into the goal",
+      ok := ask "goal /rfd/3" == "{\"plan\":" ++ full ++ ",\"reached\":true}" }
+  , { name := "campus: a token already held is not acquired again",
+      ok := ask "var /token/3 1\ngoal /rfd/3"
+        == "{\"plan\":[\"settle-2\",\"acquire-token-B1\",\"settle-3\"],\"reached\":true}" }
+  , { name := "campus: a settled goal needs nothing more",
+      ok := ask "var /rfd/3 1\ngoal /rfd/3" == "{\"plan\":[],\"reached\":true}" }
+  , { name := "campus: a goal the domain does not declare is refused",
+      ok := ask "goal /rfd/9" == "{\"refused\":\"undeclared_goal\"}" }
+  , { name := "campus: a token that is never acquired leaves its skill, and the goal, unreachable",
+      ok := Persona.Jsonld.planOf (dom.replace "\"pointer/set\": \"/token/3\"" "\"pointer/set\": \"/token/9\"") "goal /rfd/3"
+        == "{\"refused\":\"unreachable\"}" }
+  , { name := "campus: a document that is not JSON is refused as a bad domain",
+      ok := (Persona.Jsonld.planOf "{" "goal /rfd/3").startsWith "{\"refused\":\"bad_domain\"" } ]
 
 def run : IO UInt32 := do
-  let dom ← IO.FS.readFile "domains/pulls.jsonld"
-  let checks := checks ++ pullChecks dom
+  let dom ← IO.FS.readFile "domains/campus-sample.jsonld"
+  let checks := checks ++ campusChecks dom
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

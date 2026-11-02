@@ -15,7 +15,7 @@ domain and the codebook are the persona's.
 
     pixi run ask           # a domain, a goal, and the plan that reaches it
     pixi run vocabulary    # the codebook and the actions it composes from
-    pixi run test          # the green gate: 26 invariants, positive and negative controls
+    pixi run test          # the green gate: 24 invariants, positive and negative controls
 
 ## What it accepts
 
@@ -45,7 +45,7 @@ Lean comes from elan; the `lean-toolchain` file pins v4.34.1.
 `lake build` compiles the persona against the planner vendored in `thirdparty/`,
 so the build fetches no domain from GitHub.
 
-    lake exe persona_witness      # the persona's gate, 26 invariants
+    lake exe persona_witness      # the persona's gate, 24 invariants
     lake exe character_witness    # the character domain's gate, 11 invariants
 
 ## Run the guest standalone
@@ -77,22 +77,21 @@ requires, which is the `requires` field of a domain.
 `lean4/src`, the layout `interactor-lean-guest` builds for its riscv64 core. The build needs
 `emcc` on the path.
 
-## The pull requests as a planner domain
-`domains/pulls.jsonld` is a RECTGTN planner domain document, in the shape of the fleet domain in
-`manuals-weftspun/rectgtn/`: a `pull` variable with its facts, eight actions that write them, and
-a method for each goal (`/pull/open`, `/pull/checked`, `/pull/merged`) that lists its subtasks in
-order. `merge-pull` checks the graph for `operator approves pull`, and no action writes that edge,
-so the plan to `merged` is refused until the request carries it.
+## Assembling skills and tokens into a goal
+A planner domain is a RECTGTN JSON-LD document, in the shape of `rectgtn/fleet.jsonld` in
+manuals-weftspun. `domains/campus-sample.jsonld` is a three-skill example: `rfd` and `token`
+variables, a `settle-N` action for each skill that holds when the skills it needs are settled and
+the tokens it spends are acquired, an `acquire-token-T` action for each token, and a method for
+each goal that lists its subtasks in order.
 
-`Persona/Jsonld.lean` reads that document, decomposes a goal through its methods, and checks the
-final state with the planner's own goal test. The witness reads the document too, and one check
-renames the approval edge in it to show the plan follows the document.
+`Persona/Jsonld.lean` reads such a document and decomposes a goal through its methods, skipping a
+goal that already holds. The final state is checked with the planner's own goal test.
 
-    elixir tools/pulls_spec.exs V-Sekai-fire/interactor-taskweft-persona 8 checked \
-      | lake exe persona_pulls domains/pulls.jsonld
+    echo "goal /rfd/3" | lake exe persona_plan domains/campus-sample.jsonld
 
-`tools/pulls_spec.exs` reads a pull from `gh` as `var NAME 0|1` facts, and an `edge` line once the
-pull is merged.
+The manuals site builds the full domain for RFD66606-2360, one skill for each RFD behind it, and
+publishes it as `assets/campus.jsonld`. A request may carry `var POINTER 0|1` facts and
+`edge S R O` graph edges.
 
 ## Build the guest on a desk
 The guest builds from a workspace laid out as the goal manifest places it (`2-contract/guest-runtime`,
@@ -172,7 +171,7 @@ The persona is an [A2A v1.0](https://hermes-agent.nousresearch.com/docs/user-gui
 peer. A caller sends a goal as the text of a `SendMessage`, and the reply is the
 persona's own answer, byte for byte what `persona_ask` returns, in one text part.
 
-    pixi run a2a-test      # the A2A gate: 26 invariants, positive and negative controls
+    pixi run a2a-test      # the A2A gate: 24 invariants, positive and negative controls
     lake exe persona_a2a --card [url]   # the Agent Card
     lake exe persona_a2a                # JSON-RPC over stdio, one request a line
 

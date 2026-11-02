@@ -31,10 +31,10 @@ lean_exe «persona» where
 lean_exe «persona_witness» where
   root := `PersonaWitness
 
--- The pull-request domain: facts about a pull on stdin, the plan to its goal on stdout.
+-- A planner domain document and a goal on stdin: the plan to the goal on stdout.
 @[default_target]
-lean_exe «persona_pulls» where
-  root := `PersonaPulls
+lean_exe «persona_plan» where
+  root := `PersonaPlan
 
 -- Agent-to-Agent: the persona as an A2A v1.0 peer, JSON-RPC over stdio.
 @[default_target]
