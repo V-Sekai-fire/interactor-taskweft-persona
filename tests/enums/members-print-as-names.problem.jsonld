@@ -1,0 +1,35 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "enums_members_print_as_names",
+ "domain": "enums",
+ "version": "0.1.0",
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "put",
+   "b",
+   "hand"
+  ],
+  [
+   "put",
+   "c",
+   "table"
+  ]
+ ]
+}

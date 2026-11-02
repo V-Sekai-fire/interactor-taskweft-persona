@@ -6,7 +6,7 @@
  "@type": "domain:Definition",
  "name": "params",
  "version": "0.1.0",
- "description": "Actions and methods that take parameters: {name} in a pointer or a value is replaced by the argument of the call.",
+ "description": "Actions and methods that take parameters. The codebook is the interned string list: a name written there is its index everywhere else, so an argument is a number or an entry of the codebook. [name] fills a pointer path, as an integer template parameter does in the glTF extension, and {\"param\": name} stands for a number in a value.",
  "variables": [
   {
    "name": "cell",
@@ -21,7 +21,7 @@
    ],
    "body": [
     {
-     "pointer/set": "/cell/{i}",
+     "pointer/set": "/cell/[i]",
      "value": 1
     }
    ]
@@ -36,13 +36,13 @@
       "type": "math/ge",
       "a": {
        "type": "pointer/get",
-       "pointer": "/cell/{i}"
+       "pointer": "/cell/[i]"
       },
       "b": 1
      }
     },
     {
-     "pointer/set": "/used/{i}",
+     "pointer/set": "/used/[i]",
      "value": 1
     }
    ]
@@ -54,7 +54,9 @@
    "body": [
     {
      "pointer/set": "/n/last",
-     "value": "{v}"
+     "value": {
+      "param": "v"
+     }
     }
    ]
   },
@@ -70,7 +72,9 @@
        "type": "pointer/get",
        "pointer": "/n/last"
       },
-      "b": "{v}"
+      "b": {
+       "param": "v"
+      }
      }
     }
    ]
@@ -87,15 +91,27 @@
      "subtasks": [
       [
        "mark",
-       "{i}"
+       {
+        "param": "i"
+       }
       ],
       [
        "use",
-       "{i}"
+       {
+        "param": "i"
+       }
       ]
      ]
     }
    ]
   }
- }
+ },
+ "codebook": [
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f"
+ ]
 }

@@ -1,0 +1,30 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "enums_numbers_still_work",
+ "domain": "enums",
+ "version": "0.1.0",
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "put",
+   2,
+   1
+  ]
+ ]
+}

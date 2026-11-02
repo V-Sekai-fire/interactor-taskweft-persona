@@ -2,6 +2,7 @@ import Persona.Demo
 import Persona.Grid
 import Persona.Jsonld
 import Persona.Web
+import Persona.Khr
 
 open Persona
 open Persona.Demo
@@ -266,12 +267,45 @@ def stepKeys (t : String) : List String :=
       let inner := ((((x.splitOn "\"params\":[").drop 1).headD "").takeWhile (· != ']')).toString.replace "\"" ""
       if inner == "" then name else name ++ "(" ++ inner ++ ")"
 
+/-- Enums: named integers, resolved when the document is read and printed as names in the plan. -/
+def enumChecks : IO (List Check) := do
+  let dir := "tests/enums/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let mut out : List Check := []
+  for name in ["members-print-as-names", "member-as-a-value", "qualified-member", "ambiguous-member",
+               "ambiguous-bare-refused", "unknown-member", "numbers-still-work"] do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "enums: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  return out
+
+/-- The KHR_interactivity subset: each graph runs and its variables end at the values expected, or it is
+refused for the reason expected. -/
+def khrChecks : IO (List Check) := do
+  let dir := "tests/khr/"
+  let mut out : List Check := []
+  for name in ["for-sums", "for-empty", "for-end-read-each-pass", "branch-true", "branch-false", "branch-needs-bool", "while-counts", "select", "math-switch", "math-switch-default", "int-wraps", "eq-one-type", "pointer-valid", "sequence-string-order", "variable-set-two", "variable-out-of-range", "float-type", "unbuilt-node", "fuel"] do
+    let g ← IO.FS.readFile (dir ++ name ++ ".graph.json")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    let fuel := ((← IO.FS.readFile (dir ++ name ++ ".fuel")).trim.toNat?).getD 100000
+    let got := match Lean.Json.parse g with
+      | .error e => ["ERROR:" ++ e]
+      | .ok j =>
+        match Persona.Khr.runGraph j [] fuel with
+        | .error e => ["ERROR:" ++ e]
+        | .ok vs => vs.map fun (k, v) => k ++ "=" ++ toString v
+    let ok := match expect with
+      | [e] => if e.startsWith "ERROR:" then got.any (fun x => x.startsWith "ERROR:" && (x.splitOn (e.drop 6).toString).length > 1) else got == expect
+      | _ => got == expect
+    out := out ++ [{ name := "khr: " ++ name, ok := ok }]
+  return out
+
 /-- Actions, methods and tasks that take parameters. -/
 def paramChecks : IO (List Check) := do
   let dir := "tests/params/"
   let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
   let mut out : List Check := []
-  for name in ["finish-two", "finish-number", "use-without-mark", "value-reaches", "value-falls-short", "missing-argument"] do
+  for name in ["finish-two", "use-without-mark", "value-reaches", "value-falls-short", "missing-argument", "finish-name", "finish-name-and-number", "name-not-interned", "digits-as-string"] do
     let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
     let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
     out := out ++ [{ name := "params: " ++ name ++ " gives the expected steps", ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
@@ -301,7 +335,9 @@ def run : IO UInt32 := do
   let rprob ← IO.FS.readFile "problems/campus-sample-reach.jsonld"
   let g ← gtpyhopChecks
   let pc ← paramChecks
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc
+  let kc ← khrChecks
+  let ec ← enumChecks
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

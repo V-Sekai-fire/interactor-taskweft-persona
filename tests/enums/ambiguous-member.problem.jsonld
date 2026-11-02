@@ -4,12 +4,12 @@
   "domain": "VSEKAI:planning/domain/"
  },
  "@type": "domain:Problem",
- "name": "params_finish_number",
- "domain": "params",
+ "name": "enums_ambiguous_member",
+ "domain": "enums",
  "version": "0.1.0",
  "variables": [
   {
-   "name": "cell",
+   "name": "pos",
    "type": "int",
    "init": {}
   }
@@ -22,8 +22,9 @@
  },
  "todo_list": [
   [
-   "finish",
-   5
+   "put",
+   "a",
+   "hand"
   ]
  ]
 }
