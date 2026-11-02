@@ -1,0 +1,254 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "campus_sample_reach",
+ "source": "interactor-taskweft-persona",
+ "version": "0.1.0",
+ "description": "Skills and tokens: settle-N holds when the skills it needs are settled and the tokens it spends are acquired, and acquire-token-T takes a token. Variables are declared here and given their values by a problem.",
+ "variables": [
+  {
+   "name": "rfd",
+   "type": "int",
+   "description": "1 when an RFD is settled.",
+   "init": {}
+  },
+  {
+   "name": "token",
+   "type": "int",
+   "description": "1 when a token is acquired.",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "acquire-token-3": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/token/3",
+     "value": 1
+    }
+   ]
+  },
+  "acquire-token-B1": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/token/B1",
+     "value": 1
+    }
+   ]
+  },
+  "settle-2": {
+   "params": [],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/rfd/1"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/token/3"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/rfd/2",
+     "value": 1
+    }
+   ]
+  },
+  "settle-3": {
+   "params": [],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/rfd/2"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/token/B1"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/rfd/3",
+     "value": 1
+    }
+   ]
+  }
+ },
+ "methods": {
+  "reach-token-3": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "held",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/token/3"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "acquire",
+     "subtasks": [
+      [
+       "acquire-token-3"
+      ]
+     ]
+    }
+   ]
+  },
+  "reach-token-B1": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "held",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/token/B1"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "acquire",
+     "subtasks": [
+      [
+       "acquire-token-B1"
+      ]
+     ]
+    }
+   ]
+  },
+  "reach-rfd-2": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "held",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/rfd/2"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "settle",
+     "subtasks": [
+      [
+       "reach-rfd-1"
+      ],
+      [
+       "reach-token-3"
+      ],
+      [
+       "settle-2"
+      ]
+     ]
+    }
+   ]
+  },
+  "reach-rfd-3": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "held",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/rfd/3"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "settle",
+     "subtasks": [
+      [
+       "reach-rfd-2"
+      ],
+      [
+       "reach-token-B1"
+      ],
+      [
+       "settle-3"
+      ]
+     ]
+    }
+   ]
+  },
+  "reach-rfd-1": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "held",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/rfd/1"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": []
+    }
+   ]
+  }
+ }
+}
