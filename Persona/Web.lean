@@ -11,7 +11,7 @@ open Persona Jsonld
 /-- The goals a problem declares, and the actions and methods its domain holds, as one JSON object.
 A document that does not parse is refused by name. -/
 def goalsOf (domain problem : String) : String :=
-  match parse domain, parseProblem problem (vocabText domain) with
+  match parse domain, parseProblem problem (mergeVocab (vocabText domain) (vocabText problem)) with
   | .error _, _ => "{\"refused\":\"bad_domain\"}"
   | _, .error _ => "{\"refused\":\"bad_problem\"}"
   | .ok sp, .ok pb =>

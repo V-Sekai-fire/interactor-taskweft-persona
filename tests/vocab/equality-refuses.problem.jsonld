@@ -1,0 +1,38 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "vocab_equality_refuses",
+ "domain": "vocab",
+ "version": "0.1.0",
+ "codebook": [
+  "q",
+  "r",
+  "s"
+ ],
+ "variables": [
+  {
+   "name": "at",
+   "type": "int",
+   "init": {
+    "q": 0,
+    "r": 1,
+    "s": 0
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "lift",
+   "r"
+  ]
+ ]
+}

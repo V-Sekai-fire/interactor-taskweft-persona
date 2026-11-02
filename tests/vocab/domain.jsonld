@@ -1,0 +1,44 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "vocab",
+ "version": "0.1.0",
+ "description": "A problem states its own codebook, the interned list whose order numbers its things, so the order a loop over them follows is the problem's. Names key the initial state, a math/eq over a pointer is an exact precondition, and a parameter typed by the reserved enum codebook prints as the name.",
+ "variables": [
+  {
+   "name": "at",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "lift": {
+   "params": [
+    {
+     "name": "x",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/at/[x]"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/at/[x]",
+     "value": 1
+    }
+   ]
+  }
+ },
+ "methods": {}
+}

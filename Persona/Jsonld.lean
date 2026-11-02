@@ -1,6 +1,7 @@
 import Persona.Guest
 import Lean.Data.Json
 import Planner.Iso8601Duration
+import Persona.Khr
 
 namespace Persona.Jsonld
 
@@ -34,11 +35,16 @@ structure Act where
   statedEnd : Option Nat
   evals : List (String × String × String)
   holds : List (String × Int)
+  /-- Facts that must be exactly a value: `math/eq` over a `pointer/get`. -/
+  eqs   : List (String × Int)
   sets  : List (String × Int)
 
 /-- A method alternative: the facts that must hold for it to apply, then its subtasks in order. -/
 structure Alt where
   vocab : Vocab
+  eqs : List (String × Int)
+  /-- A KHR_interactivity graph, run on the current state before the alternative is read. -/
+  graph : Option Json
   params : List String
   raw    : Json
   checks : List (String × Int)
@@ -79,10 +85,21 @@ def enumsOf (j : Json) : List (String × List (String × Int)) :=
 
 def vocabOf (j : Json) : Vocab := { names := codebookOf j, enums := enumsOf j }
 
+/-- A problem's own codebook, when it has one, replaces the domain's: the order of a codebook is the order of
+its entries, so a problem can fix the numbering a loop over its blocks follows. Enums add up. -/
+def mergeVocab (d p : Vocab) : Vocab :=
+  { names := if p.names.isEmpty then d.names else p.names, enums := d.enums ++ p.enums }
+
 def vocabText (text : String) : Vocab :=
   match Json.parse text with
   | .ok j => vocabOf j
   | .error _ => {}
+
+/-- A key of a variable's initial values: an entry of the codebook is its index. -/
+def keyOf (v : Vocab) (k : String) : String :=
+  match v.names.findIdx? (· == k) with
+  | some i => toString i
+  | none => k
 
 /-- The integer an enum member names, written `enum.member` or, when no other enum has it, `member`. -/
 def memberOf (v : Vocab) (s : String) : Option Int :=
@@ -130,6 +147,12 @@ def holdOf (v : Vocab) (e : Json) : Option (String × Int) :=
     some (str (e.getObjValD "pointer"), (intOf v (e.getObjValD "value")).getD 1)
   else if str (e.getObjValD "type") == "math/ge" then
     some (str ((e.getObjValD "a").getObjValD "pointer"), (intOf v (e.getObjValD "b")).getD 1)
+  else none
+
+/-- A fact that must be exactly a value: `math/eq` over a `pointer/get` and a number. -/
+def eqOf (v : Vocab) (e : Json) : Option (String × Int) :=
+  if str (e.getObjValD "type") == "math/eq" then
+    some (str ((e.getObjValD "a").getObjValD "pointer"), (intOf v (e.getObjValD "b")).getD 0)
   else none
 
 /-- Days since 1970-01-01 of a civil date (year 1970 or later). -/
@@ -215,6 +238,7 @@ def parseAct (v : Vocab) (name : String) (j : Json) : Act :=
         some (str (e.getObjValD "subject"), str (e.getObjValD "rel"), str (e.getObjValD "object"))
       else none
   , holds := body.filterMap fun b => holdOf v (b.getObjValD "eval")
+  , eqs := body.filterMap fun b => eqOf v (b.getObjValD "eval")
   , sets := body.filterMap fun b =>
       match b.getObjVal? "pointer/set" with
       | .ok p => some (str p, (intOf v (b.getObjValD "value")).getD 0)
@@ -238,7 +262,8 @@ partial def substJson (env : List (String × String)) (j : Json) : Json :=
   | _ => j
 
 def parseAlt (v : Vocab) (params : List String) (alt : Json) : Alt :=
-  { vocab := v, params := params, raw := alt
+  { vocab := v, graph := (alt.getObjVal? "graph").toOption
+  , eqs := (items (alt.getObjValD "check")).filterMap fun c => eqOf v (c.getObjValD "eval"), params := params, raw := alt
   , checks := (items (alt.getObjValD "check")).filterMap fun c => holdOf v (c.getObjValD "eval")
   , tasks := (items (alt.getObjValD "subtasks")).map (parseTask v) }
 
@@ -248,10 +273,19 @@ def instAct (a : Act) (args : List String) : Option Act :=
   else if a.params.isEmpty then some a
   else some (parseAct a.vocab a.name (substJson (a.params.zip args) a.raw))
 
+/-- The alternative as written, without its graph: a graph's `[name]` are its own input sockets, which a
+parameter must not replace. -/
+def withoutGraph (j : Json) : Json := Json.mkObj ((entries j).filter (·.1 != "graph"))
+
+def withGraph (g : Option Json) (j : Json) : Json :=
+  match g with
+  | some x => Json.mkObj ((entries j) ++ [("graph", x)])
+  | none => j
+
 def instAlt (a : Alt) (args : List String) : Option Alt :=
   if a.params.length != args.length then none
   else if a.params.isEmpty then some a
-  else some (parseAlt a.vocab [] (substJson (a.params.zip args) a.raw))
+  else some (parseAlt a.vocab [] (substJson (a.params.zip args) (withoutGraph a.raw) |> withGraph a.graph))
 
 /-- A plan step is its action's name, or the name and its arguments as `name(a,b)`. -/
 def stepKey (n : String) (args : List String) : String :=
@@ -269,7 +303,7 @@ def parse (text : String) : Except String Spec := do
   let voc := vocabOf j
   let init := (items (j.getObjValD "variables")).flatMap fun v =>
     (entries (v.getObjValD "init")).map fun (k, x) =>
-      ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (intOf voc x).getD 0)
+      ("/" ++ str (v.getObjValD "name") ++ "/" ++ keyOf voc k, (intOf voc x).getD 0)
   return { acts := (entries (j.getObjValD "actions")).map fun (n, a) => parseAct voc n a
          , methods := (entries (j.getObjValD "methods")).map fun (p, m) =>
              (p, (items (m.getObjValD "alternatives")).map
@@ -293,7 +327,7 @@ def parseProblem (text : String) (voc : Vocab := {}) : Except String Problem := 
   let j ← Json.parse text
   let init := (items (j.getObjValD "variables")).flatMap fun v =>
     (entries (v.getObjValD "init")).map fun (k, x) =>
-      ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (intOf voc x).getD 0)
+      ("/" ++ str (v.getObjValD "name") ++ "/" ++ keyOf voc k, (intOf voc x).getD 0)
   let edges := (items (((j.getObjValD "capabilities").getObjValD "graph").getObjValD "edges")).map
     fun e => (str (e.getObjValD "subject"), str (e.getObjValD "rel"), str (e.getObjValD "object"))
   let goals := (items (j.getObjValD "todo_list")).flatMap fun t =>
@@ -314,6 +348,26 @@ def lookup (vals : List (String × Int)) (p : String) : Int :=
 def store (vals : List (String × Int)) (p : String) (v : Int) : List (String × Int) :=
   if vals.any (·.1 == p) then vals.map fun x => if x.1 == p then (p, v) else x else vals ++ [(p, v)]
 
+/-- The tasks an alternative gives on the state `vals`, or none when it does not apply. An alternative with a
+graph runs it first: the graph's variables are readable by the checks as the pointers `/graph/<id>`, and by
+the subtasks as `[id]` in a string and `{"param": id}` for a number. A graph that cannot run, because it is
+rejected or spends its fuel, makes the alternative not apply. -/
+def expandAlt (alt0 : Alt) (args : List String) (vals : List (String × Int)) : Option (List Task) := do
+  let alt ← instAlt alt0 args
+  match alt.graph with
+  | none =>
+    if alt.checks.all (fun h => lookup vals h.1 ≥ h.2) && alt.eqs.all (fun h => lookup vals h.1 == h.2)
+    then some alt.tasks else none
+  | some g =>
+    match Khr.runGraph g vals with
+    | .error _ => none
+    | .ok gv =>
+      let valsG := vals ++ gv.map (fun (k, v) => ("/graph/" ++ k, v))
+      let env := gv.map (fun (k, v) => (k, toString v))
+      let alt2 := parseAlt alt.vocab [] (substJson env (withoutGraph alt.raw))
+      if alt2.checks.all (fun h => lookup valsG h.1 ≥ h.2) && alt2.eqs.all (fun h => lookup valsG h.1 == h.2)
+      then some alt2.tasks else none
+
 /-- Decompose a task: a goal already held is no step, a goal is met by the first method
 alternative whose subtasks all succeed in order, and an action fails when the graph does
 not hold an edge it checks. -/
@@ -328,18 +382,16 @@ partial def run (sp : Spec) (bound : Nat) : List (Task × Nat) → St → Option
         | 0 => none
         | f + 1 =>
           m.2.findSome? fun alt0 =>
-            match instAlt alt0 args with
+            match expandAlt alt0 args s.vals with
             | none => none
-            | some alt =>
-              if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
-                run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
-              else none
+            | some tasks => run sp bound (tasks.map (fun u => (u, f)) ++ rest) s
       | none =>
         match (sp.acts.find? (·.name == n)).bind (fun a0 => instAct a0 args) with
         | none => none
         | some a =>
           if s.plan.length < bound && a.evals.all (fun e => s.edges.contains e)
-              && a.holds.all (fun h => lookup s.vals h.1 ≥ h.2) then
+              && a.holds.all (fun h => lookup s.vals h.1 ≥ h.2)
+              && a.eqs.all (fun h => lookup s.vals h.1 == h.2) then
             run sp bound rest { s with vals := a.sets.foldl (fun v w => store v w.1 w.2) s.vals,
                                        plan := s.plan ++ [stepKey n args] }
           else none
@@ -353,12 +405,9 @@ partial def run (sp : Spec) (bound : Nat) : List (Task × Nat) → St → Option
           | none => none
           | some m =>
             m.2.findSome? fun alt0 =>
-              match instAlt alt0 [] with
+              match expandAlt alt0 [] s.vals with
               | none => none
-              | some alt =>
-                if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
-                  run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
-                else none
+              | some tasks => run sp bound (tasks.map (fun u => (u, f)) ++ rest) s
 
 /-- Seconds as a canonical ISO-8601 duration: `PT0S`, `P3D`, `P1DT2H30M`. -/
 def fmtDur (s : Nat) : String :=
@@ -386,13 +435,14 @@ def field (name : String) (value : Option String) : String :=
   | none => ""
 
 /-- A step's arguments as they read: the name of the enum member a typed parameter has, else the number. -/
-def readable (sp : Spec) (k : String) : List String :=
+def readable (sp : Spec) (names : List String) (k : String) : List String :=
   let (n, args) := splitKey k
   match sp.acts.find? (·.name == n) with
   | none => args
   | some a =>
     (args.zip (a.paramEnums ++ args.map (fun _ => none))).map fun (x, e) =>
       match e, x.toInt? with
+      | some "codebook", some i => (names[i.toNat]?).getD x
       | some en, some i =>
         match (a.vocab.enums.find? (·.1 == en)).bind (fun m => m.2.find? (·.2 == i)) with
         | some (name, _) => name
@@ -416,7 +466,7 @@ def schedule (sp : Spec) (origin : Option Nat) (plan : List String) : List (Stri
         | _, _ => 0
       let start := acc.foldl (fun t (m, _, e) =>
         match actOfKey sp m with
-        | some b => if b.sets.any (fun w => a.holds.any (·.1 == w.1)) then max t e else t
+        | some b => if b.sets.any (fun w => (a.holds ++ a.eqs).any (·.1 == w.1)) then max t e else t
         | none => t) release
       acc ++ [(n, start, start + a.dur)]) []
   (slots, slots.foldl (fun t (_, _, e) => max t e) 0)
@@ -462,7 +512,8 @@ planner's own goal test holds on the final state for every goal of the problem. 
 def planOf (domain problem : String) (only : Option String := none) (bound : Nat := 1000000) : String :=
   let dn := docName domain
   let pn := docName problem
-  match parse domain, parseProblem problem (vocabText domain) with
+  let voc := mergeVocab (vocabText domain) (vocabText problem)
+  match parse domain, parseProblem problem voc with
   | .error _, _ => refusal dn pn "bad_domain"
   | _, .error _ => refusal dn pn "bad_problem"
   | .ok sp, .ok pb0 =>
@@ -504,7 +555,7 @@ def planOf (domain problem : String) (only : Option String := none) (bound : Nat
             if seen.contains n then ((late.find? (·.1 == n)).map (·.2) |>.getD (0, 0))
             else ((slots.find? (·.1 == n)).map (fun (_, b, e) => (b, e)) |>.getD (0, 0))
           (seen ++ [n], out ++ ["{\"action\":" ++ Guest.quote (splitKey n).1 ++ ",\"params\":["
-            ++ String.intercalate "," (readable sp n |>.map Guest.quote) ++ "]"
+            ++ String.intercalate "," (readable sp voc.names n |>.map Guest.quote) ++ "]"
             ++ field "start" (stampAt origin b) ++ field "end" (stampAt origin e)
             ++ ",\"duration\":" ++ Guest.quote (fmtDur (e - b)) ++ "}"])) ([], [])
         let steps := rows.2

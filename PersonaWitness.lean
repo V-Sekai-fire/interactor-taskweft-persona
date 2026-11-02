@@ -279,6 +279,28 @@ def enumChecks : IO (List Check) := do
     out := out ++ [{ name := "enums: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
   return out
 
+/-- A problem's own codebook, names that key the initial state, equality preconditions and names in plan steps. -/
+def vocabChecks : IO (List Check) := do
+  let dir := "tests/vocab/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let mut out : List Check := []
+  for name in ["names-print", "order-is-the-problems", "equality-refuses", "name-not-in-codebook"] do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "vocab: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  return out
+
+/-- A method alternative with a graph: the graph runs on the state and its variables decide the subtasks. -/
+def graphChecks : IO (List Check) := do
+  let dir := "tests/graph/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let mut out : List Check := []
+  for name in ["hit-in-the-middle", "first-hit-wins", "last-cell", "no-hit-falls-back"] do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "graph method: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  return out
+
 /-- The KHR_interactivity subset: each graph runs and its variables end at the values expected, or it is
 refused for the reason expected. -/
 def khrChecks : IO (List Check) := do
@@ -337,7 +359,9 @@ def run : IO UInt32 := do
   let pc ← paramChecks
   let kc ← khrChecks
   let ec ← enumChecks
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec
+  let gc ← graphChecks
+  let vc ← vocabChecks
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
