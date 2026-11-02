@@ -68,6 +68,17 @@ def checks : List Check :=
       ok := domain.actions.all (fun a => a.writes.all fun w => domain.accepts w.2) }
   ]
 
+/-- A domain of `n` methods, each calling the next, and the last calling one action. -/
+def chainDom (n : Nat) : String :=
+  let ms := (List.range n).map fun i =>
+    let next := if i + 1 == n then "act" else "c" ++ toString (i + 1)
+    "\"c" ++ toString i ++ "\":{\"alternatives\":[{\"name\":\"go\",\"subtasks\":[[\"" ++ next ++ "\"]]}]}"
+  "{\"name\":\"chain\",\"variables\":[],\"actions\":{\"act\":{\"body\":[{\"pointer/set\":\"/v/x\",\"value\":1}]}},\"methods\":{"
+    ++ String.intercalate "," ms ++ "}}"
+
+def chainProb (_n : Nat) : String :=
+  "{\"name\":\"chain_problem\",\"variables\":[],\"todo_list\":[[\"c0\"]]}"
+
 /-- Domain, problem and plan are three documents. The plan is the gold value: the planner's
 output for the domain and the problem must equal it, and a gold with one step changed must not. -/
 def campusChecks (dom prob gold rdom rprob : String) : List Check :=
@@ -111,6 +122,10 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
   , { name := "reach: a todo list with no entry is refused",
       ok := (Persona.Jsonld.planOf rdom (rprob.replace "reach-rfd-3" "")).contains "no_goal"
         || (Persona.Jsonld.planOf rdom (rprob.replace "\"todo_list\"" "\"todos\"")).contains "no_goal" }
+  , { name := "reach: a chain of methods deeper than twelve still plans",
+      ok := (Persona.Jsonld.planOf (chainDom 20) (chainProb 20)).contains "\"reached\":true" }
+  , { name := "reach: the same chain with its action removed is refused",
+      ok := (Persona.Jsonld.planOf ((chainDom 20).replace "\"act\":{" "\"actx\":{") (chainProb 20)).contains "unreachable" }
   , { name := "web: the goals list names the goal the problem asks and declares it",
       ok := (Persona.Web.goalsOf dom prob).contains "\"goal\":\"/rfd/3\",\"declared\":true" }
   , { name := "web: a goal the problem holds already is reported held",
