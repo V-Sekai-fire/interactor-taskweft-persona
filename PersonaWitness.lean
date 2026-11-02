@@ -257,6 +257,26 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
 def actionsOf (t : String) : List String :=
   (t.splitOn "\"action\":\"").drop 1 |>.map (fun x => (x.takeWhile (· != '"')).toString)
 
+/-- The steps of a plan document as `name(arguments)`, or `REFUSED:why` for a refusal. -/
+def stepKeys (t : String) : List String :=
+  if t.contains "\"refused\"" then ["REFUSED:" ++ ((((t.splitOn "\"refused\":\"").drop 1).headD "").takeWhile (· != '"')).toString]
+  else
+    (t.splitOn "\"action\":\"").drop 1 |>.map fun x =>
+      let name := (x.takeWhile (· != '"')).toString
+      let inner := ((((x.splitOn "\"params\":[").drop 1).headD "").takeWhile (· != ']')).toString.replace "\"" ""
+      if inner == "" then name else name ++ "(" ++ inner ++ ")"
+
+/-- Actions, methods and tasks that take parameters. -/
+def paramChecks : IO (List Check) := do
+  let dir := "tests/params/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let mut out : List Check := []
+  for name in ["finish-two", "finish-number", "use-without-mark", "value-reaches", "value-falls-short", "missing-argument"] do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "params: " ++ name ++ " gives the expected steps", ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  return out
+
 /-- The cases ported from GTPyhop's `backtracking_htn`: each problem's plan is the one GTPyhop expects. -/
 def gtpyhopChecks : IO (List Check) := do
   let dir := "tests/gtpyhop/backtracking_htn/"
@@ -280,7 +300,8 @@ def run : IO UInt32 := do
   let rdom ← IO.FS.readFile "domains/campus-sample-reach.jsonld"
   let rprob ← IO.FS.readFile "problems/campus-sample-reach.jsonld"
   let g ← gtpyhopChecks
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g
+  let pc ← paramChecks
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

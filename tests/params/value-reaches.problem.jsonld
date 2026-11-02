@@ -1,0 +1,33 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "params_value_reaches",
+ "domain": "params",
+ "version": "0.1.0",
+ "variables": [
+  {
+   "name": "cell",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "last",
+   "7"
+  ],
+  [
+   "after",
+   "7"
+  ]
+ ]
+}
