@@ -132,13 +132,17 @@ def refusal (domain problem why : String) : String :=
 
 /-- The plan document: the domain and the problem it answers, the steps in order, and whether the
 planner's own goal test holds on the final state for every goal of the problem. -/
-def planOf (domain problem : String) : String :=
+def planOf (domain problem : String) (only : Option String := none) : String :=
   let dn := docName domain
   let pn := docName problem
   match parse domain, parseProblem problem with
   | .error _, _ => refusal dn pn "bad_domain"
   | _, .error _ => refusal dn pn "bad_problem"
-  | .ok sp, .ok pb =>
+  | .ok sp, .ok pb0 =>
+    -- `only` narrows the problem to one goal; a goal no variable declares meets `undeclared_goal` below.
+    let pb := match only with
+      | none => pb0
+      | some g => { pb0 with goals := [g] }
     let known := sp.init ++ pb.init
     if pb.goals.isEmpty then refusal dn pn "no_goal"
     else if pb.goals.any (fun g => !(known.any (·.1 == g))) then refusal dn pn "undeclared_goal"

@@ -1,6 +1,7 @@
 import Persona.Demo
 import Persona.Grid
 import Persona.Jsonld
+import Persona.Web
 
 open Persona
 open Persona.Demo
@@ -98,7 +99,19 @@ def campusChecks (dom prob gold : String) : List Check :=
   , { name := "campus: a problem that is not JSON is refused",
       ok := (ask "{").contains "bad_problem" }
   , { name := "campus: a problem with no goal is refused",
-      ok := (ask (swap prob "\"todo_list\"" "\"todos\"")).contains "no_goal" } ]
+      ok := (ask (swap prob "\"todo_list\"" "\"todos\"")).contains "no_goal" }
+  , { name := "web: the goals list names the goal the problem asks and declares it",
+      ok := (Persona.Web.goalsOf dom prob).contains "\"goal\":\"/rfd/3\",\"declared\":true" }
+  , { name := "web: a goal the problem holds already is reported held",
+      ok := (Persona.Web.goalsOf dom held).contains "\"held\":false"
+        && (Persona.Web.goalsOf dom solved).contains "\"held\":true" }
+  , { name := "web: planning the one named goal equals planning all goals of a one-goal problem",
+      ok := Persona.Web.planWith dom prob "/rfd/3" == ask prob
+        && Persona.Web.planWith dom prob "" == ask prob }
+  , { name := "web: a named goal no variable declares is refused",
+      ok := (Persona.Web.planWith dom prob "/rfd/9").contains "undeclared_goal" }
+  , { name := "web: the goals list of a domain that is not JSON is refused",
+      ok := (Persona.Web.goalsOf "{" prob).contains "bad_domain" } ]
 
 def run : IO UInt32 := do
   let dom ← IO.FS.readFile "domains/campus-sample.jsonld"
