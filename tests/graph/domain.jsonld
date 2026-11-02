@@ -1,0 +1,278 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "graph_methods",
+ "version": "0.1.0",
+ "description": "A method alternative may carry a KHR_interactivity graph. It runs on the current state before the alternative is read: its variables are the pointers /graph/<id> to the checks, and [id] or {\"param\": id} to the subtasks. Here go finds the first cell that holds a 1 and marks it, and falls back to doing nothing when no cell does.",
+ "variables": [
+  {
+   "name": "cell",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "mark": {
+   "params": [
+    "i"
+   ],
+   "body": [
+    {
+     "pointer/set": "/marked/[i]",
+     "value": 1
+    }
+   ]
+  },
+  "nothing": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/nothing/done",
+     "value": 1
+    }
+   ]
+  }
+ },
+ "methods": {
+  "go": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "first-hit",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "found",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "at",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "flow/for"
+       },
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "math/and"
+       },
+       {
+        "op": "flow/branch"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 1,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "startIndex": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         },
+         "endIndex": {
+          "type": 0,
+          "value": [
+           4
+          ]
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 7,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 2,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/cell/[i]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "i": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 3,
+          "socket": "value"
+         },
+         "b": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "condition": {
+          "node": 6,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 8,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "configuration": {
+         "variables": {
+          "value": [
+           0,
+           1
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         },
+         "1": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/found"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "mark",
+       {
+        "param": "at"
+       }
+      ]
+     ]
+    },
+    {
+     "name": "none-found",
+     "subtasks": [
+      [
+       "nothing"
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}
