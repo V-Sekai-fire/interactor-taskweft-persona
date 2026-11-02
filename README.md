@@ -58,6 +58,13 @@ goal with a plan and refuses an undeclared goal by name.
     SANDBOX_ADDON=<godot_sandbox addon dir, with bin/godot-riscv.gdextension> \
     tools/run_standalone.sh persona.elf [goal]
 
+The guest workflow's gate does the same with a pinned double-precision Godot editor and
+godot-sandbox addon, which it downloads and checks by sha256. It requires the expected version
+and plan, the same answers from two processes, and refuses an ELF cut in half (Linux x86_64 or
+macOS):
+
+    python3 tools/check_guest.py --elf=persona.elf
+
 Two things the guest needs from its siblings. The Lean runtime asks the host for random bytes
 with `getrandom`, because a sandbox has no `/dev/urandom` (`interactor-lean-guest`,
 `patches/runtime-guest.patch`). A guest function returns a `Variant`, which is what `vmcall`
