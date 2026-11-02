@@ -15,7 +15,7 @@ domain and the codebook are the persona's.
 
     pixi run ask           # a domain, a goal, and the plan that reaches it
     pixi run vocabulary    # the codebook and the actions it composes from
-    pixi run test          # the green gate: 24 invariants, positive and negative controls
+    pixi run test          # the green gate: 29 invariants, positive and negative controls
 
 ## What it accepts
 
@@ -45,7 +45,7 @@ Lean comes from elan; the `lean-toolchain` file pins v4.34.1.
 `lake build` compiles the persona against the planner vendored in `thirdparty/`,
 so the build fetches no domain from GitHub.
 
-    lake exe persona_witness      # the persona's gate, 24 invariants
+    lake exe persona_witness      # the persona's gate, 29 invariants
     lake exe character_witness    # the character domain's gate, 11 invariants
 
 ## Run the guest standalone
@@ -77,21 +77,27 @@ requires, which is the `requires` field of a domain.
 `lean4/src`, the layout `interactor-lean-guest` builds for its riscv64 core. The build needs
 `emcc` on the path.
 
-## Assembling skills and tokens into a goal
-A planner domain is a RECTGTN JSON-LD document, in the shape of `rectgtn/fleet.jsonld` in
-manuals-weftspun. `domains/campus-sample.jsonld` is a three-skill example: `rfd` and `token`
-variables, a `settle-N` action for each skill that holds when the skills it needs are settled and
-the tokens it spends are acquired, an `acquire-token-T` action for each token, and a method for
-each goal that lists its subtasks in order.
+## Domain, problem and plan
+A planning task is three documents, each a RECTGTN JSON-LD file under the `VSEKAI` prefix:
 
-`Persona/Jsonld.lean` reads such a document and decomposes a goal through its methods, skipping a
-goal that already holds. The final state is checked with the planner's own goal test.
+- `domains/campus-sample.jsonld`, the domain (`domain:Definition`): the variables it declares, a
+  `settle-N` action for each skill that holds when the skills it needs are settled and the tokens
+  it spends are acquired, an `acquire-token-T` action for each token, and a method for each goal.
+- `problems/campus-sample.jsonld`, the problem (`domain:Problem`): the values that hold at the
+  start, the graph edges, and the goals in `todo_list`.
+- `plans/campus-sample.jsonld`, the plan (`domain:Plan`): the domain and problem it answers, the
+  steps in order, and whether the planner's own goal test holds at the end. A refusal is a plan
+  with a `refused` field: `bad_domain`, `bad_problem`, `no_goal`, `undeclared_goal` or
+  `unreachable`.
 
-    echo "goal /rfd/3" | lake exe persona_plan domains/campus-sample.jsonld
+The plan is a gold value. The witness plans the domain and the problem and requires the result to
+equal the file, and a copy of the file with one step changed must not match.
 
-The manuals site builds the full domain for RFD66606-2360, one skill for each RFD behind it, and
-publishes it as `assets/campus.jsonld`. A request may carry `var POINTER 0|1` facts and
-`edge S R O` graph edges.
+    lake exe persona_plan domains/campus-sample.jsonld problems/campus-sample.jsonld plans/campus-sample.jsonld
+
+The third path is optional, and regenerating the gold is the one way to change it.
+`Persona/Jsonld.lean` reads the documents and decomposes each goal through its methods, skipping a
+goal that already holds.
 
 ## Build the guest on a desk
 The guest builds from a workspace laid out as the goal manifest places it (`2-contract/guest-runtime`,
@@ -171,7 +177,7 @@ The persona is an [A2A v1.0](https://hermes-agent.nousresearch.com/docs/user-gui
 peer. A caller sends a goal as the text of a `SendMessage`, and the reply is the
 persona's own answer, byte for byte what `persona_ask` returns, in one text part.
 
-    pixi run a2a-test      # the A2A gate: 24 invariants, positive and negative controls
+    pixi run a2a-test      # the A2A gate: 29 invariants, positive and negative controls
     lake exe persona_a2a --card [url]   # the Agent Card
     lake exe persona_a2a                # JSON-RPC over stdio, one request a line
 

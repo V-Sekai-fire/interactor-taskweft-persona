@@ -1,0 +1,1 @@
+{"@context":{"VSEKAI":"https://v-sekai.org/","domain":"VSEKAI:planning/domain/"},"@type":"domain:Plan","name":"campus_sample_problem_plan","domain":"campus_sample","problem":"campus_sample_problem","reached":true,"steps":[{"action":"acquire-token-3","params":[]},{"action":"settle-2","params":[]},{"action":"acquire-token-B1","params":[]},{"action":"settle-3","params":[]}]}
