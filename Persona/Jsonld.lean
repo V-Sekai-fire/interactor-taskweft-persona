@@ -116,7 +116,11 @@ and no strings, so the planner sees only numbers: a name is resolved when the do
 def intOf (v : Vocab) (j : Json) : Option Int :=
   match j.getInt? with
   | .ok i => some i
-  | .error _ => (j.getStr?.toOption).bind (memberOf v)
+  | .error _ =>
+    match j.getBool? with
+    | .ok b => some (if b then 1 else 0)
+    | .error _ =>
+      (j.getStr?.toOption).bind fun s => (memberOf v s).orElse fun _ => (v.names.findIdx? (· == s)).map (fun i => (i : Int))
 
 /-- An argument as the text of its number: an integer, an enum member, or a string that is an entry of
 the codebook, which is its index. A string that is none of these is not an argument. -/
@@ -359,7 +363,8 @@ def expandAlt (alt0 : Alt) (args : List String) (vals : List (String × Int)) : 
     if alt.checks.all (fun h => lookup vals h.1 ≥ h.2) && alt.eqs.all (fun h => lookup vals h.1 == h.2)
     then some alt.tasks else none
   | some g =>
-    match Khr.runGraph g vals with
+    let inputs := alt0.params.zip args |>.filterMap fun (p, a) => a.toInt?.map (p, ·)
+    match Khr.runGraph g vals inputs with
     | .error _ => none
     | .ok gv =>
       let valsG := vals ++ gv.map (fun (k, v) => ("/graph/" ++ k, v))
@@ -529,7 +534,7 @@ def planOf (domain problem : String) (only : Option String := none) (bound : Nat
     else
       let start : St := { vals := pb.init.foldl (fun v w => store v w.1 w.2) sp.init
                         , edges := pb.edges, plan := [] }
-      let fuel := sp.methods.length + 1
+      let fuel := sp.methods.length + 1000
       let tasks := pb.goals.map (fun g => (Task.goal g, fuel)) ++ pb.calls.map (fun c => (Task.call c.1 c.2, fuel))
       match run sp bound tasks start with
       | none => refusal dn pn "unreachable"

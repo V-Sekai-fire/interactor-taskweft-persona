@@ -290,6 +290,19 @@ def vocabChecks : IO (List Check) := do
     out := out ++ [{ name := "vocab: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
   return out
 
+/-- The cases ported from GTPyhop's `blocks_gtn`: the failures, the simple successes, the two multigoals and the
+Sussman anomaly, each with the plan GTPyhop expects. -/
+def blocksChecks : IO (List Check) := do
+  let dir := "tests/gtpyhop/blocks_gtn/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let mut out : List Check := []
+  for name in ["pickup-a", "pickup-b", "take-b", "pickup-c", "take-a", "take-c", "take-a-put-a-table",
+               "goal1a", "goal1b", "sussman"] do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "gtpyhop blocks_gtn: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  return out
+
 /-- A method alternative with a graph: the graph runs on the state and its variables decide the subtasks. -/
 def graphChecks : IO (List Check) := do
   let dir := "tests/graph/"
@@ -313,7 +326,7 @@ def khrChecks : IO (List Check) := do
     let got := match Lean.Json.parse g with
       | .error e => ["ERROR:" ++ e]
       | .ok j =>
-        match Persona.Khr.runGraph j [] fuel with
+        match Persona.Khr.runGraph j [] [] fuel with
         | .error e => ["ERROR:" ++ e]
         | .ok vs => vs.map fun (k, v) => k ++ "=" ++ toString v
     let ok := match expect with
@@ -361,7 +374,8 @@ def run : IO UInt32 := do
   let ec ← enumChecks
   let gc ← graphChecks
   let vc ← vocabChecks
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc
+  let bc ← blocksChecks
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

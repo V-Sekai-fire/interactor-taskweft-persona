@@ -287,9 +287,9 @@ mutual
 end
 
 /-- Run a graph from its `event/onStart` node over a copy of the state `vals`. The answer is each variable
-that has an `id`, with the value it ends at (a bool as 0 or 1), or the reason the graph was rejected or
+that has an `id`, with the value it ends at; `inputs` replace the initial values of the variables whose ids they name (a bool as 0 or 1), or the reason the graph was rejected or
 could not run. -/
-def runGraph (g : Json) (vals : List (String × Int)) (fuel : Nat := 100000) :
+def runGraph (g : Json) (vals : List (String × Int)) (inputs : List (String × Int) := []) (fuel : Nat := 100000) :
     Except String (List (String × Int)) := do
   validate g
   let decls := items (g.getObjValD "variables")
@@ -298,6 +298,13 @@ def runGraph (g : Json) (vals : List (String × Int)) (fuel : Nat := 100000) :
     let t := (d.getObjValD "type").getNat?.toOption.getD 0
     vars := vars.push (← literal g (Json.mkObj [("type", Json.num (JsonNumber.fromNat t)), ("value", d.getObjValD "value")]))
   let start := (List.range (items (g.getObjValD "nodes")).length).find? (fun n => opOf g n == "event/onStart")
+  -- an input names a variable by its id and replaces that variable's initial value
+  for (k, x) in inputs do
+    for (d, i) in decls.zipIdx do
+      if str (d.getObjValD "id") == k then
+        vars := vars.set! i (match vars.getD i default with
+          | .bool _ => .bool (x != 0)
+          | .int _ => .int (Int32.ofInt x))
   match start with
   | none => throw "the graph has no event/onStart node"
   | some s =>
