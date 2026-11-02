@@ -26,9 +26,9 @@ facts = [
   lean: done.("Lean core"),
   elf: done.("persona-elf"),
   checked: done.("Lean core") and done.("persona-elf"),
-  approved: merged,
   merged: merged
 ]
 
 for {name, on} <- facts, do: IO.puts("var #{name} #{if on, do: 1, else: 0}")
+if merged, do: IO.puts("edge operator approves pull")
 IO.puts("goal #{goal}")

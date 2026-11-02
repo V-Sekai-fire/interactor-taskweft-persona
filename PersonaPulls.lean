@@ -1,6 +1,9 @@
-import Persona.Pulls
+import Persona.Jsonld
 
-/-- Read a pull request's facts on stdin and print the plan to its goal. -/
-def main : IO Unit := do
+/-- `persona_pulls <domain.jsonld>` reads a pull's facts on stdin and prints the plan to its goal. -/
+def main (args : List String) : IO UInt32 := do
+  let some path := args.head? | IO.eprintln "usage: persona_pulls <domain.jsonld>" *> pure 2
+  let domain ← IO.FS.readFile path
   let spec ← (← IO.getStdin).readToEnd
-  IO.println (Persona.Pulls.planOf spec)
+  IO.println (Persona.Jsonld.planOf domain spec)
+  return 0

@@ -1,6 +1,6 @@
 import Persona.Demo
 import Persona.Grid
-import Persona.Pulls
+import Persona.Jsonld
 
 open Persona
 open Persona.Demo
@@ -28,9 +28,6 @@ def gridSpec : String := "skill 1 1\nskill 2 0 1\nskill 3 0 2 1\nskill 4 0 3\ngo
 
 def gridOrdered : Bool :=
   Persona.Grid.planOf gridSpec == "{\"plan\":[\"activate-2\",\"activate-3\",\"activate-4\"],\"reached\":true}"
-
-def pull8 : String := "var staged 1\nvar pushed 1\nvar clean 1\nvar open 1\ngoal checked"
-def pull7 : String := "var staged 1\nvar pushed 1\nvar clean 1\nvar open 1\nvar lean 1\nvar elf 1\nvar checked 1\nvar approved 1\nvar merged 1\ngoal merged"
 
 def checks : List Check :=
   [ { name := "codebook: eight levels over four dimensions is 4096 codes a stage",
@@ -63,14 +60,6 @@ def checks : List Check :=
       ok := Persona.Grid.planOf "skill 1 0 2\nskill 2 0 1\ngoal 1" == "{\"refused\":\"unreachable\"}" }
   , { name := "grid: a goal the spec does not declare is refused",
       ok := Persona.Grid.planOf "skill 1 1\ngoal 9" == "{\"refused\":\"undeclared_goal\"}" }
-  , { name := "pulls: an open pull with no checks run is planned to its checks",
-      ok := Persona.Pulls.planOf pull8 == "{\"plan\":[\"run_lean_check\",\"run_elf_check\",\"collect_checks\"],\"reached\":true}" }
-  , { name := "pulls: a branch with no stage name is planned from the name onward",
-      ok := (Persona.Pulls.planOf "goal open").startsWith "{\"plan\":[\"name_branch_by_stage\",\"push_branch\",\"strip_agent_footer\",\"open_pull\"" }
-  , { name := "pulls: the agent's plan to merge is refused until the operator approves",
-      ok := Persona.Pulls.planOf "var staged 1\nvar pushed 1\nvar clean 1\nvar open 1\nvar lean 1\nvar elf 1\nvar checked 1\ngoal merged" == "{\"refused\":\"unreachable\"}" }
-  , { name := "pulls: a merged pull needs nothing more",
-      ok := Persona.Pulls.planOf pull7 == "{\"plan\":[],\"reached\":true}" }
   , { name := "domain: every action writes a variable the domain declares",
       ok := domain.actions.all (fun a =>
         a.writes.all fun w => domain.variables.any (fun sv => sv.id == w.1)) }
@@ -78,7 +67,34 @@ def checks : List Check :=
       ok := domain.actions.all (fun a => a.writes.all fun w => domain.accepts w.2) }
   ]
 
+def staged : String := "var staged 1\nvar pushed 1\nvar clean 1\nvar open 1"
+
+/-- The pull-request domain is a document, `domains/pulls.jsonld`, and every check reads it. -/
+def pullChecks (dom : String) : List Check :=
+  let ask := fun (spec : String) => Persona.Jsonld.planOf dom spec
+  [ { name := "pulls: an open pull with no checks run is planned to its checks",
+      ok := ask (staged ++ "\ngoal checked")
+        == "{\"plan\":[\"run-lean-check\",\"run-elf-check\",\"collect-checks\"],\"reached\":true}" }
+  , { name := "pulls: a pull with nothing done is planned from the branch name",
+      ok := (ask "goal open").startsWith "{\"plan\":[\"name-branch-by-stage\",\"push-branch\"" }
+  , { name := "pulls: the plan to merge is refused until the graph holds operator approves pull",
+      ok := ask (staged ++ "\ngoal merged") == "{\"refused\":\"unreachable\"}" }
+  , { name := "pulls: the same plan is found once that edge is in the graph",
+      ok := (ask (staged ++ "\nedge operator approves pull\ngoal merged")).endsWith
+        "\"merge-pull\"],\"reached\":true}" }
+  , { name := "pulls: the document drives the plan, so renaming its approval edge refuses the merge",
+      ok := Persona.Jsonld.planOf (dom.replace "\"rel\": \"approves\"" "\"rel\": \"vetoes\"")
+        (staged ++ "\nedge operator approves pull\ngoal merged") == "{\"refused\":\"unreachable\"}" }
+  , { name := "pulls: a merged pull needs nothing more",
+      ok := ask (staged ++ "\nvar merged 1\ngoal merged") == "{\"plan\":[],\"reached\":true}" }
+  , { name := "pulls: a goal the domain does not declare is refused",
+      ok := ask "goal shipped" == "{\"refused\":\"undeclared_goal\"}" }
+  , { name := "pulls: a document that is not JSON is refused as a bad domain",
+      ok := (Persona.Jsonld.planOf "{" "goal open").startsWith "{\"refused\":\"bad_domain\"" } ]
+
 def run : IO UInt32 := do
+  let dom ← IO.FS.readFile "domains/pulls.jsonld"
+  let checks := checks ++ pullChecks dom
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
