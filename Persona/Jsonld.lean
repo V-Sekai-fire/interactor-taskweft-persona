@@ -186,37 +186,42 @@ def store (vals : List (String × Int)) (p : String) (v : Int) : List (String ×
 /-- Decompose a task: a goal already held is no step, a goal is met by the first method
 alternative whose subtasks all succeed in order, and an action fails when the graph does
 not hold an edge it checks. -/
-partial def run (sp : Spec) (fuel : Nat) : Task → St → Option St
-  | .call n, s =>
-    match sp.methods.find? (·.1 == n) with
-    | some m =>
-      match fuel with
-      | 0 => none
-      | f + 1 =>
-        m.2.findSome? fun alt =>
-          if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
-            alt.tasks.foldlM (fun st t => run sp f t st) s
-          else none
-    | none =>
-      match sp.acts.find? (·.name == n) with
-      | none => none
-      | some a =>
-        if a.evals.all (fun e => s.edges.contains e) && a.holds.all (fun h => lookup s.vals h.1 ≥ h.2) then
-          some { s with vals := a.sets.foldl (fun v w => store v w.1 w.2) s.vals,
-                        plan := s.plan ++ [n] }
-        else none
-  | .goal p, s =>
-    if lookup s.vals p ≥ 1 then some s
-    else match fuel with
-      | 0 => none
-      | f + 1 =>
-        match sp.methods.find? (·.1 == p) with
-        | none => none
-        | some m =>
+partial def run (sp : Spec) (bound : Nat) : List (Task × Nat) → St → Option St
+  | [], s => some s
+  | (t, fuel) :: rest, s =>
+    match t with
+    | .call n =>
+      match sp.methods.find? (·.1 == n) with
+      | some m =>
+        match fuel with
+        | 0 => none
+        | f + 1 =>
           m.2.findSome? fun alt =>
             if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
-              alt.tasks.foldlM (fun st t => run sp f t st) s
+              run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
             else none
+      | none =>
+        match sp.acts.find? (·.name == n) with
+        | none => none
+        | some a =>
+          if s.plan.length < bound && a.evals.all (fun e => s.edges.contains e)
+              && a.holds.all (fun h => lookup s.vals h.1 ≥ h.2) then
+            run sp bound rest { s with vals := a.sets.foldl (fun v w => store v w.1 w.2) s.vals,
+                                       plan := s.plan ++ [n] }
+          else none
+    | .goal p =>
+      if lookup s.vals p ≥ 1 then run sp bound rest s
+      else
+        match fuel with
+        | 0 => none
+        | f + 1 =>
+          match sp.methods.find? (·.1 == p) with
+          | none => none
+          | some m =>
+            m.2.findSome? fun alt =>
+              if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
+                run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
+              else none
 
 /-- Seconds as a canonical ISO-8601 duration: `PT0S`, `P3D`, `P1DT2H30M`. -/
 def fmtDur (s : Nat) : String :=
@@ -298,7 +303,7 @@ def refusal (domain problem why : String) : String :=
 
 /-- The plan document: the domain and the problem it answers, the steps in order, and whether the
 planner's own goal test holds on the final state for every goal of the problem. -/
-def planOf (domain problem : String) (only : Option String := none) : String :=
+def planOf (domain problem : String) (only : Option String := none) (bound : Nat := 1000000) : String :=
   let dn := docName domain
   let pn := docName problem
   match parse domain, parseProblem problem with
@@ -317,8 +322,9 @@ def planOf (domain problem : String) (only : Option String := none) : String :=
     else
       let start : St := { vals := pb.init.foldl (fun v w => store v w.1 w.2) sp.init
                         , edges := pb.edges, plan := [] }
-      let afterGoals := pb.goals.foldlM (fun st g => run sp (sp.methods.length + 1) (.goal g) st) start
-      match afterGoals.bind (fun st => pb.calls.foldlM (fun st c => run sp (sp.methods.length + 1) (.call c) st) st) with
+      let fuel := sp.methods.length + 1
+      let tasks := pb.goals.map (fun g => (Task.goal g, fuel)) ++ pb.calls.map (fun c => (Task.call c, fuel))
+      match run sp bound tasks start with
       | none => refusal dn pn "unreachable"
       | some s =>
         let st : GTNState := { variables := s.vals.mapIdx fun i x => ⟨i, x.2⟩
@@ -350,5 +356,18 @@ def planOf (domain problem : String) (only : Option String := none) : String :=
           ++ ",\"reached\":" ++ (if ok then "true" else "false")
           ++ ",\"temporal\":{\"consistent\":" ++ (if holds then "true" else "false") ++ field "origin" (stampAt origin 0) ++ ",\"total\":" ++ Guest.quote (fmtDur total) ++ "}"
           ++ ",\"steps\":[" ++ String.intercalate "," steps ++ "]}"
+
+/-- The plan with the fewest actions. The decomposition backtracks over method alternatives, so planning
+with a bound on the number of actions and raising the bound until a plan is found gives a plan of
+the minimum length. A goal no decomposition reaches keeps its own refusal, and one that is reached only
+by a plan longer than `maxBound`, or that no plan of that length reaches, is refused as `limit`. -/
+def shortestOf (domain problem : String) (maxBound : Nat) : String :=
+  let reaches := fun (r : String) => !(r.contains "\"refused\"") && r.contains "\"reached\":true"
+  let free := planOf domain problem
+  if free.contains "\"refused\"" then free
+  else
+    match (List.range (maxBound + 1)).find? (fun b => reaches (planOf domain problem none b)) with
+    | some b => ((planOf domain problem none b).dropRight 1) ++ ",\"optimal\":true,\"length\":" ++ toString b ++ "}"
+    | none => refusal (docName domain) (docName problem) "limit"
 
 end Persona.Jsonld

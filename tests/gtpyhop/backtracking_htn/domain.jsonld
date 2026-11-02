@@ -1,0 +1,184 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "backtracking_htn",
+ "source": "GTPyhop examples/backtracking_htn.py",
+ "version": "0.1.0",
+ "description": "flag is -1 at first. The state flag holds one of two values, so it is two booleans: f0 for 0 and f1 for 1, both false for -1.",
+ "variables": [
+  {
+   "name": "flag",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "putv-0": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/flag/f0",
+     "value": 1
+    },
+    {
+     "pointer/set": "/flag/f1",
+     "value": 0
+    }
+   ]
+  },
+  "putv-1": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/flag/f1",
+     "value": 1
+    },
+    {
+     "pointer/set": "/flag/f0",
+     "value": 0
+    }
+   ]
+  },
+  "getv-0": {
+   "params": [],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/flag/f0"
+      },
+      "b": 1
+     }
+    }
+   ]
+  },
+  "getv-1": {
+   "params": [],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/flag/f1"
+      },
+      "b": 1
+     }
+    }
+   ]
+  }
+ },
+ "methods": {
+  "put_it": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "m_err",
+     "subtasks": [
+      [
+       "putv-0"
+      ],
+      [
+       "getv-1"
+      ]
+     ]
+    },
+    {
+     "name": "m0",
+     "subtasks": [
+      [
+       "putv-0"
+      ],
+      [
+       "getv-0"
+      ]
+     ]
+    },
+    {
+     "name": "m1",
+     "subtasks": [
+      [
+       "putv-1"
+      ],
+      [
+       "getv-1"
+      ]
+     ]
+    }
+   ]
+  },
+  "need0": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "m_need0",
+     "subtasks": [
+      [
+       "getv-0"
+      ]
+     ]
+    }
+   ]
+  },
+  "need1": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "m_need1",
+     "subtasks": [
+      [
+       "getv-1"
+      ]
+     ]
+    }
+   ]
+  },
+  "need01": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "m_need0",
+     "subtasks": [
+      [
+       "getv-0"
+      ]
+     ]
+    },
+    {
+     "name": "m_need1",
+     "subtasks": [
+      [
+       "getv-1"
+      ]
+     ]
+    }
+   ]
+  },
+  "need10": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "m_need1",
+     "subtasks": [
+      [
+       "getv-1"
+      ]
+     ]
+    },
+    {
+     "name": "m_need0",
+     "subtasks": [
+      [
+       "getv-0"
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}

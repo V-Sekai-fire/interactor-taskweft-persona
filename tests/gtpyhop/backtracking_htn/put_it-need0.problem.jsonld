@@ -1,0 +1,35 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "backtracking_put_it_need0",
+ "domain": "backtracking_htn",
+ "source": "GTPyhop examples/backtracking_htn.py",
+ "version": "0.1.0",
+ "variables": [
+  {
+   "name": "flag",
+   "type": "int",
+   "init": {
+    "f0": 0,
+    "f1": 0
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "put_it"
+  ],
+  [
+   "need0"
+  ]
+ ]
+}

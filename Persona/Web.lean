@@ -34,4 +34,7 @@ def goalsText (domain problem : String) : String := goalsOf domain problem
 @[export persona_plan_jsonld_text]
 def planJsonldText (domain problem goal : String) : String := planWith domain problem goal
 
+@[export persona_plan_shortest_text]
+def planShortestText (domain problem : String) (limit : Nat) : String := shortestOf domain problem limit
+
 end Persona.Web
