@@ -100,16 +100,6 @@ jobs =
 
 jobs = jobs ++ [{&Wasm.compile/3, Path.join(root, "wasm/shim.c"), Path.join(objs, "shim.o")}]
 
-# The RECTGTN engine, header-only C++ vendored beside the persona, with its thin wrapper.
-engine = fn _core, src, obj ->
-  Wasm.cc(
-    "em++",
-    ~w(-c -O2 -std=c++20 -fwasm-exceptions -w) ++
-      ["-I" <> Path.join(root, "thirdparty/rectgtn-domain-c-abi/standalone"), src, "-o", obj]
-  )
-end
-
-jobs = jobs ++ [{engine, Path.join(root, "wasm/engine.cpp"), Path.join(objs, "engine.o")}]
 
 failed =
   jobs
@@ -131,7 +121,7 @@ end
 link =
   ~w(-O2 -fwasm-exceptions -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=PersonaModule
      -sENVIRONMENT=web,worker,node -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=64MB -sSTACK_SIZE=8MB
-     -sEXPORTED_FUNCTIONS=_persona_init,_persona_plan,_persona_goals,_persona_plan_jsonld,_persona_engine_plan,_malloc,_free
+     -sEXPORTED_FUNCTIONS=_persona_init,_persona_plan,_persona_goals,_persona_plan_jsonld,_malloc,_free
      -sEXPORTED_RUNTIME_METHODS=ccall,cwrap -Wl,--gc-sections) ++
     Path.wildcard(Path.join(objs, "*.o")) ++ ["-o", Path.join(out, "persona.mjs")]
 
