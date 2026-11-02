@@ -51,6 +51,7 @@ structure Domain where
   variables : List StateVar
   codebook  : Codebook
   actions   : List Action
+  requires  : List (String × List (StateVarID × Int)) := []
   deriving Repr
 
 /-- What a persona is asked: one node of the planner's own GTN space. -/
@@ -104,6 +105,15 @@ def Domain.execute (d : Domain) (plan : List PlanElement) : GTNState :=
       | .command _ _   => st)
     d.initial
 
+/-- An action is open when every variable it requires meets its threshold. -/
+def Domain.applicable (d : Domain) (a : Action) (st : GTNState) : Bool :=
+  match d.requires.find? (fun r => r.1 == a.name) with
+  | none   => true
+  | some r =>
+    r.2.all fun q =>
+      match st.variables.find? (fun sv => sv.id == q.1) with
+      | some sv => decide (q.2 ≤ sv.val)
+      | none    => false
 /-- The answer: a plan, or nothing. An action already tried on this branch is
 blacklisted, so the search does not repeat itself. -/
 partial def Persona.answerFrom (p : Persona) (g : Goal) (blacklist : List PlanElement)
@@ -114,7 +124,8 @@ partial def Persona.answerFrom (p : Persona) (g : Goal) (blacklist : List PlanEl
     match fuel with
     | 0 => none
     | fuel + 1 =>
-      (p.domain.actions.filter (fun a => !(blacklist.any fun e => decide (e = a.element)))).foldl
+      (p.domain.actions.filter (fun a =>
+          p.domain.applicable a st && !(blacklist.any fun e => decide (e = a.element)))).foldl
         (fun found a =>
           match found with
           | some plan => some plan

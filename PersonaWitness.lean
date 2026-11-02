@@ -1,4 +1,5 @@
 import Persona.Demo
+import Persona.Grid
 
 open Persona
 open Persona.Demo
@@ -21,6 +22,11 @@ def reached : Bool :=
   match plan with
   | some p => is_node_satisfied (domain.execute p) delivered.node
   | none   => false
+
+def gridSpec : String := "skill 1 1\nskill 2 0 1\nskill 3 0 2 1\nskill 4 0 3\ngoal 4"
+
+def gridOrdered : Bool :=
+  Persona.Grid.planOf gridSpec == "{\"plan\":[\"activate-2\",\"activate-3\",\"activate-4\"],\"reached\":true}"
 
 def checks : List Check :=
   [ { name := "codebook: eight levels over four dimensions is 4096 codes a stage",
@@ -47,6 +53,12 @@ def checks : List Check :=
       ok := (persona.answer { node := .goal_geq 99 1 }).isNone }
   , { name := "refusal: zero fuel on an unmet goal",
       ok := (persona.answer delivered 0).isNone }
+  , { name := "grid: a plan activates every skill after the skills it needs",
+      ok := gridOrdered }
+  , { name := "grid: a cycle of needs is refused as unreachable",
+      ok := Persona.Grid.planOf "skill 1 0 2\nskill 2 0 1\ngoal 1" == "{\"refused\":\"unreachable\"}" }
+  , { name := "grid: a goal the spec does not declare is refused",
+      ok := Persona.Grid.planOf "skill 1 1\ngoal 9" == "{\"refused\":\"undeclared_goal\"}" }
   , { name := "domain: every action writes a variable the domain declares",
       ok := domain.actions.all (fun a =>
         a.writes.all fun w => domain.variables.any (fun sv => sv.id == w.1)) }
