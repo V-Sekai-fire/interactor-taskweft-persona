@@ -62,7 +62,8 @@
      "pointer/set": "/rfd/2",
      "value": 1
     }
-   ]
+   ],
+   "duration": "P2D"
   },
   "settle-3": {
    "params": [],
@@ -85,7 +86,8 @@
      "pointer/set": "/rfd/3",
      "value": 1
     }
-   ]
+   ],
+   "duration": "P3D"
   }
  },
  "methods": {
