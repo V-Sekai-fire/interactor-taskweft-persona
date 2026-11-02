@@ -15,7 +15,7 @@ domain and the codebook are the persona's.
 
     pixi run ask           # a domain, a goal, and the plan that reaches it
     pixi run vocabulary    # the codebook and the actions it composes from
-    pixi run test          # the green gate: 15 invariants, positive and negative controls
+    pixi run test          # the green gate: 24 invariants, positive and negative controls
 
 ## What it accepts
 
@@ -45,7 +45,7 @@ Lean comes from elan; the `lean-toolchain` file pins v4.34.1.
 `lake build` compiles the persona against the planner vendored in `thirdparty/`,
 so the build fetches no domain from GitHub.
 
-    lake exe persona_witness      # the persona's gate, 15 invariants
+    lake exe persona_witness      # the persona's gate, 24 invariants
     lake exe character_witness    # the character domain's gate, 11 invariants
 
 ## Run the guest standalone
@@ -62,6 +62,36 @@ Two things the guest needs from its siblings. The Lean runtime asks the host for
 with `getrandom`, because a sandbox has no `/dev/urandom` (`interactor-lean-guest`,
 `patches/runtime-guest.patch`). A guest function returns a `Variant`, which is what `vmcall`
 reads back (`guest/main.cpp`).
+
+## Run the planner in a browser
+`wasm/shim.c` and `tools/build_wasm.exs` build the persona as `persona.mjs` and `persona.wasm`
+(about 1.3 MB). The module exports `persona_init` and `persona_plan`. A request is a skill grid as
+text, one `skill ID DONE NEED...` line a skill and one `goal ID` line, and the answer is the
+activation order, `{"plan":["activate-2",...],"reached":true}`, or a refusal by name
+(`bad_spec`, `undeclared_goal`, `unreachable`). A skill needs the skills whose variables an action
+requires, which is the `requires` field of a domain.
+
+    elixir tools/build_wasm.exs <core-dir> <out-dir>
+
+`<core-dir>` holds the C emitted for the toolchain's Init and Std (`c/`), `gen/include` and
+`lean4/src`, the layout `interactor-lean-guest` builds for its riscv64 core. The build needs
+`emcc` on the path.
+
+## Assembling skills and tokens into a goal
+A planner domain is a RECTGTN JSON-LD document, in the shape of `rectgtn/fleet.jsonld` in
+manuals-weftspun. `domains/campus-sample.jsonld` is a three-skill example: `rfd` and `token`
+variables, a `settle-N` action for each skill that holds when the skills it needs are settled and
+the tokens it spends are acquired, an `acquire-token-T` action for each token, and a method for
+each goal that lists its subtasks in order.
+
+`Persona/Jsonld.lean` reads such a document and decomposes a goal through its methods, skipping a
+goal that already holds. The final state is checked with the planner's own goal test.
+
+    echo "goal /rfd/3" | lake exe persona_plan domains/campus-sample.jsonld
+
+The manuals site builds the full domain for RFD66606-2360, one skill for each RFD behind it, and
+publishes it as `assets/campus.jsonld`. A request may carry `var POINTER 0|1` facts and
+`edge S R O` graph edges.
 
 ## Build the guest on a desk
 The guest builds from a workspace laid out as the goal manifest places it (`2-contract/guest-runtime`,
@@ -141,7 +171,7 @@ The persona is an [A2A v1.0](https://hermes-agent.nousresearch.com/docs/user-gui
 peer. A caller sends a goal as the text of a `SendMessage`, and the reply is the
 persona's own answer, byte for byte what `persona_ask` returns, in one text part.
 
-    pixi run a2a-test      # the A2A gate: 22 invariants, positive and negative controls
+    pixi run a2a-test      # the A2A gate: 24 invariants, positive and negative controls
     lake exe persona_a2a --card [url]   # the Agent Card
     lake exe persona_a2a                # JSON-RPC over stdio, one request a line
 

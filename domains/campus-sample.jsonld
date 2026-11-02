@@ -1,0 +1,172 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "campus_sample",
+ "source": "interactor-taskweft-persona",
+ "version": "0.1.0",
+ "description": "Three skills and two tokens: skill 1 is settled, skill 2 needs it and spends innovation token 3, and the goal, skill 3, needs skill 2 and spends boring token B1. The site generates the full campus domain in this shape from the RFDs behind RFD66606-2360.",
+ "variables": [
+  {
+   "name": "rfd",
+   "type": "int",
+   "init": {
+    "1": 1,
+    "2": 0,
+    "3": 0
+   }
+  },
+  {
+   "name": "token",
+   "type": "int",
+   "init": {
+    "3": 0,
+    "B1": 0
+   }
+  }
+ ],
+ "actions": {
+  "acquire-token-3": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/token/3",
+     "value": 1
+    }
+   ]
+  },
+  "acquire-token-B1": {
+   "params": [],
+   "body": [
+    {
+     "pointer/set": "/token/B1",
+     "value": 1
+    }
+   ]
+  },
+  "settle-2": {
+   "params": [],
+   "body": [
+    {
+     "eval": {
+      "type": "pointer/ge",
+      "pointer": "/rfd/1",
+      "value": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "pointer/ge",
+      "pointer": "/token/3",
+      "value": 1
+     }
+    },
+    {
+     "pointer/set": "/rfd/2",
+     "value": 1
+    }
+   ]
+  },
+  "settle-3": {
+   "params": [],
+   "body": [
+    {
+     "eval": {
+      "type": "pointer/ge",
+      "pointer": "/rfd/2",
+      "value": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "pointer/ge",
+      "pointer": "/token/B1",
+      "value": 1
+     }
+    },
+    {
+     "pointer/set": "/rfd/3",
+     "value": 1
+    }
+   ]
+  }
+ },
+ "methods": {
+  "/token/3": {
+   "alternatives": [
+    {
+     "name": "acquire",
+     "subtasks": [
+      [
+       "acquire-token-3"
+      ]
+     ]
+    }
+   ]
+  },
+  "/token/B1": {
+   "alternatives": [
+    {
+     "name": "acquire",
+     "subtasks": [
+      [
+       "acquire-token-B1"
+      ]
+     ]
+    }
+   ]
+  },
+  "/rfd/2": {
+   "alternatives": [
+    {
+     "name": "settle",
+     "subtasks": [
+      [
+       "goal",
+       "/rfd/1"
+      ],
+      [
+       "goal",
+       "/token/3"
+      ],
+      [
+       "settle-2"
+      ]
+     ]
+    }
+   ]
+  },
+  "/rfd/3": {
+   "alternatives": [
+    {
+     "name": "settle",
+     "subtasks": [
+      [
+       "goal",
+       "/rfd/2"
+      ],
+      [
+       "goal",
+       "/token/B1"
+      ],
+      [
+       "settle-3"
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "todo_list": [
+  {
+   "goal": [
+    {
+     "pointer": "/rfd/3",
+     "eq": 1
+    }
+   ]
+  }
+ ]
+}
