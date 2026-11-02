@@ -12,6 +12,8 @@ cp site/playground.js "$out/assets/playground.js"
 cp domains/*.jsonld "$out/samples/domains/"
 cp problems/*.jsonld "$out/samples/problems/"
 cp plans/*.jsonld "$out/samples/plans/"
+mkdir -p "$out/samples/tests"
+for d in gtpyhop enums graph params vocab khr; do cp -R "tests/$d" "$out/samples/tests/$d"; done
 tag="$(gh release list --repo V-Sekai-fire/interactor-taskweft-persona --limit 1 --json tagName --jq '.[0].tagName')"
 gh release download "$tag" --repo V-Sekai-fire/interactor-taskweft-persona --dir "$out/assets" --pattern 'persona.*'
 { cat site/header.md; echo; cat README.md; } > "$out/index.md"

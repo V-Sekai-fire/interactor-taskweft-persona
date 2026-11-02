@@ -301,6 +301,12 @@ def blocksChecks : IO (List Check) := do
     let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
     let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
     out := out ++ [{ name := "gtpyhop blocks_gtn: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  let sus ← IO.FS.readFile (dir ++ "sussman.problem.jsonld")
+  let best := Persona.Jsonld.shortestOf dom sus 40
+  out := out ++ [{ name := "gtpyhop blocks_gtn: the shortest plan for the Sussman anomaly has six actions",
+                   ok := best.contains "\"length\":6" && best.contains "\"optimal\":true" }
+                , { name := "gtpyhop blocks_gtn: a bound of five is refused as limit, since moveblocks is not done while a block can move",
+                    ok := (Persona.Jsonld.shortestOf dom sus 5).contains "limit" }]
   return out
 
 /-- A method alternative with a graph: the graph runs on the state and its variables decide the subtasks. -/
