@@ -70,7 +70,9 @@ def checks : List Check :=
 
 /-- Domain, problem and plan are three documents. The plan is the gold value: the planner's
 output for the domain and the problem must equal it, and a gold with one step changed must not. -/
-def campusChecks (dom prob gold : String) : List Check :=
+def campusChecks (dom prob gold rdom rprob : String) : List Check :=
+  let steps := fun (t : String) =>
+    ((t.replace " " "").replace "\n" "").splitOn "\"action\":\"" |>.drop 1 |>.map (·.takeWhile (· != '"'))
   let ask := fun (pr : String) => Persona.Jsonld.planOf dom pr
   let swap := fun (t a b : String) => t.replace a b
   let held := swap prob "\"3\": 0,\n    \"B1\"" "\"3\": 1,\n    \"B1\""
@@ -100,6 +102,15 @@ def campusChecks (dom prob gold : String) : List Check :=
       ok := (ask "{").contains "bad_problem" }
   , { name := "campus: a problem with no goal is refused",
       ok := (ask (swap prob "\"todo_list\"" "\"todos\"")).contains "no_goal" }
+  , { name := "reach: the engine-shaped sample plans to the same steps as the pointer-shaped one",
+      ok := steps (Persona.Jsonld.planOf rdom rprob) == steps gold }
+  , { name := "reach: a task the domain does not name is refused",
+      ok := (Persona.Jsonld.planOf rdom (rprob.replace "reach-rfd-3" "reach-rfd-9")).contains "undeclared_goal" }
+  , { name := "reach: a goal already held by its first alternative needs no step",
+      ok := (Persona.Jsonld.planOf rdom (rprob.replace "reach-rfd-3" "reach-rfd-1")).contains "\"steps\":[]" }
+  , { name := "reach: a todo list with no entry is refused",
+      ok := (Persona.Jsonld.planOf rdom (rprob.replace "reach-rfd-3" "")).contains "no_goal"
+        || (Persona.Jsonld.planOf rdom (rprob.replace "\"todo_list\"" "\"todos\"")).contains "no_goal" }
   , { name := "web: the goals list names the goal the problem asks and declares it",
       ok := (Persona.Web.goalsOf dom prob).contains "\"goal\":\"/rfd/3\",\"declared\":true" }
   , { name := "web: a goal the problem holds already is reported held",
@@ -117,7 +128,9 @@ def run : IO UInt32 := do
   let dom ← IO.FS.readFile "domains/campus-sample.jsonld"
   let prob ← IO.FS.readFile "problems/campus-sample.jsonld"
   let gold ← IO.FS.readFile "plans/campus-sample.jsonld"
-  let checks := checks ++ campusChecks dom prob gold
+  let rdom ← IO.FS.readFile "domains/campus-sample-reach.jsonld"
+  let rprob ← IO.FS.readFile "problems/campus-sample-reach.jsonld"
+  let checks := checks ++ campusChecks dom prob gold rdom rprob
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
