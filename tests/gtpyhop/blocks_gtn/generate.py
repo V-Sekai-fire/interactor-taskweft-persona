@@ -86,6 +86,26 @@ def graphB():
         inner=g.seq([d1,g.branch(cond,g.seq([g.setv(found,g.I(1)),g.setv(x,i)]))])
         return g.branch(g.and_(g.eq(g.get(found),g.I(0)),g.ge(g.ptr("/clear/[b]",b=i),g.I(1))),inner)
     root(g,g.loop_for(g.I(0),n,body)); return g.out("B")
+# --- graph C: neither pass finds a block to move, which is when moveblocks has nothing left to do
+def graphC():
+    g=GB(); found=g.var("found"); x=g.var("x"); dest=g.var("dest")
+    n=g.ptr("/count/blocks")
+    def bodyA(i):
+        d1,r1=g.isdone("a1",i)
+        goal_i=g.ptr("/goal/[b]",b=i)
+        tbl=g.or_(g.eq(goal_i,g.I(FREE)),g.eq(goal_i,g.I(TABLE)))
+        d2,r2=g.isdone("a2",g.ptr("/goal/[b]",b=i))
+        gi=g.ptr("/goal/[b]",b=i)
+        ok=g.and_(g.eq(g.get(r2),g.I(1)),g.ge(g.ptr("/clear/[b]",b=gi),g.I(1)))
+        mark=g.seq([g.setv(found,g.I(1)),g.setv(x,i)])
+        inner=g.seq([d1,g.branch(g.eq(g.get(r1),g.I(0)),g.branch(tbl,mark,g.seq([d2,g.branch(ok,mark)])))])
+        return g.branch(g.and_(g.eq(g.get(found),g.I(0)),g.ge(g.ptr("/clear/[b]",b=i),g.I(1))),inner)
+    def bodyB(i):
+        d1,r1=g.isdone("b1",i)
+        cond=g.and_(g.eq(g.get(r1),g.I(0)),g.not_(g.eq(g.ptr("/pos/[b]",b=i),g.I(TABLE))))
+        inner=g.seq([d1,g.branch(cond,g.seq([g.setv(found,g.I(1)),g.setv(x,i)]))])
+        return g.branch(g.and_(g.eq(g.get(found),g.I(0)),g.ge(g.ptr("/clear/[b]",b=i),g.I(1))),inner)
+    root(g,g.seq([g.loop_for(g.I(0),n,bodyA),g.loop_for(g.I(0),n,bodyB)])); return g.out("C")
 # --- graph for take: the block x rests on p, and p is a block, not the table
 def graphTake():
     g=GB(); x=g.var("x"); p=g.var("p"); valid=g.var("valid")
@@ -124,7 +144,7 @@ dom={"@context":{"VSEKAI":"https://v-sekai.org/","domain":"VSEKAI:planning/domai
   "moveblocks":{"params":[],"alternatives":[
     {"name":"to-final-place","graph":graphA(),"check":[ge("/graph/found",1)],"subtasks":[["take",P("x")],["put",P("x"),P("dest")],["moveblocks"]]},
     {"name":"out-of-the-way","graph":graphB(),"check":[ge("/graph/found",1)],"subtasks":[["take",P("x")],["put",P("x"),"table"],["moveblocks"]]},
-    {"name":"done","subtasks":[]}]}}}
+    {"name":"done","graph":graphC(),"check":[eqc("/graph/found",0)],"subtasks":[]}]}}}
 json.dump(dom,open(D+"domain.jsonld","w"),indent=1); open(D+"domain.jsonld","a").write("\n")
 ctx=dom["@context"]
 def problem(name,codebook,pos,clear,goal,todo,expect):
