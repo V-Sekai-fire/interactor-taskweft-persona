@@ -104,6 +104,28 @@ def tempWinDom : String :=
 def tempWinProb (origin : String) : String :=
   "{\"name\":\"window_problem\",\"origin\":\"" ++ origin ++ "\",\"variables\":[],\"todo_list\":[[\"w\"]]}"
 
+/-- y can be made by going through x, which is listed first, or directly, which is listed second. -/
+def gtnDom : String :=
+  "{\"name\":\"shortcut\",\"variables\":[],\"actions\":{"
+    ++ "\"a\":{\"body\":[{\"pointer/set\":\"/v/x\",\"value\":1}]},"
+    ++ "\"b\":{\"body\":[{\"eval\":{\"type\":\"math/ge\",\"a\":{\"type\":\"pointer/get\",\"pointer\":\"/v/x\"},\"b\":1}},{\"pointer/set\":\"/v/y\",\"value\":1}]},"
+    ++ "\"c\":{\"body\":[{\"pointer/set\":\"/v/y\",\"value\":1}]}},"
+    ++ "\"methods\":{\"/v/y\":{\"alternatives\":[{\"name\":\"long\",\"subtasks\":[[\"goal\",\"/v/x\"],[\"b\"]]},{\"name\":\"short\",\"subtasks\":[[\"c\"]]}]},"
+    ++ "\"/v/x\":{\"alternatives\":[{\"name\":\"do\",\"subtasks\":[[\"a\"]]}]}}}"
+
+def gtnProb (goals : List String) : String :=
+  "{\"name\":\"shortcut_problem\",\"variables\":[{\"name\":\"v\",\"init\":{\"x\":0,\"y\":0,\"p\":0,\"q\":0,\"r\":0}}],\"todo_list\":[{\"goal\":["
+    ++ String.intercalate "," (goals.map fun g => "{\"pointer\":\"" ++ g ++ "\",\"eq\":1}") ++ "]}]}"
+
+/-- p is made by u1, listed first, which leaves q unset, or by u2, which sets q; r needs both. -/
+def backDom : String :=
+  "{\"name\":\"back\",\"variables\":[],\"actions\":{"
+    ++ "\"u1\":{\"body\":[{\"pointer/set\":\"/v/p\",\"value\":1}]},"
+    ++ "\"u2\":{\"body\":[{\"pointer/set\":\"/v/p\",\"value\":1},{\"pointer/set\":\"/v/q\",\"value\":1}]},"
+    ++ "\"w\":{\"body\":[{\"eval\":{\"type\":\"math/ge\",\"a\":{\"type\":\"pointer/get\",\"pointer\":\"/v/p\"},\"b\":1}},{\"eval\":{\"type\":\"math/ge\",\"a\":{\"type\":\"pointer/get\",\"pointer\":\"/v/q\"},\"b\":1}},{\"pointer/set\":\"/v/r\",\"value\":1}]}},"
+    ++ "\"methods\":{\"/v/p\":{\"alternatives\":[{\"name\":\"first\",\"subtasks\":[[\"u1\"]]},{\"name\":\"second\",\"subtasks\":[[\"u2\"]]}]},"
+    ++ "\"/v/r\":{\"alternatives\":[{\"name\":\"go\",\"subtasks\":[[\"w\"]]}]}}}"
+
 /-- Domain, problem and plan are three documents. The plan is the gold value: the planner's
 output for the domain and the problem must equal it, and a gold with one step changed must not. -/
 def campusChecks (dom prob gold rdom rprob : String) : List Check :=
@@ -206,6 +228,18 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
   , { name := "temporal: a duration is written in its canonical ISO-8601 form",
       ok := Persona.Jsonld.fmtDur 0 == "PT0S" && Persona.Jsonld.fmtDur 90000 == "P1DT1H"
         && Persona.Jsonld.fmtDur 3661 == "PT1H1M1S" && Persona.Jsonld.fmtDur 259200 == "P3D" }
+  , { name := "gtn: the first decomposition found takes the long way",
+      ok := let t := Persona.Jsonld.planOf gtnDom (gtnProb ["/v/y"])
+        t.contains "\"action\":\"b\"" && !(t.contains "\"action\":\"c\"") }
+  , { name := "gtn: planning with a rising bound on the actions finds the plan with the fewest",
+      ok := let t := Persona.Jsonld.shortestOf gtnDom (gtnProb ["/v/y"]) 10
+        t.contains "\"length\":1" && t.contains "\"action\":\"c\"" && t.contains "\"optimal\":true" && !(t.contains "\"action\":\"b\"") }
+  , { name := "gtn: a later goal that fails backtracks into the earlier goal's other alternative",
+      ok := let t := Persona.Jsonld.planOf backDom (gtnProb ["/v/p", "/v/r"])
+        t.contains "\"reached\":true" && t.contains "\"action\":\"u2\"" && !(t.contains "\"action\":\"u1\"") }
+  , { name := "gtn: a goal no decomposition reaches keeps its refusal, and a bound too small says limit",
+      ok := (Persona.Jsonld.shortestOf gtnDom (gtnProb ["/v/q"]) 10).contains "unreachable"
+        && (Persona.Jsonld.shortestOf (gtnDom.replace "\"c\":{\"body\":[{\"pointer/set\":\"/v/y\",\"value\":1}]}" "\"c\":{\"body\":[{\"pointer/set\":\"/v/z\",\"value\":1}]}") (gtnProb ["/v/y"]) 1).contains "limit" }
   , { name := "web: the goals list names the goal the problem asks and declares it",
       ok := (Persona.Web.goalsOf dom prob).contains "\"goal\":\"/rfd/3\",\"declared\":true" }
   , { name := "web: a goal the problem holds already is reported held",
@@ -219,13 +253,34 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
   , { name := "web: the goals list of a domain that is not JSON is refused",
       ok := (Persona.Web.goalsOf "{" prob).contains "bad_domain" } ]
 
+/-- The names of the actions in a plan document, in order. -/
+def actionsOf (t : String) : List String :=
+  (t.splitOn "\"action\":\"").drop 1 |>.map (fun x => (x.takeWhile (· != '"')).toString)
+
+/-- The cases ported from GTPyhop's `backtracking_htn`: each problem's plan is the one GTPyhop expects. -/
+def gtpyhopChecks : IO (List Check) := do
+  let dir := "tests/gtpyhop/backtracking_htn/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let mut out : List Check := []
+  for name in ["put_it-need0", "put_it-need01", "put_it-need10", "put_it-need1"] do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    let got := actionsOf (Persona.Jsonld.planOf dom prob)
+    out := out ++ [{ name := "gtpyhop backtracking_htn: " ++ name ++ " plans to the expected actions"
+                   , ok := got == expect }
+                  , { name := "gtpyhop backtracking_htn: " ++ name ++ " is not GTPyhop's other expected plan"
+                    , ok := got != (if expect == ["putv-0", "getv-0", "getv-0"] then ["putv-1", "getv-1", "getv-1"]
+                                    else ["putv-0", "getv-0", "getv-0"]) }]
+  return out
+
 def run : IO UInt32 := do
   let dom ← IO.FS.readFile "domains/campus-sample.jsonld"
   let prob ← IO.FS.readFile "problems/campus-sample.jsonld"
   let gold ← IO.FS.readFile "plans/campus-sample.jsonld"
   let rdom ← IO.FS.readFile "domains/campus-sample-reach.jsonld"
   let rprob ← IO.FS.readFile "problems/campus-sample-reach.jsonld"
-  let checks := checks ++ campusChecks dom prob gold rdom rprob
+  let g ← gtpyhopChecks
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
