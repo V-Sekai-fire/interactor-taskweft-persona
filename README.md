@@ -85,6 +85,14 @@ the one goal named, or every goal of the problem when `goal` is empty, and answe
 document or a refusal by name (`bad_domain`, `bad_problem`, `no_goal`, `undeclared_goal`,
 `unreachable`). The RFD site's persona navigator calls these two.
 
+The module also carries the RECTGTN engine, the vendored C++ planner, behind
+`persona_engine_plan(domain, problem)`. It reads the documents in the engine's own shape: a goal is a
+task such as `reach-rfd-3` whose first alternative `held` checks that the variable is already 1, and
+the problem's `todo_list` is `[["reach-rfd-3"]]`. The answer is `{"plan":[["settle-2"],...]}`, or a
+refusal by name (`bad_domain`, `bad_problem`, `no_goal`, `unreachable`). The engine's loader takes a
+broken document as an empty one, so the caller checks that the JSON parses first. On the RFD site's
+99 open goals the engine and the Lean planner return the same plan, step for step.
+
     elixir tools/build_wasm.exs <core-dir> <out-dir>
 
 `<core-dir>` holds the C emitted for the toolchain's Init and Std (`c/`), `gen/include` and
