@@ -79,6 +79,31 @@ def chainDom (n : Nat) : String :=
 def chainProb (_n : Nat) : String :=
   "{\"name\":\"chain_problem\",\"variables\":[],\"todo_list\":[[\"c0\"]]}"
 
+def stampPlus (s : String) (k : Nat) : String :=
+  Persona.Jsonld.fmtStamp ((Persona.Jsonld.parseStamp s).getD 0 + k)
+
+def tempProb (origin : String) : String :=
+  "{\"name\":\"temporal_problem\",\"origin\":\"" ++ origin ++ "\",\"variables\":[],\"todo_list\":[[\"m\"]]}"
+
+/-- Two independent actions of two and three days, and a third that needs both and takes one. -/
+def tempDom : String :=
+  let act := fun (n d v : String) (needs : List String) =>
+    "\"" ++ n ++ "\":{\"duration\":\"" ++ d ++ "\",\"body\":["
+      ++ String.intercalate "," (needs.map fun x =>
+          "{\"eval\":{\"type\":\"math/ge\",\"a\":{\"type\":\"pointer/get\",\"pointer\":\"/v/" ++ x
+            ++ "\"},\"b\":1}}" ++ "") ++ (if needs.isEmpty then "" else ",")
+      ++ "{\"pointer/set\":\"/v/" ++ v ++ "\",\"value\":1}]}"
+  "{\"name\":\"temporal\",\"variables\":[],\"actions\":{"
+    ++ act "a" "P2D" "a" [] ++ "," ++ act "b" "P3D" "b" [] ++ "," ++ act "c" "PT24H" "c" ["a", "b"]
+    ++ "},\"methods\":{\"m\":{\"alternatives\":[{\"name\":\"go\",\"subtasks\":[[\"a\"],[\"b\"],[\"c\"]]}]}}}"
+
+/-- The same three actions under a composite task that plans them, then lists each step again. -/
+def tempWinDom : String :=
+  tempDom.replace "\"methods\":{" "\"methods\":{\"w\":{\"alternatives\":[{\"name\":\"win\",\"subtasks\":[[\"m\"],[\"a\"],[\"b\"],[\"c\"]]}]},"
+
+def tempWinProb (origin : String) : String :=
+  "{\"name\":\"window_problem\",\"origin\":\"" ++ origin ++ "\",\"variables\":[],\"todo_list\":[[\"w\"]]}"
+
 /-- Domain, problem and plan are three documents. The plan is the gold value: the planner's
 output for the domain and the problem must equal it, and a gold with one step changed must not. -/
 def campusChecks (dom prob gold rdom rprob : String) : List Check :=
@@ -126,6 +151,61 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
       ok := (Persona.Jsonld.planOf (chainDom 20) (chainProb 20)).contains "\"reached\":true" }
   , { name := "reach: the same chain with its action removed is refused",
       ok := (Persona.Jsonld.planOf ((chainDom 20).replace "\"act\":{" "\"actx\":{") (chainProb 20)).contains "unreachable" }
+  , { name := "temporal: independent steps start together and the dependent one starts at the later end",
+      ok := let t := Persona.Jsonld.planOf tempDom (tempProb "2026-11-02T00:00:00Z")
+        t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-04T00:00:00Z\""
+          && t.contains "\"action\":\"b\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-05T00:00:00Z\""
+          && t.contains "\"action\":\"c\",\"params\":[],\"start\":\"2026-11-05T00:00:00Z\",\"end\":\"2026-11-06T00:00:00Z\"" }
+  , { name := "temporal: the total is the critical path, not the sum, and is a duration",
+      ok := (Persona.Jsonld.planOf tempDom (tempProb "2026-11-02T00:00:00Z")).contains "\"total\":\"P4D\""
+        && !((Persona.Jsonld.planOf tempDom (tempProb "2026-11-02T00:00:00Z")).contains "\"total\":\"P6D\"") }
+  , { name := "temporal: with no valid origin every start and end is unspecified and durations stay durations",
+      ok := let t := Persona.Jsonld.planOf tempDom (tempProb "")
+        t.contains "\"params\":[],\"duration\":\"P2D\"" && !(t.contains "\"start\"") && !(t.contains "\"end\":")
+          && !((Persona.Jsonld.planOf tempDom (tempProb "2026-13-40T00:00:00Z")).contains "\"origin\"") }
+  , { name := "temporal: an action that states no duration is instantaneous, so its start and end coincide and the total is zero",
+      ok := let t := Persona.Jsonld.planOf ((tempDom.replace "\"duration\":\"P2D\"," "").replace "\"duration\":\"P3D\"," "" |>.replace "\"duration\":\"PT24H\"," "")
+                (tempProb "2026-11-02T00:00:00Z")
+        t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-02T00:00:00Z\",\"duration\":\"PT0S\""
+          && t.contains "\"action\":\"c\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-02T00:00:00Z\",\"duration\":\"PT0S\""
+          && t.contains "\"total\":\"PT0S\"" }
+  , { name := "temporal: with no duration and no origin the start and end are unspecified and the duration is PT0S",
+      ok := let t := Persona.Jsonld.planOf ((tempDom.replace "\"duration\":\"P2D\"," "").replace "\"duration\":\"P3D\"," "" |>.replace "\"duration\":\"PT24H\"," "")
+                (tempProb "")
+        t.contains "\"params\":[],\"duration\":\"PT0S\"" && !(t.contains "\"start\"") }
+  , { name := "temporal: an action that states a start and an end has the end minus the start as its duration",
+      ok := (Persona.Jsonld.planOf (tempDom.replace "\"duration\":\"P2D\"" "\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-04T00:00:00Z\"")
+                (tempProb "")).contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-04T00:00:00Z\",\"duration\":\"P2D\"" }
+  , { name := "temporal: a step the plan lists again is presented at its last possible time points",
+      ok := let t := Persona.Jsonld.planOf tempWinDom (tempWinProb "2026-11-02T00:00:00Z")
+        t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-04T00:00:00Z\""
+          && t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-03T00:00:00Z\",\"end\":\"2026-11-05T00:00:00Z\""
+          && t.contains "\"action\":\"b\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-05T00:00:00Z\""
+          && t.contains "\"action\":\"c\",\"params\":[],\"start\":\"2026-11-05T00:00:00Z\",\"end\":\"2026-11-06T00:00:00Z\"" }
+  , { name := "temporal: listing the steps again does not move the plan's total",
+      ok := (Persona.Jsonld.planOf tempWinDom (tempWinProb "2026-11-02T00:00:00Z")).contains "\"total\":\"P4D\"" }
+  , { name := "temporal: a start an action states is a release time, so it and the steps after it start no earlier",
+      ok := let t := Persona.Jsonld.planOf (tempDom.replace "\"duration\":\"P2D\"" "\"start\":\"2026-11-05T00:00:00Z\",\"duration\":\"P2D\"")
+                (tempProb "2026-11-02T00:00:00Z")
+        t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-05T00:00:00Z\",\"end\":\"2026-11-07T00:00:00Z\""
+          && t.contains "\"action\":\"c\",\"params\":[],\"start\":\"2026-11-07T00:00:00Z\",\"end\":\"2026-11-08T00:00:00Z\""
+          && t.contains "\"total\":\"P6D\"" && t.contains "\"consistent\":true" }
+  , { name := "temporal: an end an action states is a deadline, and a plan that misses it is not consistent",
+      ok := (Persona.Jsonld.planOf (tempDom.replace "\"duration\":\"P2D\"" "\"end\":\"2026-11-03T00:00:00Z\",\"duration\":\"P2D\"")
+                (tempProb "2026-11-02T00:00:00Z")).contains "\"consistent\":false"
+        && (Persona.Jsonld.planOf (tempDom.replace "\"duration\":\"P2D\"" "\"end\":\"2026-11-04T00:00:00Z\",\"duration\":\"P2D\"")
+                (tempProb "2026-11-02T00:00:00Z")).contains "\"consistent\":true" }
+  , { name := "temporal: with no origin stated the plan starts at the earliest start an action states",
+      ok := let t := Persona.Jsonld.planOf (tempDom.replace "\"duration\":\"P2D\"" "\"start\":\"2026-11-05T00:00:00Z\",\"duration\":\"P2D\"")
+                (tempProb "")
+        t.contains "\"origin\":\"2026-11-05T00:00:00Z\"" && t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-05T00:00:00Z\"" }
+  , { name := "temporal: a datestamp carries across a month end, a leap day and a year end",
+      ok := stampPlus "2026-02-27T12:00:00Z" 259200 == "2026-03-02T12:00:00Z"
+        && stampPlus "2028-02-27T00:00:00Z" 172800 == "2028-02-29T00:00:00Z"
+        && stampPlus "2026-12-31T23:59:59Z" 1 == "2027-01-01T00:00:00Z" }
+  , { name := "temporal: a duration is written in its canonical ISO-8601 form",
+      ok := Persona.Jsonld.fmtDur 0 == "PT0S" && Persona.Jsonld.fmtDur 90000 == "P1DT1H"
+        && Persona.Jsonld.fmtDur 3661 == "PT1H1M1S" && Persona.Jsonld.fmtDur 259200 == "P3D" }
   , { name := "web: the goals list names the goal the problem asks and declares it",
       ok := (Persona.Web.goalsOf dom prob).contains "\"goal\":\"/rfd/3\",\"declared\":true" }
   , { name := "web: a goal the problem holds already is reported held",
