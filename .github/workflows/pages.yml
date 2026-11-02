@@ -1,0 +1,40 @@
+# The persona on GitHub Pages: the README as the page, and the planner running in the browser.
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - run: bash site/build.sh _site_src
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: _site_src
+          destination: _site
+      - uses: actions/upload-pages-artifact@v4
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
