@@ -8,12 +8,11 @@
 # and the guest's API registration) and interactor-lean-guest (the Lean runtime
 # and Init for riscv64).
 #
-# The gate here is the ELF a double-precision viewer loads, with a planted
-# single-precision control. The guest is also callable: tools/run_standalone.sh loads it in
-# a headless entities-godot host and checks that `persona_ask` returns a plan and refuses an
-# undeclared goal by name (verified on the Mac desk). It is not a job here yet because no
-# release publishes a Linux entities-godot editor binary for the runner to download; add the
-# job when one does.
+# Two gates. persona-elf checks the ELF a double-precision viewer loads, with a planted
+# single-precision control. persona-load loads that ELF in a pinned double-precision Godot
+# editor with the godot-sandbox addon (service-godot-build releases, by sha256) and calls it:
+# persona_version() and persona_ask() must give the expected answers, the same in two
+# processes, and an ELF cut in half must not load (tools/check_guest.py).
 
 name: guest
 
@@ -92,3 +91,16 @@ jobs:
         with:
           name: persona-elf-${{ github.sha }}
           path: ${{ runner.temp }}/out/
+
+  persona-load:
+    needs: persona-elf
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: persona-elf-${{ github.sha }}
+          path: ${{ runner.temp }}/elf
+      - name: persona.elf loads in Godot and answers, with controls
+        run: python3 tools/check_guest.py --elf="$RUNNER_TEMP/elf/persona.elf" --work="$RUNNER_TEMP/guest"
