@@ -1,0 +1,101 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "params",
+ "version": "0.1.0",
+ "description": "Actions and methods that take parameters: {name} in a pointer or a value is replaced by the argument of the call.",
+ "variables": [
+  {
+   "name": "cell",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "mark": {
+   "params": [
+    "i"
+   ],
+   "body": [
+    {
+     "pointer/set": "/cell/{i}",
+     "value": 1
+    }
+   ]
+  },
+  "use": {
+   "params": [
+    "i"
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/cell/{i}"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/used/{i}",
+     "value": 1
+    }
+   ]
+  },
+  "last": {
+   "params": [
+    "v"
+   ],
+   "body": [
+    {
+     "pointer/set": "/n/last",
+     "value": "{v}"
+    }
+   ]
+  },
+  "after": {
+   "params": [
+    "v"
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/n/last"
+      },
+      "b": "{v}"
+     }
+    }
+   ]
+  }
+ },
+ "methods": {
+  "finish": {
+   "params": [
+    "i"
+   ],
+   "alternatives": [
+    {
+     "name": "go",
+     "subtasks": [
+      [
+       "mark",
+       "{i}"
+      ],
+      [
+       "use",
+       "{i}"
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}

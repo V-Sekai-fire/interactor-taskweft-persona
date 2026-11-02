@@ -9,10 +9,14 @@ open Lean Persona
 inductive Task where
   | goal : String → Task
   /-- A named task: a method when the domain has one by that name, an action otherwise. -/
-  | call : String → Task
+  | call : String → List String → Task
 
 structure Act where
   name  : String
+  /-- The parameters the action names, replaced in its body by the arguments of a call. -/
+  params : List String
+  /-- The action as written, kept so a call can replace its parameters before it is read. -/
+  raw   : Json
   dur   : Nat
   /-- A start the action states, as seconds since the epoch. -/
   statedStart : Option Nat
@@ -24,6 +28,8 @@ structure Act where
 
 /-- A method alternative: the facts that must hold for it to apply, then its subtasks in order. -/
 structure Alt where
+  params : List String
+  raw    : Json
   checks : List (String × Int)
   tasks  : List Task
 
@@ -50,18 +56,30 @@ def items (j : Json) : List Json :=
 
 def str (j : Json) : String := (j.getStr?.toOption).getD ""
 
+/-- An argument or a value as text: a string as it is, a number or a boolean as it is written. -/
+def argText (j : Json) : String :=
+  match j.getStr? with
+  | .ok s => s
+  | .error _ => j.compress
+
+/-- An integer, written as a number or as a string of digits, as it is after `{name}` is replaced. -/
+def intOf (j : Json) : Option Int :=
+  match j.getInt? with
+  | .ok i => some i
+  | .error _ => (j.getStr?.toOption).bind String.toInt?
+
 def parseTask (j : Json) : Task :=
   match items j with
-  | s :: p :: _ => if str s == "goal" then .goal (str p) else .call (str s)
-  | s :: _ => .call (str s)
-  | [] => .call ""
+  | s :: p :: rest => if str s == "goal" then .goal (str p) else .call (str s) ((p :: rest).map argText)
+  | s :: _ => .call (str s) []
+  | [] => .call "" []
 
 /-- A fact that must be at least a value: `pointer/ge`, or `math/ge` over a `pointer/get`. -/
 def holdOf (e : Json) : Option (String × Int) :=
   if str (e.getObjValD "type") == "pointer/ge" then
-    some (str (e.getObjValD "pointer"), ((e.getObjValD "value").getInt?.toOption).getD 1)
+    some (str (e.getObjValD "pointer"), (intOf (e.getObjValD "value")).getD 1)
   else if str (e.getObjValD "type") == "math/ge" then
-    some (str ((e.getObjValD "a").getObjValD "pointer"), ((e.getObjValD "b").getInt?.toOption).getD 1)
+    some (str ((e.getObjValD "a").getObjValD "pointer"), (intOf (e.getObjValD "b")).getD 1)
   else none
 
 /-- Days since 1970-01-01 of a civil date (year 1970 or later). -/
@@ -123,6 +141,8 @@ def durOf (j : Json) : Nat :=
 def parseAct (name : String) (j : Json) : Act :=
   let body := items (j.getObjValD "body")
   { name := name
+  , params := (items (j.getObjValD "params")).map str
+  , raw := j
   , dur := durOf j
   , statedStart := parseStamp (str (j.getObjValD "start"))
   , statedEnd := parseStamp (str (j.getObjValD "end"))
@@ -134,8 +154,45 @@ def parseAct (name : String) (j : Json) : Act :=
   , holds := body.filterMap fun b => holdOf (b.getObjValD "eval")
   , sets := body.filterMap fun b =>
       match b.getObjVal? "pointer/set" with
-      | .ok p => some (str p, ((b.getObjValD "value").getInt?.toOption).getD 0)
+      | .ok p => some (str p, (intOf (b.getObjValD "value")).getD 0)
       | .error _ => none }
+
+def substStr (env : List (String × String)) (s : String) : String :=
+  env.foldl (fun acc (k, v) => acc.replace ("{" ++ k ++ "}") v) s
+
+/-- A JSON value with `{name}` replaced by its argument in every string. -/
+partial def substJson (env : List (String × String)) (j : Json) : Json :=
+  match j with
+  | .str s => .str (substStr env s)
+  | .arr a => .arr (a.map (substJson env))
+  | .obj _ => Json.mkObj ((entries j).map fun (k, v) => (k, substJson env v))
+  | _ => j
+
+def parseAlt (params : List String) (alt : Json) : Alt :=
+  { params := params, raw := alt
+  , checks := (items (alt.getObjValD "check")).filterMap fun c => holdOf (c.getObjValD "eval")
+  , tasks := (items (alt.getObjValD "subtasks")).map parseTask }
+
+/-- The action with its arguments in place of its parameters; none when the arity is wrong. -/
+def instAct (a : Act) (args : List String) : Option Act :=
+  if a.params.length != args.length then none
+  else if a.params.isEmpty then some a
+  else some (parseAct a.name (substJson (a.params.zip args) a.raw))
+
+def instAlt (a : Alt) (args : List String) : Option Alt :=
+  if a.params.length != args.length then none
+  else if a.params.isEmpty then some a
+  else some (parseAlt [] (substJson (a.params.zip args) a.raw))
+
+/-- A plan step is its action's name, or the name and its arguments as `name(a,b)`. -/
+def stepKey (n : String) (args : List String) : String :=
+  if args.isEmpty then n else n ++ "(" ++ String.intercalate "," args ++ ")"
+
+def splitKey (k : String) : String × List String :=
+  match k.splitOn "(" with
+  | n :: rest =>
+    if rest.isEmpty then (k, []) else (n, ((String.intercalate "(" rest).dropRight 1).splitOn ",")
+  | [] => (k, [])
 
 /-- A domain document: actions, methods, and the variables it declares with their defaults. -/
 def parse (text : String) : Except String Spec := do
@@ -145,9 +202,8 @@ def parse (text : String) : Except String Spec := do
       ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (x.getInt?.toOption).getD 0)
   return { acts := (entries (j.getObjValD "actions")).map fun (n, a) => parseAct n a
          , methods := (entries (j.getObjValD "methods")).map fun (p, m) =>
-             (p, (items (m.getObjValD "alternatives")).map fun alt =>
-               { checks := (items (alt.getObjValD "check")).filterMap fun c => holdOf (c.getObjValD "eval")
-               , tasks := (items (alt.getObjValD "subtasks")).map parseTask })
+             (p, (items (m.getObjValD "alternatives")).map
+               (parseAlt ((items (m.getObjValD "params")).map str)))
          , init, edges := [] }
 
 structure Problem where
@@ -156,7 +212,7 @@ structure Problem where
   edges : List (String × String × String)
   goals : List String
   /-- The todo list's named tasks, in order: `["reach-rfd-3"]`. -/
-  calls : List String
+  calls : List (String × List String)
   /-- The plan origin as an ISO-8601 datestamp. A problem that states none, or one that is not a
 datestamp, takes the earliest start an action states, and with none leaves every start and end
 unspecified. -/
@@ -173,7 +229,10 @@ def parseProblem (text : String) : Except String Problem := do
   let goals := (items (j.getObjValD "todo_list")).flatMap fun t =>
     (items (t.getObjValD "goal")).map fun g => str (g.getObjValD "pointer")
   let todo := items (j.getObjValD "todo_list")
-  let calls := todo.filterMap fun t => (items t).head?.map str
+  let calls := todo.filterMap fun t =>
+    match items t with
+    | s :: rest => some (str s, rest.map argText)
+    | [] => none
   return { name := str (j.getObjValD "name"), init, edges, goals, calls
          , origin := str (j.getObjValD "origin") }
 
@@ -190,24 +249,27 @@ partial def run (sp : Spec) (bound : Nat) : List (Task × Nat) → St → Option
   | [], s => some s
   | (t, fuel) :: rest, s =>
     match t with
-    | .call n =>
+    | .call n args =>
       match sp.methods.find? (·.1 == n) with
       | some m =>
         match fuel with
         | 0 => none
         | f + 1 =>
-          m.2.findSome? fun alt =>
-            if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
-              run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
-            else none
+          m.2.findSome? fun alt0 =>
+            match instAlt alt0 args with
+            | none => none
+            | some alt =>
+              if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
+                run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
+              else none
       | none =>
-        match sp.acts.find? (·.name == n) with
+        match (sp.acts.find? (·.name == n)).bind (fun a0 => instAct a0 args) with
         | none => none
         | some a =>
           if s.plan.length < bound && a.evals.all (fun e => s.edges.contains e)
               && a.holds.all (fun h => lookup s.vals h.1 ≥ h.2) then
             run sp bound rest { s with vals := a.sets.foldl (fun v w => store v w.1 w.2) s.vals,
-                                       plan := s.plan ++ [n] }
+                                       plan := s.plan ++ [stepKey n args] }
           else none
     | .goal p =>
       if lookup s.vals p ≥ 1 then run sp bound rest s
@@ -218,10 +280,13 @@ partial def run (sp : Spec) (bound : Nat) : List (Task × Nat) → St → Option
           match sp.methods.find? (·.1 == p) with
           | none => none
           | some m =>
-            m.2.findSome? fun alt =>
-              if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
-                run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
-              else none
+            m.2.findSome? fun alt0 =>
+              match instAlt alt0 [] with
+              | none => none
+              | some alt =>
+                if alt.checks.all (fun h => lookup s.vals h.1 ≥ h.2) then
+                  run sp bound (alt.tasks.map (fun u => (u, f)) ++ rest) s
+                else none
 
 /-- Seconds as a canonical ISO-8601 duration: `PT0S`, `P3D`, `P1DT2H30M`. -/
 def fmtDur (s : Nat) : String :=
@@ -248,18 +313,23 @@ def field (name : String) (value : Option String) : String :=
   | some v => ",\"" ++ name ++ "\":" ++ Guest.quote v
   | none => ""
 
+/-- The action a plan step names, with its arguments in place. -/
+def actOfKey (sp : Spec) (k : String) : Option Act :=
+  let (n, args) := splitKey k
+  (sp.acts.find? (·.name == n)).bind fun a => instAct a args
+
 /-- Each step of the plan starts when every earlier step that sets a fact it needs has ended, so
 independent steps overlap. The plan's total is the latest end. -/
 def schedule (sp : Spec) (origin : Option Nat) (plan : List String) : List (String × Nat × Nat) × Nat :=
   let slots := plan.foldl (fun (acc : List (String × Nat × Nat)) n =>
-    match sp.acts.find? (·.name == n) with
+    match actOfKey sp n with
     | none => acc ++ [(n, 0, 0)]
     | some a =>
       let release := match origin, a.statedStart with
         | some o, some st => st - o
         | _, _ => 0
       let start := acc.foldl (fun t (m, _, e) =>
-        match sp.acts.find? (·.name == m) with
+        match actOfKey sp m with
         | some b => if b.sets.any (fun w => a.holds.any (·.1 == w.1)) then max t e else t
         | none => t) release
       acc ++ [(n, start, start + a.dur)]) []
@@ -270,7 +340,7 @@ must end by the latest start of every later step that needs a fact it sets, and 
 plan's end. -/
 def latestTimes (sp : Spec) (origin : Option Nat) (plan : List String) (total : Nat) :
     List (Nat × Nat) :=
-  let acts := (plan.map fun nm => sp.acts.find? (·.name == nm)).toArray
+  let acts := (plan.map fun nm => actOfKey sp nm).toArray
   let n := acts.size
   let res := (List.range n).reverse.foldl (fun (res : Array (Nat × Nat)) i =>
     let d := ((acts[i]!).map (·.dur)).getD 0
@@ -317,13 +387,13 @@ def planOf (domain problem : String) (only : Option String := none) (bound : Nat
     let known := sp.init ++ pb.init
     let named := fun (n : String) => sp.methods.any (·.1 == n) || sp.acts.any (·.name == n)
     if pb.goals.isEmpty && pb.calls.isEmpty then refusal dn pn "no_goal"
-    else if pb.goals.any (fun g => !(known.any (·.1 == g))) || pb.calls.any (fun c => !named c) then
+    else if pb.goals.any (fun g => !(known.any (·.1 == g))) || pb.calls.any (fun c => !named c.1) then
       refusal dn pn "undeclared_goal"
     else
       let start : St := { vals := pb.init.foldl (fun v w => store v w.1 w.2) sp.init
                         , edges := pb.edges, plan := [] }
       let fuel := sp.methods.length + 1
-      let tasks := pb.goals.map (fun g => (Task.goal g, fuel)) ++ pb.calls.map (fun c => (Task.call c, fuel))
+      let tasks := pb.goals.map (fun g => (Task.goal g, fuel)) ++ pb.calls.map (fun c => (Task.call c.1 c.2, fuel))
       match run sp bound tasks start with
       | none => refusal dn pn "unreachable"
       | some s =>
@@ -332,14 +402,14 @@ def planOf (domain problem : String) (only : Option String := none) (bound : Nat
         let ok := pb.goals.all fun g =>
           is_node_satisfied st (.goal_geq ((s.vals.findIdx? (·.1 == g)).getD 0) 1)
         let firsts := firstOccurrences s.plan
-        let stated := firsts.filterMap fun n => (sp.acts.find? (·.name == n)).bind (·.statedStart)
+        let stated := firsts.filterMap fun n => (actOfKey sp n).bind (·.statedStart)
         let origin := match parseStamp pb.origin with
           | some o => some o
           | none => stated.min?
         let (slots, total) := schedule sp origin firsts
         let late := (firsts.zip (latestTimes sp origin firsts total))
         let holds := firsts.all fun n =>
-          match origin, (sp.acts.find? (·.name == n)).bind (·.statedEnd), slots.find? (·.1 == n) with
+          match origin, (actOfKey sp n).bind (·.statedEnd), slots.find? (·.1 == n) with
           | some o, some e, some (_, _, fin) => fin + o ≤ e
           | _, _, _ => true
         let rows := s.plan.foldl (fun (acc : List String × List String) n =>
@@ -347,7 +417,8 @@ def planOf (domain problem : String) (only : Option String := none) (bound : Nat
           let (b, e) :=
             if seen.contains n then ((late.find? (·.1 == n)).map (·.2) |>.getD (0, 0))
             else ((slots.find? (·.1 == n)).map (fun (_, b, e) => (b, e)) |>.getD (0, 0))
-          (seen ++ [n], out ++ ["{\"action\":" ++ Guest.quote n ++ ",\"params\":[]"
+          (seen ++ [n], out ++ ["{\"action\":" ++ Guest.quote (splitKey n).1 ++ ",\"params\":["
+            ++ String.intercalate "," ((splitKey n).2.map Guest.quote) ++ "]"
             ++ field "start" (stampAt origin b) ++ field "end" (stampAt origin e)
             ++ ",\"duration\":" ++ Guest.quote (fmtDur (e - b)) ++ "}"])) ([], [])
         let steps := rows.2
