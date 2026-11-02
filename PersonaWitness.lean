@@ -2,6 +2,7 @@ import Persona.Demo
 import Persona.Grid
 import Persona.Jsonld
 import Persona.Web
+import Persona.Search
 
 open Persona
 open Persona.Demo
@@ -103,6 +104,16 @@ def tempWinDom : String :=
 
 def tempWinProb (origin : String) : String :=
   "{\"name\":\"window_problem\",\"origin\":\"" ++ origin ++ "\",\"variables\":[],\"todo_list\":[[\"w\"]]}"
+
+/-- Two ways to make y hold: a long one that goes through x, and a shortcut listed last. -/
+def shortDom : String :=
+  "{\"name\":\"shortcut\",\"variables\":[],\"actions\":{"
+    ++ "\"a\":{\"body\":[{\"pointer/set\":\"/v/x\",\"value\":1}]},"
+    ++ "\"b\":{\"body\":[{\"eval\":{\"type\":\"math/ge\",\"a\":{\"type\":\"pointer/get\",\"pointer\":\"/v/x\"},\"b\":1}},{\"pointer/set\":\"/v/y\",\"value\":1}]},"
+    ++ "\"c\":{\"body\":[{\"pointer/set\":\"/v/y\",\"value\":1}]}},\"methods\":{}}"
+
+def shortProb (goal : String) : String :=
+  "{\"name\":\"shortcut_problem\",\"variables\":[{\"name\":\"v\",\"init\":{\"x\":0,\"y\":0}}],\"todo_list\":[{\"goal\":[{\"pointer\":\"" ++ goal ++ "\",\"eq\":1}]}]}"
 
 /-- Domain, problem and plan are three documents. The plan is the gold value: the planner's
 output for the domain and the problem must equal it, and a gold with one step changed must not. -/
@@ -206,6 +217,15 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
   , { name := "temporal: a duration is written in its canonical ISO-8601 form",
       ok := Persona.Jsonld.fmtDur 0 == "PT0S" && Persona.Jsonld.fmtDur 90000 == "P1DT1H"
         && Persona.Jsonld.fmtDur 3661 == "PT1H1M1S" && Persona.Jsonld.fmtDur 259200 == "P3D" }
+  , { name := "shortest: the plan has the fewest actions, not the first one found",
+      ok := let t := Persona.Search.shortestOf shortDom (shortProb "/v/y") 1000
+        t.contains "\"length\":1" && t.contains "\"action\":\"c\"" && t.contains "\"optimal\":true" }
+  , { name := "shortest: a goal that needs the longer way takes it",
+      ok := let t := Persona.Search.shortestOf (shortDom.replace "\"c\":{\"body\":[{\"pointer/set\":\"/v/y\",\"value\":1}]}" "\"c\":{\"body\":[{\"pointer/set\":\"/v/z\",\"value\":1}]}") (shortProb "/v/y") 1000
+        t.contains "\"length\":2" && t.contains "\"action\":\"a\"" && t.contains "\"action\":\"b\"" }
+  , { name := "shortest: a goal no action reaches is unreachable, and a search that runs out of fuel says limit",
+      ok := (Persona.Search.shortestOf shortDom (shortProb "/v/q") 1000).contains "unreachable"
+        && (Persona.Search.shortestOf shortDom (shortProb "/v/y") 0).contains "limit" }
   , { name := "web: the goals list names the goal the problem asks and declares it",
       ok := (Persona.Web.goalsOf dom prob).contains "\"goal\":\"/rfd/3\",\"declared\":true" }
   , { name := "web: a goal the problem holds already is reported held",

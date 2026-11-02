@@ -1,4 +1,5 @@
 import Persona.Jsonld
+import Persona.Search
 
 /-! The browser entries: a RECTGTN JSON-LD domain and problem in, an answer out.
 `persona_goals_text` lists what the problem asks and `persona_plan_jsonld_text` plans it,
@@ -33,5 +34,8 @@ def goalsText (domain problem : String) : String := goalsOf domain problem
 
 @[export persona_plan_jsonld_text]
 def planJsonldText (domain problem goal : String) : String := planWith domain problem goal
+
+@[export persona_plan_shortest_text]
+def planShortestText (domain problem : String) (limit : Nat) : String := Search.shortestOf domain problem limit
 
 end Persona.Web

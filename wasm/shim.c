@@ -7,6 +7,7 @@ extern lean_object *initialize_persona_Persona_Grid(uint8_t builtin);
 extern lean_object *initialize_persona_Persona_Web(uint8_t builtin);
 extern lean_object *persona_plan_text(lean_object *spec);
 extern lean_object *persona_goals_text(lean_object *domain, lean_object *problem);
+extern lean_object *persona_plan_shortest_text(lean_object *domain, lean_object *problem, lean_object *limit);
 extern lean_object *persona_plan_jsonld_text(lean_object *domain, lean_object *problem, lean_object *goal);
 const char *uv_strerror(int e) { return "uv unavailable"; }
 /* Modules that import Lean.* call this first. The runtime is up before persona_init reaches them, and
@@ -42,4 +43,8 @@ const char *persona_goals(const char *domain, const char *problem) {
 const char *persona_plan_jsonld(const char *domain, const char *problem, const char *goal) {
   return keep(persona_plan_jsonld_text(lean_mk_string(domain), lean_mk_string(problem),
                                        lean_mk_string(goal)));
+}
+/* The shortest plan: a domain and a problem in, a plan out. `limit` bounds the states expanded. */
+const char *persona_plan_shortest(const char *domain, const char *problem, int limit) {
+  return keep(persona_plan_shortest_text(lean_mk_string(domain), lean_mk_string(problem), lean_box(limit)));
 }
