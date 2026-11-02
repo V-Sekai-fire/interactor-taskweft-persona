@@ -15,7 +15,7 @@ domain and the codebook are the persona's.
 
     pixi run ask           # a domain, a goal, and the plan that reaches it
     pixi run vocabulary    # the codebook and the actions it composes from
-    pixi run test          # the green gate: 18 invariants, positive and negative controls
+    pixi run test          # the green gate: 22 invariants, positive and negative controls
 
 ## What it accepts
 
@@ -45,7 +45,7 @@ Lean comes from elan; the `lean-toolchain` file pins v4.34.1.
 `lake build` compiles the persona against the planner vendored in `thirdparty/`,
 so the build fetches no domain from GitHub.
 
-    lake exe persona_witness      # the persona's gate, 18 invariants
+    lake exe persona_witness      # the persona's gate, 22 invariants
     lake exe character_witness    # the character domain's gate, 11 invariants
 
 ## Run the guest standalone
@@ -76,6 +76,16 @@ requires, which is the `requires` field of a domain.
 `<core-dir>` holds the C emitted for the toolchain's Init and Std (`c/`), `gen/include` and
 `lean4/src`, the layout `interactor-lean-guest` builds for its riscv64 core. The build needs
 `emcc` on the path.
+
+## The pull requests as a domain
+`Persona/Pulls.lean` encodes how a pull request reaches `main` in this repository: name the branch
+by stage (`dev/`, `beta/`, `rc/`, `release/`, `archived/`), push it, strip any agent footer from the
+body, open the pull, run `Lean core + self-test` and `persona-elf`, collect the checks, then merge.
+No action writes the operator's approval, so a plan to `merged` is refused until the facts say he
+approved. `tools/pulls_spec.exs` reads a pull from `gh` as facts, and `persona_pulls` prints the
+plan to a goal.
+
+    elixir tools/pulls_spec.exs V-Sekai-fire/interactor-taskweft-persona 8 checked | lake exe persona_pulls
 
 ## Build the guest on a desk
 The guest builds from a workspace laid out as the goal manifest places it (`2-contract/guest-runtime`,

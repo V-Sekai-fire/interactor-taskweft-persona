@@ -52,6 +52,7 @@ structure Domain where
   codebook  : Codebook
   actions   : List Action
   requires  : List (String × List (StateVarID × Int)) := []
+  skipDone  : Bool := false
   deriving Repr
 
 /-- What a persona is asked: one node of the planner's own GTN space. -/
@@ -107,6 +108,8 @@ def Domain.execute (d : Domain) (plan : List PlanElement) : GTNState :=
 
 /-- An action is open when every variable it requires meets its threshold. -/
 def Domain.applicable (d : Domain) (a : Action) (st : GTNState) : Bool :=
+  (!d.skipDone || !(a.writes.all fun w =>
+    st.variables.any fun sv => sv.id == w.1 && sv.val == d.resolve w.2)) &&
   match d.requires.find? (fun r => r.1 == a.name) with
   | none   => true
   | some r =>
