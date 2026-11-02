@@ -180,8 +180,8 @@ def planOf (domain problem : String) (only : Option String := none) : String :=
     else
       let start : St := { vals := pb.init.foldl (fun v w => store v w.1 w.2) sp.init
                         , edges := pb.edges, plan := [] }
-      let afterGoals := pb.goals.foldlM (fun st g => run sp 12 (.goal g) st) start
-      match afterGoals.bind (fun st => pb.calls.foldlM (fun st c => run sp 12 (.call c) st) st) with
+      let afterGoals := pb.goals.foldlM (fun st g => run sp (sp.methods.length + 1) (.goal g) st) start
+      match afterGoals.bind (fun st => pb.calls.foldlM (fun st c => run sp (sp.methods.length + 1) (.call c) st) st) with
       | none => refusal dn pn "unreachable"
       | some s =>
         let st : GTNState := { variables := s.vals.mapIdx fun i x => ⟨i, x.2⟩
