@@ -1,0 +1,109 @@
+{
+ "types": [
+  {
+   "signature": "int"
+  },
+  {
+   "signature": "bool"
+  }
+ ],
+ "variables": [
+  {
+   "id": "sum",
+   "type": 0,
+   "value": [
+    0
+   ]
+  }
+ ],
+ "declarations": [
+  {
+   "op": "event/onStart"
+  },
+  {
+   "op": "flow/for"
+  },
+  {
+   "op": "variable/get"
+  },
+  {
+   "op": "math/add"
+  },
+  {
+   "op": "variable/set"
+  }
+ ],
+ "nodes": [
+  {
+   "declaration": 0,
+   "flows": {
+    "out": {
+     "node": 1,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 1,
+   "values": {
+    "startIndex": {
+     "type": 0,
+     "value": [
+      0
+     ]
+    },
+    "endIndex": {
+     "type": 0,
+     "value": [
+      5
+     ]
+    }
+   },
+   "flows": {
+    "loopBody": {
+     "node": 4,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 2,
+   "configuration": {
+    "variable": {
+     "value": [
+      0
+     ]
+    }
+   }
+  },
+  {
+   "declaration": 3,
+   "values": {
+    "a": {
+     "node": 2,
+     "socket": "value"
+    },
+    "b": {
+     "node": 1,
+     "socket": "index"
+    }
+   }
+  },
+  {
+   "declaration": 4,
+   "configuration": {
+    "variables": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "0": {
+     "node": 3,
+     "socket": "value"
+    }
+   }
+  }
+ ]
+}

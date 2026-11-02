@@ -1,0 +1,67 @@
+{
+ "types": [
+  {
+   "signature": "int"
+  },
+  {
+   "signature": "bool"
+  }
+ ],
+ "variables": [
+  {
+   "id": "x",
+   "type": 0,
+   "value": [
+    0
+   ]
+  }
+ ],
+ "declarations": [
+  {
+   "op": "event/onStart"
+  },
+  {
+   "op": "math/eq"
+  },
+  {
+   "op": "flow/branch"
+  }
+ ],
+ "nodes": [
+  {
+   "declaration": 0,
+   "flows": {
+    "out": {
+     "node": 2,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 1,
+   "values": {
+    "a": {
+     "type": 0,
+     "value": [
+      1
+     ]
+    },
+    "b": {
+     "type": 1,
+     "value": [
+      true
+     ]
+    }
+   }
+  },
+  {
+   "declaration": 2,
+   "values": {
+    "condition": {
+     "node": 1,
+     "socket": "value"
+    }
+   }
+  }
+ ]
+}

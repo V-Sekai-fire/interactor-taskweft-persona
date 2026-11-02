@@ -1,0 +1,116 @@
+{
+ "types": [
+  {
+   "signature": "int"
+  },
+  {
+   "signature": "bool"
+  }
+ ],
+ "variables": [
+  {
+   "id": "x",
+   "type": 0,
+   "value": [
+    0
+   ]
+  }
+ ],
+ "declarations": [
+  {
+   "op": "event/onStart"
+  },
+  {
+   "op": "math/lt"
+  },
+  {
+   "op": "flow/branch"
+  },
+  {
+   "op": "variable/set"
+  }
+ ],
+ "nodes": [
+  {
+   "declaration": 0,
+   "flows": {
+    "out": {
+     "node": 2,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 1,
+   "values": {
+    "a": {
+     "type": 0,
+     "value": [
+      2
+     ]
+    },
+    "b": {
+     "type": 0,
+     "value": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "declaration": 2,
+   "values": {
+    "condition": {
+     "node": 1,
+     "socket": "value"
+    }
+   },
+   "flows": {
+    "true": {
+     "node": 3,
+     "socket": "in"
+    },
+    "false": {
+     "node": 4,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 3,
+   "configuration": {
+    "variables": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "0": {
+     "type": 0,
+     "value": [
+      1
+     ]
+    }
+   }
+  },
+  {
+   "declaration": 3,
+   "configuration": {
+    "variables": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "0": {
+     "type": 0,
+     "value": [
+      2
+     ]
+    }
+   }
+  }
+ ]
+}

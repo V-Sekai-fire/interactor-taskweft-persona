@@ -1,0 +1,29 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "params_digits_as_string",
+ "domain": "params",
+ "version": "0.1.0",
+ "variables": [
+  {
+   "name": "cell",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "finish",
+   "3"
+  ]
+ ]
+}

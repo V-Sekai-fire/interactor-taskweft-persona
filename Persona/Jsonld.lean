@@ -11,10 +11,20 @@ inductive Task where
   /-- A named task: a method when the domain has one by that name, an action otherwise. -/
   | call : String → List String → Task
 
+/-- What a document names: its codebook, the interned string list in which a name is its index, and its
+enums, each a name with named integer members. A member is written as `enum.member`, or as `member` alone
+when no other enum has it. -/
+structure Vocab where
+  names : List String := []
+  enums : List (String × List (String × Int)) := []
+
 structure Act where
+  vocab : Vocab
   name  : String
   /-- The parameters the action names, replaced in its body by the arguments of a call. -/
   params : List String
+  /-- The enum each parameter is typed by, for printing its argument as a name. -/
+  paramEnums : List (Option String)
   /-- The action as written, kept so a call can replace its parameters before it is read. -/
   raw   : Json
   dur   : Nat
@@ -28,6 +38,7 @@ structure Act where
 
 /-- A method alternative: the facts that must hold for it to apply, then its subtasks in order. -/
 structure Alt where
+  vocab : Vocab
   params : List String
   raw    : Json
   checks : List (String × Int)
@@ -56,30 +67,69 @@ def items (j : Json) : List Json :=
 
 def str (j : Json) : String := (j.getStr?.toOption).getD ""
 
-/-- An argument or a value as text: a string as it is, a number or a boolean as it is written. -/
-def argText (j : Json) : String :=
-  match j.getStr? with
-  | .ok s => s
-  | .error _ => j.compress
+def codebookOf (j : Json) : List String :=
+  (items (j.getObjValD "codebook")).filterMap fun x => x.getStr?.toOption
 
-/-- An integer, written as a number or as a string of digits, as it is after `{name}` is replaced. -/
-def intOf (j : Json) : Option Int :=
+/-- An enum is an object of members with their integers, or an array of members numbered from zero. -/
+def enumsOf (j : Json) : List (String × List (String × Int)) :=
+  (entries (j.getObjValD "enums")).map fun (k, v) =>
+    (k, match v.getArr? with
+      | .ok a => (a.toList.filterMap fun x => x.getStr?.toOption).zipIdx.map fun (m, i) => (m, (i : Int))
+      | .error _ => (entries v).filterMap fun (m, x) => x.getInt?.toOption.map (m, ·))
+
+def vocabOf (j : Json) : Vocab := { names := codebookOf j, enums := enumsOf j }
+
+def vocabText (text : String) : Vocab :=
+  match Json.parse text with
+  | .ok j => vocabOf j
+  | .error _ => {}
+
+/-- The integer an enum member names, written `enum.member` or, when no other enum has it, `member`. -/
+def memberOf (v : Vocab) (s : String) : Option Int :=
+  match s.splitOn "." with
+  | [e, m] => ((v.enums.find? (·.1 == e)).bind fun en => (en.2.find? (·.1 == m)).map (·.2))
+  | [m] =>
+    match v.enums.filterMap fun en => (en.2.find? (·.1 == m)).map (·.2) with
+    | [i] => some i
+    | _ => none
+  | _ => none
+
+/-- An integer, written as a number or as an enum member. glTF interactivity has numerics and pointers
+and no strings, so the planner sees only numbers: a name is resolved when the document is read. -/
+def intOf (v : Vocab) (j : Json) : Option Int :=
   match j.getInt? with
   | .ok i => some i
-  | .error _ => (j.getStr?.toOption).bind String.toInt?
+  | .error _ => (j.getStr?.toOption).bind (memberOf v)
 
-def parseTask (j : Json) : Task :=
+/-- An argument as the text of its number: an integer, an enum member, or a string that is an entry of
+the codebook, which is its index. A string that is none of these is not an argument. -/
+def argNum (v : Vocab) (j : Json) : Option String :=
+  match intOf v j with
+  | some i => some (toString i)
+  | none =>
+    match j.getStr? with
+    | .ok s => (v.names.findIdx? (· == s)).map toString
+    | .error _ => none
+
+/-- The task a call to nothing stands for, which no method or action answers to. -/
+def noTask : String := "no-numeric-argument"
+
+def parseTask (v : Vocab) (j : Json) : Task :=
   match items j with
-  | s :: p :: rest => if str s == "goal" then .goal (str p) else .call (str s) ((p :: rest).map argText)
+  | s :: p :: rest =>
+    if str s == "goal" then .goal (str p)
+    else
+      let args := (p :: rest).map (argNum v)
+      if args.all Option.isSome then .call (str s) (args.filterMap id) else .call noTask []
   | s :: _ => .call (str s) []
   | [] => .call "" []
 
 /-- A fact that must be at least a value: `pointer/ge`, or `math/ge` over a `pointer/get`. -/
-def holdOf (e : Json) : Option (String × Int) :=
+def holdOf (v : Vocab) (e : Json) : Option (String × Int) :=
   if str (e.getObjValD "type") == "pointer/ge" then
-    some (str (e.getObjValD "pointer"), (intOf (e.getObjValD "value")).getD 1)
+    some (str (e.getObjValD "pointer"), (intOf v (e.getObjValD "value")).getD 1)
   else if str (e.getObjValD "type") == "math/ge" then
-    some (str ((e.getObjValD "a").getObjValD "pointer"), (intOf (e.getObjValD "b")).getD 1)
+    some (str ((e.getObjValD "a").getObjValD "pointer"), (intOf v (e.getObjValD "b")).getD 1)
   else none
 
 /-- Days since 1970-01-01 of a civil date (year 1970 or later). -/
@@ -138,10 +188,23 @@ def durOf (j : Json) : Nat :=
     | some a, some b => b - a
     | _, _ => 0
 
-def parseAct (name : String) (j : Json) : Act :=
+/-- A parameter is written as its name, or as an object with its name and the enum that types it. -/
+def paramName (j : Json) : String :=
+  match j.getStr? with
+  | .ok s => s
+  | .error _ => str (j.getObjValD "name")
+
+def paramEnum (j : Json) : Option String :=
+  match (j.getObjValD "enum").getStr? with
+  | .ok e => some e
+  | .error _ => none
+
+def parseAct (v : Vocab) (name : String) (j : Json) : Act :=
   let body := items (j.getObjValD "body")
-  { name := name
-  , params := (items (j.getObjValD "params")).map str
+  { vocab := v
+  , name := name
+  , params := (items (j.getObjValD "params")).map paramName
+  , paramEnums := (items (j.getObjValD "params")).map paramEnum
   , raw := j
   , dur := durOf j
   , statedStart := parseStamp (str (j.getObjValD "start"))
@@ -151,38 +214,44 @@ def parseAct (name : String) (j : Json) : Act :=
       if str (e.getObjValD "type") == "rebac/check" then
         some (str (e.getObjValD "subject"), str (e.getObjValD "rel"), str (e.getObjValD "object"))
       else none
-  , holds := body.filterMap fun b => holdOf (b.getObjValD "eval")
+  , holds := body.filterMap fun b => holdOf v (b.getObjValD "eval")
   , sets := body.filterMap fun b =>
       match b.getObjVal? "pointer/set" with
-      | .ok p => some (str p, (intOf (b.getObjValD "value")).getD 0)
+      | .ok p => some (str p, (intOf v (b.getObjValD "value")).getD 0)
       | .error _ => none }
 
 def substStr (env : List (String × String)) (s : String) : String :=
-  env.foldl (fun acc (k, v) => acc.replace ("{" ++ k ++ "}") v) s
+  env.foldl (fun acc (k, v) => acc.replace ("[" ++ k ++ "]") v) s
 
 /-- A JSON value with `{name}` replaced by its argument in every string. -/
 partial def substJson (env : List (String × String)) (j : Json) : Json :=
   match j with
   | .str s => .str (substStr env s)
   | .arr a => .arr (a.map (substJson env))
-  | .obj _ => Json.mkObj ((entries j).map fun (k, v) => (k, substJson env v))
+  | .obj _ =>
+    match entries j with
+    | [("param", p)] =>
+      match (env.find? (·.1 == str p)).bind (·.2.toInt?) with
+      | some i => Json.num (JsonNumber.fromInt i)
+      | none => j
+    | es => Json.mkObj (es.map fun (k, v) => (k, substJson env v))
   | _ => j
 
-def parseAlt (params : List String) (alt : Json) : Alt :=
-  { params := params, raw := alt
-  , checks := (items (alt.getObjValD "check")).filterMap fun c => holdOf (c.getObjValD "eval")
-  , tasks := (items (alt.getObjValD "subtasks")).map parseTask }
+def parseAlt (v : Vocab) (params : List String) (alt : Json) : Alt :=
+  { vocab := v, params := params, raw := alt
+  , checks := (items (alt.getObjValD "check")).filterMap fun c => holdOf v (c.getObjValD "eval")
+  , tasks := (items (alt.getObjValD "subtasks")).map (parseTask v) }
 
 /-- The action with its arguments in place of its parameters; none when the arity is wrong. -/
 def instAct (a : Act) (args : List String) : Option Act :=
   if a.params.length != args.length then none
   else if a.params.isEmpty then some a
-  else some (parseAct a.name (substJson (a.params.zip args) a.raw))
+  else some (parseAct a.vocab a.name (substJson (a.params.zip args) a.raw))
 
 def instAlt (a : Alt) (args : List String) : Option Alt :=
   if a.params.length != args.length then none
   else if a.params.isEmpty then some a
-  else some (parseAlt [] (substJson (a.params.zip args) a.raw))
+  else some (parseAlt a.vocab [] (substJson (a.params.zip args) a.raw))
 
 /-- A plan step is its action's name, or the name and its arguments as `name(a,b)`. -/
 def stepKey (n : String) (args : List String) : String :=
@@ -197,13 +266,14 @@ def splitKey (k : String) : String × List String :=
 /-- A domain document: actions, methods, and the variables it declares with their defaults. -/
 def parse (text : String) : Except String Spec := do
   let j ← Json.parse text
+  let voc := vocabOf j
   let init := (items (j.getObjValD "variables")).flatMap fun v =>
     (entries (v.getObjValD "init")).map fun (k, x) =>
-      ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (x.getInt?.toOption).getD 0)
-  return { acts := (entries (j.getObjValD "actions")).map fun (n, a) => parseAct n a
+      ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (intOf voc x).getD 0)
+  return { acts := (entries (j.getObjValD "actions")).map fun (n, a) => parseAct voc n a
          , methods := (entries (j.getObjValD "methods")).map fun (p, m) =>
              (p, (items (m.getObjValD "alternatives")).map
-               (parseAlt ((items (m.getObjValD "params")).map str)))
+               (parseAlt voc ((items (m.getObjValD "params")).map paramName)))
          , init, edges := [] }
 
 structure Problem where
@@ -219,11 +289,11 @@ unspecified. -/
   origin : String
 
 /-- A problem document: the facts that hold at the start, the graph edges, and the goals. -/
-def parseProblem (text : String) : Except String Problem := do
+def parseProblem (text : String) (voc : Vocab := {}) : Except String Problem := do
   let j ← Json.parse text
   let init := (items (j.getObjValD "variables")).flatMap fun v =>
     (entries (v.getObjValD "init")).map fun (k, x) =>
-      ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (x.getInt?.toOption).getD 0)
+      ("/" ++ str (v.getObjValD "name") ++ "/" ++ k, (intOf voc x).getD 0)
   let edges := (items (((j.getObjValD "capabilities").getObjValD "graph").getObjValD "edges")).map
     fun e => (str (e.getObjValD "subject"), str (e.getObjValD "rel"), str (e.getObjValD "object"))
   let goals := (items (j.getObjValD "todo_list")).flatMap fun t =>
@@ -231,7 +301,9 @@ def parseProblem (text : String) : Except String Problem := do
   let todo := items (j.getObjValD "todo_list")
   let calls := todo.filterMap fun t =>
     match items t with
-    | s :: rest => some (str s, rest.map argText)
+    | s :: rest =>
+      let args := rest.map (argNum voc)
+      if args.all Option.isSome then some (str s, args.filterMap id) else some (noTask, [])
     | [] => none
   return { name := str (j.getObjValD "name"), init, edges, goals, calls
          , origin := str (j.getObjValD "origin") }
@@ -313,6 +385,20 @@ def field (name : String) (value : Option String) : String :=
   | some v => ",\"" ++ name ++ "\":" ++ Guest.quote v
   | none => ""
 
+/-- A step's arguments as they read: the name of the enum member a typed parameter has, else the number. -/
+def readable (sp : Spec) (k : String) : List String :=
+  let (n, args) := splitKey k
+  match sp.acts.find? (·.name == n) with
+  | none => args
+  | some a =>
+    (args.zip (a.paramEnums ++ args.map (fun _ => none))).map fun (x, e) =>
+      match e, x.toInt? with
+      | some en, some i =>
+        match (a.vocab.enums.find? (·.1 == en)).bind (fun m => m.2.find? (·.2 == i)) with
+        | some (name, _) => name
+        | none => x
+      | _, _ => x
+
 /-- The action a plan step names, with its arguments in place. -/
 def actOfKey (sp : Spec) (k : String) : Option Act :=
   let (n, args) := splitKey k
@@ -376,7 +462,7 @@ planner's own goal test holds on the final state for every goal of the problem. 
 def planOf (domain problem : String) (only : Option String := none) (bound : Nat := 1000000) : String :=
   let dn := docName domain
   let pn := docName problem
-  match parse domain, parseProblem problem with
+  match parse domain, parseProblem problem (vocabText domain) with
   | .error _, _ => refusal dn pn "bad_domain"
   | _, .error _ => refusal dn pn "bad_problem"
   | .ok sp, .ok pb0 =>
@@ -418,7 +504,7 @@ def planOf (domain problem : String) (only : Option String := none) (bound : Nat
             if seen.contains n then ((late.find? (·.1 == n)).map (·.2) |>.getD (0, 0))
             else ((slots.find? (·.1 == n)).map (fun (_, b, e) => (b, e)) |>.getD (0, 0))
           (seen ++ [n], out ++ ["{\"action\":" ++ Guest.quote (splitKey n).1 ++ ",\"params\":["
-            ++ String.intercalate "," ((splitKey n).2.map Guest.quote) ++ "]"
+            ++ String.intercalate "," (readable sp n |>.map Guest.quote) ++ "]"
             ++ field "start" (stampAt origin b) ++ field "end" (stampAt origin e)
             ++ ",\"duration\":" ++ Guest.quote (fmtDur (e - b)) ++ "}"])) ([], [])
         let steps := rows.2

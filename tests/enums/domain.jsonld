@@ -1,0 +1,74 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "enums",
+ "version": "0.1.0",
+ "description": "Enums are named integers. An enum is an object of members with their integers, or an array of members numbered from zero. A member is written enum.member, or member alone when no other enum has it, and is resolved to its number when the document is read, so the planner sees numbers and a plan step prints the name for a parameter typed by an enum.",
+ "enums": {
+  "block": {
+   "a": 0,
+   "b": 1,
+   "c": 2
+  },
+  "place": [
+   "table",
+   "hand"
+  ],
+  "flag": [
+   "a"
+  ]
+ },
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "put": {
+   "params": [
+    {
+     "name": "x",
+     "enum": "block"
+    },
+    {
+     "name": "p",
+     "enum": "place"
+    }
+   ],
+   "body": [
+    {
+     "pointer/set": "/pos/[x]",
+     "value": {
+      "param": "p"
+     }
+    }
+   ]
+  },
+  "settled": {
+   "params": [
+    {
+     "name": "x",
+     "enum": "block"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/pos/[x]"
+      },
+      "b": "hand"
+     }
+    }
+   ]
+  }
+ },
+ "methods": {}
+}

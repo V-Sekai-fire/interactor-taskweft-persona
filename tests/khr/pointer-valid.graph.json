@@ -1,0 +1,207 @@
+{
+ "types": [
+  {
+   "signature": "int"
+  },
+  {
+   "signature": "bool"
+  }
+ ],
+ "variables": [
+  {
+   "id": "r",
+   "type": 0,
+   "value": [
+    0
+   ]
+  },
+  {
+   "id": "ok",
+   "type": 1,
+   "value": [
+    false
+   ]
+  },
+  {
+   "id": "no",
+   "type": 1,
+   "value": [
+    true
+   ]
+  }
+ ],
+ "declarations": [
+  {
+   "op": "event/onStart"
+  },
+  {
+   "op": "pointer/set"
+  },
+  {
+   "op": "pointer/get"
+  },
+  {
+   "op": "variable/set"
+  },
+  {
+   "op": "flow/sequence"
+  }
+ ],
+ "nodes": [
+  {
+   "declaration": 0,
+   "flows": {
+    "out": {
+     "node": 1,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 1,
+   "configuration": {
+    "pointer": {
+     "value": [
+      "/cell/[i]"
+     ]
+    },
+    "type": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "i": {
+     "type": 0,
+     "value": [
+      3
+     ]
+    },
+    "value": {
+     "type": 0,
+     "value": [
+      7
+     ]
+    }
+   },
+   "flows": {
+    "out": {
+     "node": 7,
+     "socket": "in"
+    }
+   }
+  },
+  {
+   "declaration": 2,
+   "configuration": {
+    "pointer": {
+     "value": [
+      "/cell/[i]"
+     ]
+    },
+    "type": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "i": {
+     "type": 0,
+     "value": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "declaration": 3,
+   "configuration": {
+    "variables": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "0": {
+     "node": 2,
+     "socket": "value"
+    }
+   }
+  },
+  {
+   "declaration": 3,
+   "configuration": {
+    "variables": {
+     "value": [
+      1
+     ]
+    }
+   },
+   "values": {
+    "1": {
+     "node": 2,
+     "socket": "isValid"
+    }
+   }
+  },
+  {
+   "declaration": 2,
+   "configuration": {
+    "pointer": {
+     "value": [
+      "/cell/[i]"
+     ]
+    },
+    "type": {
+     "value": [
+      0
+     ]
+    }
+   },
+   "values": {
+    "i": {
+     "type": 0,
+     "value": [
+      9
+     ]
+    }
+   }
+  },
+  {
+   "declaration": 3,
+   "configuration": {
+    "variables": {
+     "value": [
+      2
+     ]
+    }
+   },
+   "values": {
+    "2": {
+     "node": 5,
+     "socket": "isValid"
+    }
+   }
+  },
+  {
+   "declaration": 4,
+   "flows": {
+    "0": {
+     "node": 3,
+     "socket": "in"
+    },
+    "1": {
+     "node": 4,
+     "socket": "in"
+    },
+    "2": {
+     "node": 6,
+     "socket": "in"
+    }
+   }
+  }
+ ]
+}

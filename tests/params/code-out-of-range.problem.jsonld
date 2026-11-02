@@ -1,0 +1,38 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "params_code_out_of_range",
+ "domain": "params",
+ "version": "0.1.0",
+ "variables": [
+  {
+   "name": "cell",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "finish",
+   [
+    2,
+    0
+   ]
+  ]
+ ],
+ "codebook": {
+  "levels": [
+   2,
+   3
+  ]
+ }
+}

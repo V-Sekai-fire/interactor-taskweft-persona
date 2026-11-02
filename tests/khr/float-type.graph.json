@@ -1,0 +1,29 @@
+{
+ "types": [
+  {
+   "signature": "int"
+  },
+  {
+   "signature": "float"
+  }
+ ],
+ "variables": [
+  {
+   "id": "x",
+   "type": 0,
+   "value": [
+    0
+   ]
+  }
+ ],
+ "declarations": [
+  {
+   "op": "event/onStart"
+  }
+ ],
+ "nodes": [
+  {
+   "declaration": 0
+  }
+ ]
+}
