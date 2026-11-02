@@ -1,0 +1,47 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "campus_sample_problem",
+ "domain": "campus_sample",
+ "source": "interactor-taskweft-persona",
+ "version": "0.1.0",
+ "description": "Skill 1 is settled, skills 2 and 3 are open, and no token is held. The goal is skill 3.",
+ "variables": [
+  {
+   "name": "rfd",
+   "type": "int",
+   "init": {
+    "1": 1,
+    "2": 0,
+    "3": 0
+   }
+  },
+  {
+   "name": "token",
+   "type": "int",
+   "init": {
+    "3": 0,
+    "B1": 0
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  {
+   "goal": [
+    {
+     "pointer": "/rfd/3",
+     "eq": 1
+    }
+   ]
+  }
+ ]
+}
