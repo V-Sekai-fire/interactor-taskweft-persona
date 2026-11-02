@@ -45,7 +45,7 @@ defmodule Wasm do
   end
 end
 
-{_, 0} = System.cmd("lake", ["build", "Persona.Grid:c", "persona_witness"], cd: root)
+{_, 0} = System.cmd("lake", ["build", "Persona.Grid:c", "Persona.Web:c", "persona_witness"], cd: root)
 
 lean_c =
   for dir <- [
@@ -56,7 +56,34 @@ lean_c =
       not String.contains?(f, "Witness"),
       do: f
 
-core_c = Path.wildcard(Path.join(core, "c/{Init,Std}*.c"))
+# Init and Std whole, plus the Lean modules the JSON-LD path reaches: the closure of the
+# `initialize_*` calls from our own C into the toolchain's Lean.* C (Lean.Data.Json and what it needs).
+lean_mods =
+  for f <- Path.wildcard(Path.join(core, "c/Lean*.c")),
+      into: %{},
+      do: {"initialize_" <> (Path.basename(f, ".c") |> String.replace(".", "_")), f}
+
+reach = fn reach, pending, seen ->
+  case pending do
+    [] ->
+      seen
+
+    [f | rest] ->
+      calls =
+        ~r/initialize_[A-Za-z0-9_]+(?=\()/
+        |> Regex.scan(File.read!(f))
+        |> List.flatten()
+        |> Enum.flat_map(&List.wrap(lean_mods[&1]))
+        |> Enum.reject(&MapSet.member?(seen, &1))
+        |> Enum.uniq()
+
+      reach.(reach, rest ++ calls, MapSet.union(seen, MapSet.new(calls)))
+  end
+end
+
+core_lean = reach.(reach, lean_c ++ Path.wildcard(Path.join(core, "c/{Init,Std}*.c")), MapSet.new())
+
+core_c = Path.wildcard(Path.join(core, "c/{Init,Std}*.c")) ++ MapSet.to_list(core_lean)
 
 rt_cpp =
   for f <- Path.wildcard(Path.join(core, "lean4/src/runtime/*.cpp")),
@@ -93,7 +120,7 @@ end
 link =
   ~w(-O2 -fwasm-exceptions -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=PersonaModule
      -sENVIRONMENT=web,worker,node -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=64MB -sSTACK_SIZE=8MB
-     -sEXPORTED_FUNCTIONS=_persona_init,_persona_plan,_malloc,_free
+     -sEXPORTED_FUNCTIONS=_persona_init,_persona_plan,_persona_goals,_persona_plan_jsonld,_malloc,_free
      -sEXPORTED_RUNTIME_METHODS=ccall,cwrap -Wl,--gc-sections) ++
     Path.wildcard(Path.join(objs, "*.o")) ++ ["-o", Path.join(out, "persona.mjs")]
 

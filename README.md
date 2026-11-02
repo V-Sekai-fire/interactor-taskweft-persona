@@ -78,6 +78,13 @@ activation order, `{"plan":["activate-2",...],"reached":true}`, or a refusal by 
 (`bad_spec`, `undeclared_goal`, `unreachable`). A skill needs the skills whose variables an action
 requires, which is the `requires` field of a domain.
 
+The module also reads a RECTGTN JSON-LD domain and problem, the documents under "Domain, problem and
+plan" below. `persona_goals(domain, problem)` lists the goals the problem asks, each with whether a
+variable declares it and whether it already holds. `persona_plan_jsonld(domain, problem, goal)` plans
+the one goal named, or every goal of the problem when `goal` is empty, and answers with the plan
+document or a refusal by name (`bad_domain`, `bad_problem`, `no_goal`, `undeclared_goal`,
+`unreachable`). The RFD site's persona navigator calls these two.
+
     elixir tools/build_wasm.exs <core-dir> <out-dir>
 
 `<core-dir>` holds the C emitted for the toolchain's Init and Std (`c/`), `gen/include` and
