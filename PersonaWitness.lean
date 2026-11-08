@@ -309,6 +309,24 @@ def blocksChecks (case : String) : IO (List Check) := do
                     ok := (Persona.Jsonld.shortestOf dom sus 5).contains "limit" }]
   return out
 
+/-- The cases ported from GTPyhop's unigoal domains (`blocks_hgn`, `blocks_goal_splitting`): every problem listed in
+the case's `cases` file plans to the actions GTPyhop 2.0.2 returned, or is refused, as recorded. -/
+def unigoalChecks (case : String) : IO (List Check) := do
+  let dir := "tests/gtpyhop/" ++ case ++ "/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let names := ((← IO.FS.readFile (dir ++ "cases")).splitOn "\n").filter (· != "")
+  let mut out : List Check := []
+  for name in names do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "gtpyhop " ++ case ++ ": " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  if case == "blocks_goal_splitting" then
+    -- goal splitting's plan for goal1a is not blocks_gtn's: the encoding is not the moveblocks graph in disguise
+    let gtn := ((← IO.FS.readFile "tests/gtpyhop/blocks_gtn/goal1a.expect").splitOn "\n").filter (· != "")
+    let gs := ((← IO.FS.readFile (dir ++ "goal1a.expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "gtpyhop blocks_goal_splitting: goal1a is not the blocks_gtn plan", ok := gs != gtn && gs.length > gtn.length }]
+  return out
+
 /-- A method alternative with a graph: the graph runs on the state and its variables decide the subtasks. -/
 def graphChecks : IO (List Check) := do
   let dir := "tests/graph/"
@@ -382,7 +400,9 @@ def run : IO UInt32 := do
   let vc ← vocabChecks
   let bc ← blocksChecks "blocks_gtn"
   let bh ← blocksChecks "blocks_htn"
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh
+  let uh ← unigoalChecks "blocks_hgn"
+  let ug ← unigoalChecks "blocks_goal_splitting"
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
