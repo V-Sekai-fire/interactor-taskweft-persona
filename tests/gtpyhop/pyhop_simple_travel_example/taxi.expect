@@ -1,0 +1,3 @@
+call_taxi(me,home)
+ride_taxi(me,home,park,11)
+pay_driver(me,11,29)

@@ -405,7 +405,8 @@ def run : IO UInt32 := do
   let ul ← unigoalChecks "logistics_hgn"
   let us ← unigoalChecks "simple_htn"
   let uy ← unigoalChecks "simple_hgn"
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug ++ ul ++ us ++ uy
+  let ut ← unigoalChecks "pyhop_simple_travel_example"
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug ++ ul ++ us ++ uy ++ ut
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

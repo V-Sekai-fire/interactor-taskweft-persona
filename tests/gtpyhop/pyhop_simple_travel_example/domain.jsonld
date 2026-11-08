@@ -1,0 +1,1109 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "pyhop_simple_travel_example",
+ "source": "GTPyhop examples/pyhop_simple_travel_example",
+ "version": "0.1.0",
+ "description": "GTPyhop's copy of Pyhop's simple_travel_example: the task travel(a,x,y) with the alternatives travel_by_foot and travel_by_taxi in that order. Money is in half-units: cash 20 is 40 and the fare 1.5+0.5d is 3+d. ride_taxi and pay_driver take the fare and the cash left as arguments, computed by the method graph, because an action here only sets constants. The one distance, home to park, is dist/d.",
+ "variables": [
+  {
+   "name": "loc",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "cash",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "owe",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "dist",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "walk": {
+   "params": [
+    {
+     "name": "a",
+     "enum": "codebook"
+    },
+    {
+     "name": "x",
+     "enum": "codebook"
+    },
+    {
+     "name": "y",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/loc/[a]"
+      },
+      "b": {
+       "param": "x"
+      }
+     }
+    },
+    {
+     "pointer/set": "/loc/[a]",
+     "value": {
+      "param": "y"
+     }
+    }
+   ]
+  },
+  "call_taxi": {
+   "params": [
+    {
+     "name": "a",
+     "enum": "codebook"
+    },
+    {
+     "name": "x",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "pointer/set": "/loc/taxi",
+     "value": {
+      "param": "x"
+     }
+    }
+   ]
+  },
+  "ride_taxi": {
+   "params": [
+    {
+     "name": "a",
+     "enum": "codebook"
+    },
+    {
+     "name": "x",
+     "enum": "codebook"
+    },
+    {
+     "name": "y",
+     "enum": "codebook"
+    },
+    "fare"
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/loc/taxi"
+      },
+      "b": {
+       "param": "x"
+      }
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/loc/[a]"
+      },
+      "b": {
+       "param": "x"
+      }
+     }
+    },
+    {
+     "pointer/set": "/loc/taxi",
+     "value": {
+      "param": "y"
+     }
+    },
+    {
+     "pointer/set": "/loc/[a]",
+     "value": {
+      "param": "y"
+     }
+    },
+    {
+     "pointer/set": "/owe/[a]",
+     "value": {
+      "param": "fare"
+     }
+    }
+   ]
+  },
+  "pay_driver": {
+   "params": [
+    {
+     "name": "a",
+     "enum": "codebook"
+    },
+    "fare",
+    "cash2"
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/owe/[a]"
+      },
+      "b": {
+       "param": "fare"
+      }
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/cash/[a]"
+      },
+      "b": {
+       "param": "fare"
+      }
+     }
+    },
+    {
+     "pointer/set": "/cash/[a]",
+     "value": {
+      "param": "cash2"
+     }
+    },
+    {
+     "pointer/set": "/owe/[a]",
+     "value": 0
+    }
+   ]
+  }
+ },
+ "methods": {
+  "travel": {
+   "params": [
+    "a",
+    "x",
+    "y"
+   ],
+   "alternatives": [
+    {
+     "name": "by-foot",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "a",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "d",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "fare",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cash",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cash2",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "foot",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "taxi",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/add"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/le"
+       },
+       {
+        "op": "type/boolToInt"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/dist/d"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 0,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/cash/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 3,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "type": 0,
+          "value": [
+           3
+          ]
+         },
+         "b": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         },
+         "b": {
+          "node": 9,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 12,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "node": 14,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 16,
+          "socket": "value"
+         },
+         "b": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 18,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 19,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "flows": {
+         "0": {
+          "node": 1,
+          "socket": "in"
+         },
+         "1": {
+          "node": 4,
+          "socket": "in"
+         },
+         "2": {
+          "node": 7,
+          "socket": "in"
+         },
+         "3": {
+          "node": 11,
+          "socket": "in"
+         },
+         "4": {
+          "node": 15,
+          "socket": "in"
+         },
+         "5": {
+          "node": 20,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "flows": {
+         "out": {
+          "node": 21,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/foot"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "walk",
+       {
+        "param": "a"
+       },
+       {
+        "param": "x"
+       },
+       {
+        "param": "y"
+       }
+      ]
+     ]
+    },
+    {
+     "name": "by-taxi",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "a",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "d",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "fare",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cash",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cash2",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "foot",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "taxi",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/add"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/le"
+       },
+       {
+        "op": "type/boolToInt"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/dist/d"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 0,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/cash/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 3,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "type": 0,
+          "value": [
+           3
+          ]
+         },
+         "b": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         },
+         "b": {
+          "node": 9,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 12,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "node": 14,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 16,
+          "socket": "value"
+         },
+         "b": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 18,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 19,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "flows": {
+         "0": {
+          "node": 1,
+          "socket": "in"
+         },
+         "1": {
+          "node": 4,
+          "socket": "in"
+         },
+         "2": {
+          "node": 7,
+          "socket": "in"
+         },
+         "3": {
+          "node": 11,
+          "socket": "in"
+         },
+         "4": {
+          "node": 15,
+          "socket": "in"
+         },
+         "5": {
+          "node": 20,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "flows": {
+         "out": {
+          "node": 21,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/taxi"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "call_taxi",
+       {
+        "param": "a"
+       },
+       {
+        "param": "x"
+       }
+      ],
+      [
+       "ride_taxi",
+       {
+        "param": "a"
+       },
+       {
+        "param": "x"
+       },
+       {
+        "param": "y"
+       },
+       {
+        "param": "fare"
+       }
+      ],
+      [
+       "pay_driver",
+       {
+        "param": "a"
+       },
+       {
+        "param": "fare"
+       },
+       {
+        "param": "cash2"
+       }
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}
