@@ -297,7 +297,7 @@ def blocksChecks (case : String) : IO (List Check) := do
   let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
   let mut out : List Check := []
   for name in ["pickup-a", "pickup-b", "take-b", "pickup-c", "take-a", "take-c", "take-a-put-a-table",
-               "goal1a", "goal1b", "sussman"] do
+               "goal1a", "goal1b", "sussman", "goal2a", "goal2b", "goal2b-done", "goal3"] do
     let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
     let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
     out := out ++ [{ name := "gtpyhop " ++ case ++ ": " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
