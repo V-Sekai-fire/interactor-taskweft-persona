@@ -297,7 +297,7 @@ def blocksChecks (case : String) : IO (List Check) := do
   let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
   let mut out : List Check := []
   for name in ["pickup-a", "pickup-b", "take-b", "pickup-c", "take-a", "take-c", "take-a-put-a-table",
-               "goal1a", "goal1b", "sussman"] do
+               "goal1a", "goal1b", "sussman", "goal2a", "goal2b", "goal2b-done", "goal3"] do
     let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
     let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
     out := out ++ [{ name := "gtpyhop " ++ case ++ ": " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
@@ -307,6 +307,24 @@ def blocksChecks (case : String) : IO (List Check) := do
                    ok := best.contains "\"length\":6" && best.contains "\"optimal\":true" }
                 , { name := "gtpyhop " ++ case ++ ": a bound of five is refused as limit, since the top task is not done while a block can move",
                     ok := (Persona.Jsonld.shortestOf dom sus 5).contains "limit" }]
+  return out
+
+/-- The cases ported from GTPyhop's unigoal domains (`blocks_hgn`, `blocks_goal_splitting`): every problem listed in
+the case's `cases` file plans to the actions GTPyhop 2.0.2 returned, or is refused, as recorded. -/
+def unigoalChecks (case : String) : IO (List Check) := do
+  let dir := "tests/gtpyhop/" ++ case ++ "/"
+  let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
+  let names := ((← IO.FS.readFile (dir ++ "cases")).splitOn "\n").filter (· != "")
+  let mut out : List Check := []
+  for name in names do
+    let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
+    let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "gtpyhop " ++ case ++ ": " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+  if case == "blocks_goal_splitting" then
+    -- goal splitting's plan for goal1a is not blocks_gtn's: the encoding is not the moveblocks graph in disguise
+    let gtn := ((← IO.FS.readFile "tests/gtpyhop/blocks_gtn/goal1a.expect").splitOn "\n").filter (· != "")
+    let gs := ((← IO.FS.readFile (dir ++ "goal1a.expect")).splitOn "\n").filter (· != "")
+    out := out ++ [{ name := "gtpyhop blocks_goal_splitting: goal1a is not the blocks_gtn plan", ok := gs != gtn && gs.length > gtn.length }]
   return out
 
 /-- A method alternative with a graph: the graph runs on the state and its variables decide the subtasks. -/
@@ -382,7 +400,13 @@ def run : IO UInt32 := do
   let vc ← vocabChecks
   let bc ← blocksChecks "blocks_gtn"
   let bh ← blocksChecks "blocks_htn"
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh
+  let uh ← unigoalChecks "blocks_hgn"
+  let ug ← unigoalChecks "blocks_goal_splitting"
+  let ul ← unigoalChecks "logistics_hgn"
+  let us ← unigoalChecks "simple_htn"
+  let uy ← unigoalChecks "simple_hgn"
+  let ut ← unigoalChecks "pyhop_simple_travel_example"
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug ++ ul ++ us ++ uy ++ ut
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

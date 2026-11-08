@@ -1,0 +1,345 @@
+[
+{
+"state": {
+"loc": {
+"alice": "home_a",
+"bob": "home_b",
+"taxi1": "park",
+"taxi2": "station"
+},
+"cash": {
+"alice": 20,
+"bob": 15
+},
+"owe": {
+"alice": 0,
+"bob": 0
+}
+},
+"order": {
+"loc": [
+"alice",
+"bob",
+"taxi1",
+"taxi2"
+],
+"cash": [
+"alice",
+"bob"
+],
+"owe": [
+"alice",
+"bob"
+]
+},
+"todo": [
+[
+"travel",
+"alice",
+"park"
+]
+],
+"result": [
+[
+"call_taxi",
+"alice",
+"home_a"
+],
+[
+"ride_taxi",
+"alice",
+"park"
+],
+[
+"pay_driver",
+"alice",
+"park"
+]
+]
+},
+{
+"state": {
+"loc": {
+"alice": "home_a",
+"bob": "home_b",
+"taxi1": "park",
+"taxi2": "station"
+},
+"cash": {
+"alice": 20,
+"bob": 15
+},
+"owe": {
+"alice": 0,
+"bob": 0
+}
+},
+"order": {
+"loc": [
+"alice",
+"bob",
+"taxi1",
+"taxi2"
+],
+"cash": [
+"alice",
+"bob"
+],
+"owe": [
+"alice",
+"bob"
+]
+},
+"todo": [
+[
+"travel",
+"alice",
+"park"
+]
+],
+"result": [
+[
+"call_taxi",
+"alice",
+"home_a"
+],
+[
+"ride_taxi",
+"alice",
+"park"
+],
+[
+"pay_driver",
+"alice",
+"park"
+]
+]
+},
+{
+"state": {
+"loc": {
+"alice": "home_a",
+"bob": "home_b",
+"taxi1": "park",
+"taxi2": "station"
+},
+"cash": {
+"alice": 20,
+"bob": 15
+},
+"owe": {
+"alice": 0,
+"bob": 0
+}
+},
+"order": {
+"loc": [
+"alice",
+"bob",
+"taxi1",
+"taxi2"
+],
+"cash": [
+"alice",
+"bob"
+],
+"owe": [
+"alice",
+"bob"
+]
+},
+"todo": [
+[
+"travel",
+"alice",
+"park"
+]
+],
+"result": [
+[
+"call_taxi",
+"alice",
+"home_a"
+],
+[
+"ride_taxi",
+"alice",
+"park"
+],
+[
+"pay_driver",
+"alice",
+"park"
+]
+]
+},
+{
+"state": {
+"loc": {
+"alice": "home_a",
+"bob": "home_b",
+"taxi1": "park",
+"taxi2": "station"
+},
+"cash": {
+"alice": 20,
+"bob": 15
+},
+"owe": {
+"alice": 0,
+"bob": 0
+}
+},
+"order": {
+"loc": [
+"alice",
+"bob",
+"taxi1",
+"taxi2"
+],
+"cash": [
+"alice",
+"bob"
+],
+"owe": [
+"alice",
+"bob"
+]
+},
+"todo": [
+[
+"travel",
+"alice",
+"park"
+]
+],
+"result": [
+[
+"call_taxi",
+"alice",
+"home_a"
+],
+[
+"ride_taxi",
+"alice",
+"park"
+],
+[
+"pay_driver",
+"alice",
+"park"
+]
+]
+},
+{
+"state": {
+"loc": {
+"alice": "home_a",
+"bob": "home_b",
+"taxi1": "park",
+"taxi2": "station"
+},
+"cash": {
+"alice": 20,
+"bob": 15
+},
+"owe": {
+"alice": 0,
+"bob": 0
+}
+},
+"order": {
+"loc": [
+"alice",
+"bob",
+"taxi1",
+"taxi2"
+],
+"cash": [
+"alice",
+"bob"
+],
+"owe": [
+"alice",
+"bob"
+]
+},
+"todo": [
+[
+"travel",
+"alice",
+"park"
+],
+[
+"travel",
+"bob",
+"park"
+]
+],
+"result": [
+[
+"call_taxi",
+"alice",
+"home_a"
+],
+[
+"ride_taxi",
+"alice",
+"park"
+],
+[
+"pay_driver",
+"alice",
+"park"
+],
+[
+"walk",
+"bob",
+"home_b",
+"park"
+]
+]
+},
+{
+"state": {
+"loc": {
+"alice": "park",
+"bob": "home_b",
+"taxi1": "park",
+"taxi2": "station"
+},
+"cash": {
+"alice": 14.5,
+"bob": 15
+},
+"owe": {
+"alice": 0,
+"bob": 0
+}
+},
+"order": {
+"loc": [
+"alice",
+"bob",
+"taxi1",
+"taxi2"
+],
+"cash": [
+"alice",
+"bob"
+],
+"owe": [
+"alice",
+"bob"
+]
+},
+"todo": [
+[
+"travel",
+"alice",
+"park"
+]
+],
+"result": []
+}
+]

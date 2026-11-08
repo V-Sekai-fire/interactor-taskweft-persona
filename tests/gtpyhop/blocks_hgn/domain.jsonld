@@ -1,0 +1,7100 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "blocks_hgn",
+ "source": "GTPyhop examples/blocks_hgn",
+ "version": "0.1.0",
+ "description": "GTPyhop's blocks_hgn. Its unigoal methods on pos are the task pos(x,y); the multigoal method moveblocks asks for pos(x,hand) and then pos(x,destination). A block is its index in the problem's codebook. pos is a block, table (-1) or hand (-2); clear is 0 or 1; holding is a block, or nothing (-4); the goal is goal/<block>, a block, table, or free (-3).",
+ "enums": {
+  "place": {
+   "table": -1,
+   "hand": -2,
+   "free": -3,
+   "nothing": -4
+  }
+ },
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "clear",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "holding",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "goal",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "count",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "pickup": {
+   "params": [
+    {
+     "name": "x",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/pos/[x]"
+      },
+      "b": "table"
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/clear/[x]"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/holding/hand"
+      },
+      "b": "nothing"
+     }
+    },
+    {
+     "pointer/set": "/pos/[x]",
+     "value": "hand"
+    },
+    {
+     "pointer/set": "/clear/[x]",
+     "value": 0
+    },
+    {
+     "pointer/set": "/holding/hand",
+     "value": {
+      "param": "x"
+     }
+    }
+   ]
+  },
+  "unstack": {
+   "params": [
+    {
+     "name": "b1",
+     "enum": "codebook"
+    },
+    {
+     "name": "b2",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/pos/[b1]"
+      },
+      "b": {
+       "param": "b2"
+      }
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/clear/[b1]"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/holding/hand"
+      },
+      "b": "nothing"
+     }
+    },
+    {
+     "pointer/set": "/pos/[b1]",
+     "value": "hand"
+    },
+    {
+     "pointer/set": "/clear/[b1]",
+     "value": 0
+    },
+    {
+     "pointer/set": "/holding/hand",
+     "value": {
+      "param": "b1"
+     }
+    },
+    {
+     "pointer/set": "/clear/[b2]",
+     "value": 1
+    }
+   ]
+  },
+  "putdown": {
+   "params": [
+    {
+     "name": "b1",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/pos/[b1]"
+      },
+      "b": "hand"
+     }
+    },
+    {
+     "pointer/set": "/pos/[b1]",
+     "value": "table"
+    },
+    {
+     "pointer/set": "/clear/[b1]",
+     "value": 1
+    },
+    {
+     "pointer/set": "/holding/hand",
+     "value": "nothing"
+    }
+   ]
+  },
+  "stack": {
+   "params": [
+    {
+     "name": "b1",
+     "enum": "codebook"
+    },
+    {
+     "name": "b2",
+     "enum": "codebook"
+    }
+   ],
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/pos/[b1]"
+      },
+      "b": "hand"
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/clear/[b2]"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/pos/[b1]",
+     "value": {
+      "param": "b2"
+     }
+    },
+    {
+     "pointer/set": "/clear/[b1]",
+     "value": 1
+    },
+    {
+     "pointer/set": "/holding/hand",
+     "value": "nothing"
+    },
+    {
+     "pointer/set": "/clear/[b2]",
+     "value": 0
+    }
+   ]
+  }
+ },
+ "methods": {
+  "pos": {
+   "params": [
+    "x",
+    "y"
+   ],
+   "alternatives": [
+    {
+     "name": "done",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/pos/[x]"
+        },
+        "b": {
+         "param": "y"
+        }
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "pickup",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "y",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yh",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yt",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cur",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "pb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "type/boolToInt"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 0,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           5
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 15,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 16,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "flows": {
+         "0": {
+          "node": 3,
+          "socket": "in"
+         },
+         "1": {
+          "node": 7,
+          "socket": "in"
+         },
+         "2": {
+          "node": 11,
+          "socket": "in"
+         },
+         "3": {
+          "node": 14,
+          "socket": "in"
+         },
+         "4": {
+          "node": 18,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "flows": {
+         "out": {
+          "node": 19,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/yh"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/clear/[x]"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/holding/hand"
+        },
+        "b": "nothing"
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/pos/[x]"
+        },
+        "b": "table"
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "pickup",
+       {
+        "param": "x"
+       }
+      ]
+     ]
+    },
+    {
+     "name": "unstack",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "y",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yh",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yt",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cur",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "pb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "type/boolToInt"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 0,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           5
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 15,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 16,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "flows": {
+         "0": {
+          "node": 3,
+          "socket": "in"
+         },
+         "1": {
+          "node": 7,
+          "socket": "in"
+         },
+         "2": {
+          "node": 11,
+          "socket": "in"
+         },
+         "3": {
+          "node": 14,
+          "socket": "in"
+         },
+         "4": {
+          "node": 18,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "flows": {
+         "out": {
+          "node": 19,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/yh"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/clear/[x]"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/holding/hand"
+        },
+        "b": "nothing"
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/pb"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "unstack",
+       {
+        "param": "x"
+       },
+       {
+        "param": "cur"
+       }
+      ]
+     ]
+    },
+    {
+     "name": "putdown",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "y",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yh",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yt",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cur",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "pb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "type/boolToInt"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 0,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           5
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 15,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 16,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "flows": {
+         "0": {
+          "node": 3,
+          "socket": "in"
+         },
+         "1": {
+          "node": 7,
+          "socket": "in"
+         },
+         "2": {
+          "node": 11,
+          "socket": "in"
+         },
+         "3": {
+          "node": 14,
+          "socket": "in"
+         },
+         "4": {
+          "node": 18,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "flows": {
+         "out": {
+          "node": 19,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/yt"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/pos/[x]"
+        },
+        "b": "hand"
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "putdown",
+       {
+        "param": "x"
+       }
+      ]
+     ]
+    },
+    {
+     "name": "stack",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "y",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yh",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yt",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "yb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cur",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "pb",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "type/boolToInt"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 0,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "variable": {
+          "value": [
+           5
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 15,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 16,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "flows": {
+         "0": {
+          "node": 3,
+          "socket": "in"
+         },
+         "1": {
+          "node": 7,
+          "socket": "in"
+         },
+         "2": {
+          "node": 11,
+          "socket": "in"
+         },
+         "3": {
+          "node": 14,
+          "socket": "in"
+         },
+         "4": {
+          "node": 18,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "flows": {
+         "out": {
+          "node": 19,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/yb"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/pos/[x]"
+        },
+        "b": "hand"
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/clear/[y]"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "stack",
+       {
+        "param": "x"
+       },
+       {
+        "param": "y"
+       }
+      ]
+     ]
+    }
+   ]
+  },
+  "moveblocks": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "to-final-place",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "found",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "dest",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cur1",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "res1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "go1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "cur2",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "res2",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "go2",
+        "type": 0,
+        "value": [
+         1
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/for"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "math/not"
+       },
+       {
+        "op": "math/and"
+       },
+       {
+        "op": "flow/branch"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "flow/while"
+       },
+       {
+        "op": "math/or"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/count/blocks"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "startIndex": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         },
+         "endIndex": {
+          "node": 0,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 104,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 2,
+          "socket": "in"
+         },
+         "1": {
+          "node": 3,
+          "socket": "in"
+         },
+         "2": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 7,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 11,
+          "socket": "value"
+         },
+         "b": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 14,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         },
+         "b": {
+          "node": 15,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 18,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 20,
+          "socket": "in"
+         },
+         "1": {
+          "node": 21,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 24,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 25,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 19,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 23,
+          "socket": "in"
+         },
+         "false": {
+          "node": 26,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 16,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 22,
+          "socket": "in"
+         },
+         "false": {
+          "node": 27,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           5
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 29,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 31,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 32,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 30,
+          "socket": "value"
+         },
+         "b": {
+          "node": 33,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 10,
+        "values": {
+         "condition": {
+          "node": 34,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 28,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 5,
+          "socket": "in"
+         },
+         "1": {
+          "node": 35,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 37,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 37,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 11,
+        "values": {
+         "a": {
+          "node": 38,
+          "socket": "value"
+         },
+         "b": {
+          "node": 39,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 41,
+          "socket": "in"
+         },
+         "1": {
+          "node": 42,
+          "socket": "in"
+         },
+         "2": {
+          "node": 43,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 45,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           7
+          ]
+         }
+        },
+        "values": {
+         "7": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           8
+          ]
+         }
+        },
+        "values": {
+         "8": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 46,
+          "socket": "in"
+         },
+         "1": {
+          "node": 47,
+          "socket": "in"
+         },
+         "2": {
+          "node": 48,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 50,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 51,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 52,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 54,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 56,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 55,
+          "socket": "value"
+         },
+         "b": {
+          "node": 57,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 58,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 53,
+          "socket": "value"
+         },
+         "b": {
+          "node": 59,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 61,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 62,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           7
+          ]
+         }
+        },
+        "values": {
+         "7": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           8
+          ]
+         }
+        },
+        "values": {
+         "8": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 64,
+          "socket": "in"
+         },
+         "1": {
+          "node": 65,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           8
+          ]
+         }
+        },
+        "values": {
+         "8": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 68,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 69,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 63,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 67,
+          "socket": "in"
+         },
+         "false": {
+          "node": 70,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 60,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 66,
+          "socket": "in"
+         },
+         "false": {
+          "node": 71,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           8
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 73,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 75,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 76,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 74,
+          "socket": "value"
+         },
+         "b": {
+          "node": 77,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 10,
+        "values": {
+         "condition": {
+          "node": 78,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 72,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 49,
+          "socket": "in"
+         },
+         "1": {
+          "node": 79,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           7
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 82,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/clear/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 81,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 84,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 83,
+          "socket": "value"
+         },
+         "b": {
+          "node": 85,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 89,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 87,
+          "socket": "in"
+         },
+         "1": {
+          "node": 88,
+          "socket": "in"
+         },
+         "2": {
+          "node": 90,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           4
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 92,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 86,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 91,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 80,
+          "socket": "in"
+         },
+         "1": {
+          "node": 94,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 40,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 44,
+          "socket": "in"
+         },
+         "false": {
+          "node": 95,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 93,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 96,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 36,
+          "socket": "in"
+         },
+         "1": {
+          "node": 97,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 99,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/clear/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 101,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 100,
+          "socket": "value"
+         },
+         "b": {
+          "node": 102,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 103,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 98,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 12,
+        "flows": {
+         "out": {
+          "node": 1,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/found"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "pos",
+       {
+        "param": "x"
+       },
+       "hand"
+      ],
+      [
+       "pos",
+       {
+        "param": "x"
+       },
+       {
+        "param": "dest"
+       }
+      ],
+      [
+       "moveblocks"
+      ]
+     ]
+    },
+    {
+     "name": "out-of-the-way",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "found",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cur1",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "res1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "go1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/for"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "math/not"
+       },
+       {
+        "op": "math/and"
+       },
+       {
+        "op": "flow/branch"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "flow/while"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/count/blocks"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "startIndex": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         },
+         "endIndex": {
+          "node": 0,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 53,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 2,
+          "socket": "in"
+         },
+         "1": {
+          "node": 3,
+          "socket": "in"
+         },
+         "2": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 7,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 11,
+          "socket": "value"
+         },
+         "b": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 14,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         },
+         "b": {
+          "node": 15,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 18,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 20,
+          "socket": "in"
+         },
+         "1": {
+          "node": 21,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 24,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           2
+          ]
+         }
+        },
+        "values": {
+         "2": {
+          "node": 25,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 19,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 23,
+          "socket": "in"
+         },
+         "false": {
+          "node": 26,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 16,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 22,
+          "socket": "in"
+         },
+         "false": {
+          "node": 27,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           4
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 29,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           2
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 31,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 32,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 30,
+          "socket": "value"
+         },
+         "b": {
+          "node": 33,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 10,
+        "values": {
+         "condition": {
+          "node": 34,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 28,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 5,
+          "socket": "in"
+         },
+         "1": {
+          "node": 35,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 37,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 39,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 40,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 38,
+          "socket": "value"
+         },
+         "b": {
+          "node": 41,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 43,
+          "socket": "in"
+         },
+         "1": {
+          "node": 44,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 42,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 45,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 36,
+          "socket": "in"
+         },
+         "1": {
+          "node": 46,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 48,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/clear/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 50,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 49,
+          "socket": "value"
+         },
+         "b": {
+          "node": 51,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 52,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 47,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 11,
+        "flows": {
+         "out": {
+          "node": 1,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/found"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "pos",
+       {
+        "param": "x"
+       },
+       "hand"
+      ],
+      [
+       "pos",
+       {
+        "param": "x"
+       },
+       "table"
+      ],
+      [
+       "moveblocks"
+      ]
+     ]
+    },
+    {
+     "name": "done",
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "found",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "x",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "dest",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "cura1",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "resa1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "goa1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "cura2",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "resa2",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "goa2",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "curb1",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "resb1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       },
+       {
+        "id": "gob1",
+        "type": 0,
+        "value": [
+         1
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "flow/for"
+       },
+       {
+        "op": "variable/set"
+       },
+       {
+        "op": "flow/sequence"
+       },
+       {
+        "op": "variable/get"
+       },
+       {
+        "op": "math/eq"
+       },
+       {
+        "op": "math/not"
+       },
+       {
+        "op": "math/and"
+       },
+       {
+        "op": "flow/branch"
+       },
+       {
+        "op": "math/ge"
+       },
+       {
+        "op": "flow/while"
+       },
+       {
+        "op": "math/or"
+       },
+       {
+        "op": "event/onStart"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/count/blocks"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "startIndex": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         },
+         "endIndex": {
+          "node": 0,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 98,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 2,
+          "socket": "in"
+         },
+         "1": {
+          "node": 3,
+          "socket": "in"
+         },
+         "2": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 7,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 8,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 10,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 12,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 11,
+          "socket": "value"
+         },
+         "b": {
+          "node": 13,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 14,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 9,
+          "socket": "value"
+         },
+         "b": {
+          "node": 15,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 17,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 18,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           4
+          ]
+         }
+        },
+        "values": {
+         "4": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 20,
+          "socket": "in"
+         },
+         "1": {
+          "node": 21,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           5
+          ]
+         }
+        },
+        "values": {
+         "5": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 24,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           3
+          ]
+         }
+        },
+        "values": {
+         "3": {
+          "node": 25,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 19,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 23,
+          "socket": "in"
+         },
+         "false": {
+          "node": 26,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 16,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 22,
+          "socket": "in"
+         },
+         "false": {
+          "node": 27,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           5
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 29,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 31,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 32,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 30,
+          "socket": "value"
+         },
+         "b": {
+          "node": 33,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 10,
+        "values": {
+         "condition": {
+          "node": 34,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 28,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 5,
+          "socket": "in"
+         },
+         "1": {
+          "node": 35,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 37,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 37,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 11,
+        "values": {
+         "a": {
+          "node": 38,
+          "socket": "value"
+         },
+         "b": {
+          "node": 39,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 41,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           7
+          ]
+         }
+        },
+        "values": {
+         "7": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           8
+          ]
+         }
+        },
+        "values": {
+         "8": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 42,
+          "socket": "in"
+         },
+         "1": {
+          "node": 43,
+          "socket": "in"
+         },
+         "2": {
+          "node": 44,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 46,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 47,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 48,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 50,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 52,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 51,
+          "socket": "value"
+         },
+         "b": {
+          "node": 53,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 54,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 49,
+          "socket": "value"
+         },
+         "b": {
+          "node": 55,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 57,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 58,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           7
+          ]
+         }
+        },
+        "values": {
+         "7": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           8
+          ]
+         }
+        },
+        "values": {
+         "8": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 60,
+          "socket": "in"
+         },
+         "1": {
+          "node": 61,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           8
+          ]
+         }
+        },
+        "values": {
+         "8": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 64,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           6
+          ]
+         }
+        },
+        "values": {
+         "6": {
+          "node": 65,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 59,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 63,
+          "socket": "in"
+         },
+         "false": {
+          "node": 66,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 56,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 62,
+          "socket": "in"
+         },
+         "false": {
+          "node": 67,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           8
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 69,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           6
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 71,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 72,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 70,
+          "socket": "value"
+         },
+         "b": {
+          "node": 73,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 10,
+        "values": {
+         "condition": {
+          "node": 74,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 68,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 45,
+          "socket": "in"
+         },
+         "1": {
+          "node": 75,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           7
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 78,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/clear/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 77,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 80,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 79,
+          "socket": "value"
+         },
+         "b": {
+          "node": 81,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 83,
+          "socket": "in"
+         },
+         "1": {
+          "node": 84,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           4
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 86,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 82,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 85,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 76,
+          "socket": "in"
+         },
+         "1": {
+          "node": 88,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 40,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 85,
+          "socket": "in"
+         },
+         "false": {
+          "node": 89,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 87,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 90,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 36,
+          "socket": "in"
+         },
+         "1": {
+          "node": 91,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 93,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/clear/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 1,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 95,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 94,
+          "socket": "value"
+         },
+         "b": {
+          "node": 96,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 97,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 92,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "values": {
+         "startIndex": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         },
+         "endIndex": {
+          "node": 0,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 151,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           9
+          ]
+         }
+        },
+        "values": {
+         "9": {
+          "node": 99,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           10
+          ]
+         }
+        },
+        "values": {
+         "10": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           11
+          ]
+         }
+        },
+        "values": {
+         "11": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 100,
+          "socket": "in"
+         },
+         "1": {
+          "node": 101,
+          "socket": "in"
+         },
+         "2": {
+          "node": 102,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           9
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 104,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 105,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -3
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 106,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           9
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/goal/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 108,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           9
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 110,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 109,
+          "socket": "value"
+         },
+         "b": {
+          "node": 111,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 112,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 107,
+          "socket": "value"
+         },
+         "b": {
+          "node": 113,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           9
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 115,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 116,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           10
+          ]
+         }
+        },
+        "values": {
+         "10": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           11
+          ]
+         }
+        },
+        "values": {
+         "11": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 118,
+          "socket": "in"
+         },
+         "1": {
+          "node": 119,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           11
+          ]
+         }
+        },
+        "values": {
+         "11": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           9
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[c]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "c": {
+          "node": 122,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           9
+          ]
+         }
+        },
+        "values": {
+         "9": {
+          "node": 123,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 117,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 121,
+          "socket": "in"
+         },
+         "false": {
+          "node": 124,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 114,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 120,
+          "socket": "in"
+         },
+         "false": {
+          "node": 125,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           11
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 127,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           9
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 129,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 130,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 128,
+          "socket": "value"
+         },
+         "b": {
+          "node": 131,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 10,
+        "values": {
+         "condition": {
+          "node": 132,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "loopBody": {
+          "node": 126,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 103,
+          "socket": "in"
+         },
+         "1": {
+          "node": 133,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           10
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 135,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/pos/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 99,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 137,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           -1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "values": {
+         "a": {
+          "node": 138,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 136,
+          "socket": "value"
+         },
+         "b": {
+          "node": 139,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "configuration": {
+         "variables": {
+          "value": [
+           1
+          ]
+         }
+        },
+        "values": {
+         "1": {
+          "node": 99,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 141,
+          "socket": "in"
+         },
+         "1": {
+          "node": 142,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 140,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 143,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 134,
+          "socket": "in"
+         },
+         "1": {
+          "node": 144,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variable": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 146,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 0,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/clear/[b]"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "b": {
+          "node": 99,
+          "socket": "index"
+         }
+        }
+       },
+       {
+        "declaration": 9,
+        "values": {
+         "a": {
+          "node": 148,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 7,
+        "values": {
+         "a": {
+          "node": 147,
+          "socket": "value"
+         },
+         "b": {
+          "node": 149,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 8,
+        "values": {
+         "condition": {
+          "node": 150,
+          "socket": "value"
+         }
+        },
+        "flows": {
+         "true": {
+          "node": 145,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "flows": {
+         "0": {
+          "node": 1,
+          "socket": "in"
+         },
+         "1": {
+          "node": 99,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 12,
+        "flows": {
+         "out": {
+          "node": 152,
+          "socket": "in"
+         }
+        }
+       }
+      ]
+     },
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/found"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": []
+    }
+   ]
+  }
+ }
+}

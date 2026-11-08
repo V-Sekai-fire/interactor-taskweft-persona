@@ -1,0 +1,69 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "blocks_hgn_sussman",
+ "domain": "blocks_hgn",
+ "version": "0.1.0",
+ "codebook": [
+  "a",
+  "b",
+  "c"
+ ],
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {
+    "a": "table",
+    "b": "table",
+    "c": "a"
+   }
+  },
+  {
+   "name": "clear",
+   "type": "int",
+   "init": {
+    "a": false,
+    "b": true,
+    "c": true
+   }
+  },
+  {
+   "name": "holding",
+   "type": "int",
+   "init": {
+    "hand": "nothing"
+   }
+  },
+  {
+   "name": "goal",
+   "type": "int",
+   "init": {
+    "a": "b",
+    "b": "c",
+    "c": "free"
+   }
+  },
+  {
+   "name": "count",
+   "type": "int",
+   "init": {
+    "blocks": 3
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "moveblocks"
+  ]
+ ]
+}

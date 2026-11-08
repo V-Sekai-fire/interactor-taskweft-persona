@@ -1,0 +1,4 @@
+call_taxi(alice,home_a)
+ride_taxi(alice,home_a,park,11)
+pay_driver(alice,park,11,29)
+walk(bob,home_b,park)

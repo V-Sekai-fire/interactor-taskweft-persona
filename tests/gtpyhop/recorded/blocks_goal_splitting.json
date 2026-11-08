@@ -1,0 +1,344 @@
+[
+{
+"state": {
+"pos": {
+"a": "b",
+"b": "table",
+"c": "table"
+},
+"clear": {
+"c": true,
+"b": false,
+"a": true
+},
+"holding": {
+"hand": false
+}
+},
+"order": {
+"pos": [
+"a",
+"b",
+"c"
+],
+"clear": [
+"c",
+"b",
+"a"
+],
+"holding": [
+"hand"
+]
+},
+"todo": [
+{
+"multigoal": {
+"pos": {
+"c": "b",
+"b": "a",
+"a": "table"
+}
+}
+}
+],
+"result": [
+[
+"unstack",
+"a",
+"b"
+],
+[
+"putdown",
+"a"
+],
+[
+"pickup",
+"c"
+],
+[
+"stack",
+"c",
+"b"
+],
+[
+"unstack",
+"c",
+"b"
+],
+[
+"putdown",
+"c"
+],
+[
+"pickup",
+"b"
+],
+[
+"stack",
+"b",
+"a"
+],
+[
+"pickup",
+"c"
+],
+[
+"stack",
+"c",
+"b"
+]
+]
+},
+{
+"state": {
+"pos": {
+"a": "b",
+"b": "table",
+"c": "table"
+},
+"clear": {
+"c": true,
+"b": false,
+"a": true
+},
+"holding": {
+"hand": false
+}
+},
+"order": {
+"pos": [
+"a",
+"b",
+"c"
+],
+"clear": [
+"c",
+"b",
+"a"
+],
+"holding": [
+"hand"
+]
+},
+"todo": [
+{
+"multigoal": {
+"pos": {
+"c": "b",
+"b": "a"
+}
+}
+}
+],
+"result": [
+[
+"unstack",
+"a",
+"b"
+],
+[
+"putdown",
+"a"
+],
+[
+"pickup",
+"c"
+],
+[
+"stack",
+"c",
+"b"
+],
+[
+"unstack",
+"c",
+"b"
+],
+[
+"putdown",
+"c"
+],
+[
+"pickup",
+"b"
+],
+[
+"stack",
+"b",
+"a"
+],
+[
+"pickup",
+"c"
+],
+[
+"stack",
+"c",
+"b"
+]
+]
+},
+{
+"state": {
+"pos": {
+"a": "c",
+"b": "d",
+"c": "table",
+"d": "table"
+},
+"clear": {
+"a": true,
+"c": false,
+"b": true,
+"d": false
+},
+"holding": {
+"hand": false
+}
+},
+"order": {
+"pos": [
+"a",
+"b",
+"c",
+"d"
+],
+"clear": [
+"a",
+"c",
+"b",
+"d"
+],
+"holding": [
+"hand"
+]
+},
+"todo": [
+{
+"multigoal": {
+"pos": {
+"b": "c",
+"a": "d",
+"c": "table",
+"d": "table"
+},
+"clear": {
+"a": true,
+"c": false,
+"b": true,
+"d": false
+},
+"holding": {
+"hand": false
+}
+}
+}
+],
+"result": [
+[
+"unstack",
+"a",
+"c"
+],
+[
+"putdown",
+"a"
+],
+[
+"unstack",
+"b",
+"d"
+],
+[
+"stack",
+"b",
+"c"
+],
+[
+"pickup",
+"a"
+],
+[
+"stack",
+"a",
+"d"
+]
+]
+},
+{
+"state": {
+"pos": {
+"a": "c",
+"b": "d",
+"c": "table",
+"d": "table"
+},
+"clear": {
+"a": true,
+"c": false,
+"b": true,
+"d": false
+},
+"holding": {
+"hand": false
+}
+},
+"order": {
+"pos": [
+"a",
+"b",
+"c",
+"d"
+],
+"clear": [
+"a",
+"c",
+"b",
+"d"
+],
+"holding": [
+"hand"
+]
+},
+"todo": [
+{
+"multigoal": {
+"pos": {
+"b": "c",
+"a": "d"
+}
+}
+}
+],
+"result": [
+[
+"unstack",
+"a",
+"c"
+],
+[
+"putdown",
+"a"
+],
+[
+"unstack",
+"b",
+"d"
+],
+[
+"stack",
+"b",
+"c"
+],
+[
+"pickup",
+"a"
+],
+[
+"stack",
+"a",
+"d"
+]
+]
+}
+]

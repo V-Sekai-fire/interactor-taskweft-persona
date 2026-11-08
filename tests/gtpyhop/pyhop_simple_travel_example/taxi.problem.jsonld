@@ -1,0 +1,63 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "pyhop_simple_travel_example_taxi",
+ "domain": "pyhop_simple_travel_example",
+ "version": "0.1.0",
+ "codebook": [
+  "me",
+  "taxi",
+  "home",
+  "park"
+ ],
+ "variables": [
+  {
+   "name": "loc",
+   "type": "int",
+   "init": {
+    "me": "home",
+    "taxi": "park",
+    "home": "home",
+    "park": "park"
+   }
+  },
+  {
+   "name": "cash",
+   "type": "int",
+   "init": {
+    "me": 40
+   }
+  },
+  {
+   "name": "owe",
+   "type": "int",
+   "init": {
+    "me": 0
+   }
+  },
+  {
+   "name": "dist",
+   "type": "int",
+   "init": {
+    "d": 8
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "travel",
+   "me",
+   "home",
+   "park"
+  ]
+ ]
+}

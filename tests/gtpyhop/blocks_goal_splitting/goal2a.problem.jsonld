@@ -1,0 +1,73 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "blocks_goal_splitting_goal2a",
+ "domain": "blocks_goal_splitting",
+ "version": "0.1.0",
+ "codebook": [
+  "b",
+  "a",
+  "c",
+  "d"
+ ],
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {
+    "a": "c",
+    "b": "d",
+    "c": "table",
+    "d": "table"
+   }
+  },
+  {
+   "name": "clear",
+   "type": "int",
+   "init": {
+    "a": true,
+    "c": false,
+    "b": true,
+    "d": false
+   }
+  },
+  {
+   "name": "holding",
+   "type": "int",
+   "init": {
+    "hand": "nothing"
+   }
+  },
+  {
+   "name": "goal",
+   "type": "int",
+   "init": {
+    "b": "c",
+    "a": "d",
+    "c": "table",
+    "d": "table"
+   }
+  },
+  {
+   "name": "count",
+   "type": "int",
+   "init": {
+    "blocks": 4
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "split"
+  ]
+ ]
+}

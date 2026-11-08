@@ -1,0 +1,133 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "blocks_hgn_goal3",
+ "domain": "blocks_hgn",
+ "version": "0.1.0",
+ "codebook": [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19"
+ ],
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {
+    "1": "12",
+    "12": "13",
+    "13": "table",
+    "11": "10",
+    "10": "5",
+    "5": "4",
+    "4": "14",
+    "14": "15",
+    "15": "table",
+    "9": "8",
+    "8": "7",
+    "7": "6",
+    "6": "table",
+    "19": "18",
+    "18": "17",
+    "17": "16",
+    "16": "3",
+    "3": "2",
+    "2": "table"
+   }
+  },
+  {
+   "name": "clear",
+   "type": "int",
+   "init": {
+    "1": true,
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "6": false,
+    "7": false,
+    "8": false,
+    "9": true,
+    "10": false,
+    "11": true,
+    "12": false,
+    "13": false,
+    "14": false,
+    "15": false,
+    "16": false,
+    "17": false,
+    "18": false,
+    "19": true
+   }
+  },
+  {
+   "name": "holding",
+   "type": "int",
+   "init": {
+    "hand": "nothing"
+   }
+  },
+  {
+   "name": "goal",
+   "type": "int",
+   "init": {
+    "1": "free",
+    "2": "3",
+    "3": "16",
+    "4": "table",
+    "5": "free",
+    "6": "table",
+    "7": "6",
+    "8": "9",
+    "9": "4",
+    "10": "free",
+    "11": "7",
+    "12": "2",
+    "13": "8",
+    "14": "free",
+    "15": "13",
+    "16": "11",
+    "17": "free",
+    "18": "free",
+    "19": "free"
+   }
+  },
+  {
+   "name": "count",
+   "type": "int",
+   "init": {
+    "blocks": 19
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "moveblocks"
+  ]
+ ]
+}
