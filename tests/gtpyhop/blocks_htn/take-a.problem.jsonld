@@ -1,0 +1,70 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "blocks_htn_take_a",
+ "domain": "blocks_htn",
+ "version": "0.1.0",
+ "codebook": [
+  "c",
+  "b",
+  "a"
+ ],
+ "variables": [
+  {
+   "name": "pos",
+   "type": "int",
+   "init": {
+    "a": "b",
+    "b": "table",
+    "c": "table"
+   }
+  },
+  {
+   "name": "clear",
+   "type": "int",
+   "init": {
+    "c": true,
+    "b": false,
+    "a": true
+   }
+  },
+  {
+   "name": "holding",
+   "type": "int",
+   "init": {
+    "hand": "nothing"
+   }
+  },
+  {
+   "name": "goal",
+   "type": "int",
+   "init": {
+    "c": "free",
+    "b": "free",
+    "a": "free"
+   }
+  },
+  {
+   "name": "count",
+   "type": "int",
+   "init": {
+    "blocks": 3
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "take",
+   "a"
+  ]
+ ]
+}
