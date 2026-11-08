@@ -1,0 +1,73 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "simple_hgn_alice_then_bob",
+ "domain": "simple_hgn",
+ "version": "0.1.0",
+ "codebook": [
+  "alice",
+  "bob",
+  "taxi1",
+  "taxi2",
+  "home_a",
+  "home_b",
+  "park",
+  "station"
+ ],
+ "variables": [
+  {
+   "name": "loc",
+   "type": "int",
+   "init": {
+    "alice": "home_a",
+    "bob": "home_b",
+    "taxi1": "park",
+    "taxi2": "station"
+   }
+  },
+  {
+   "name": "cash",
+   "type": "int",
+   "init": {
+    "alice": 40,
+    "bob": 30
+   }
+  },
+  {
+   "name": "owe",
+   "type": "int",
+   "init": {
+    "alice": 0,
+    "bob": 0
+   }
+  },
+  {
+   "name": "goal",
+   "type": "int",
+   "init": {
+    "alice": "park",
+    "bob": "park",
+    "taxi1": "free",
+    "taxi2": "free",
+    "home_a": "free",
+    "home_b": "free",
+    "park": "free",
+    "station": "free"
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "split"
+  ]
+ ]
+}
