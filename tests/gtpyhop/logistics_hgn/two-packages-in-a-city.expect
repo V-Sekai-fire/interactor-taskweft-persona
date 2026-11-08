@@ -1,0 +1,7 @@
+drive_truck(truck1,location1)
+load_truck(package1,truck1)
+drive_truck(truck1,location2)
+unload_truck(package1,location2)
+load_truck(package2,truck1)
+drive_truck(truck1,location3)
+unload_truck(package2,location3)

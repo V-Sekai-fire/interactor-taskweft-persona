@@ -1,0 +1,153 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "logistics_hgn_two_packages_in_a_city",
+ "domain": "logistics_hgn",
+ "version": "0.1.0",
+ "codebook": [
+  "package1",
+  "package2",
+  "truck1",
+  "truck6",
+  "plane2",
+  "location1",
+  "location2",
+  "location3",
+  "airport1",
+  "location10",
+  "airport2",
+  "city1",
+  "city2",
+  "none"
+ ],
+ "variables": [
+  {
+   "name": "at",
+   "type": "int",
+   "init": {
+    "package1": "location1",
+    "package2": "location2",
+    "truck1": "none",
+    "truck6": "none",
+    "plane2": "none",
+    "location1": "none",
+    "location2": "none",
+    "location3": "none",
+    "airport1": "none",
+    "location10": "none",
+    "airport2": "none",
+    "city1": "none",
+    "city2": "none",
+    "none": "none"
+   }
+  },
+  {
+   "name": "truck_at",
+   "type": "int",
+   "init": {
+    "package1": "none",
+    "package2": "none",
+    "truck1": "location3",
+    "truck6": "location10",
+    "plane2": "none",
+    "location1": "none",
+    "location2": "none",
+    "location3": "none",
+    "airport1": "none",
+    "location10": "none",
+    "airport2": "none",
+    "city1": "none",
+    "city2": "none",
+    "none": "none"
+   }
+  },
+  {
+   "name": "plane_at",
+   "type": "int",
+   "init": {
+    "package1": "none",
+    "package2": "none",
+    "truck1": "none",
+    "truck6": "none",
+    "plane2": "airport2",
+    "location1": "none",
+    "location2": "none",
+    "location3": "none",
+    "airport1": "none",
+    "location10": "none",
+    "airport2": "none",
+    "city1": "none",
+    "city2": "none",
+    "none": "none"
+   }
+  },
+  {
+   "name": "in_city",
+   "type": "int",
+   "init": {
+    "package1": "none",
+    "package2": "none",
+    "truck1": "none",
+    "truck6": "none",
+    "plane2": "none",
+    "location1": "city1",
+    "location2": "city1",
+    "location3": "city1",
+    "airport1": "city1",
+    "location10": "city2",
+    "airport2": "city2",
+    "city1": "city1",
+    "city2": "city2",
+    "none": "none"
+   }
+  },
+  {
+   "name": "kind",
+   "type": "int",
+   "init": {
+    "package1": 0,
+    "package2": 0,
+    "truck1": 1,
+    "truck6": 1,
+    "plane2": 2,
+    "location1": 3,
+    "location2": 3,
+    "location3": 3,
+    "airport1": 4,
+    "location10": 3,
+    "airport2": 4,
+    "city1": 5,
+    "city2": 5,
+    "none": 6
+   }
+  },
+  {
+   "name": "count",
+   "type": "int",
+   "init": {
+    "blocks": 14
+   }
+  }
+ ],
+ "capabilities": {
+  "entities": {},
+  "graph": {
+   "edges": []
+  }
+ },
+ "todo_list": [
+  [
+   "at",
+   "package1",
+   "location2"
+  ],
+  [
+   "at",
+   "package2",
+   "location3"
+  ]
+ ]
+}

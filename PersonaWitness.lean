@@ -402,7 +402,8 @@ def run : IO UInt32 := do
   let bh ← blocksChecks "blocks_htn"
   let uh ← unigoalChecks "blocks_hgn"
   let ug ← unigoalChecks "blocks_goal_splitting"
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug
+  let ul ← unigoalChecks "logistics_hgn"
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug ++ ul
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
