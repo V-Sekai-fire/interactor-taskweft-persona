@@ -290,22 +290,22 @@ def vocabChecks : IO (List Check) := do
     out := out ++ [{ name := "vocab: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
   return out
 
-/-- The cases ported from GTPyhop's `blocks_gtn`: the failures, the simple successes, the two multigoals and the
+/-- The cases ported from GTPyhop's `blocks_gtn` and `blocks_htn` (the same states and plans, with the top task named achieve): the failures, the simple successes, the two multigoals and the
 Sussman anomaly, each with the plan GTPyhop expects. -/
-def blocksChecks : IO (List Check) := do
-  let dir := "tests/gtpyhop/blocks_gtn/"
+def blocksChecks (case : String) : IO (List Check) := do
+  let dir := "tests/gtpyhop/" ++ case ++ "/"
   let dom ← IO.FS.readFile (dir ++ "domain.jsonld")
   let mut out : List Check := []
   for name in ["pickup-a", "pickup-b", "take-b", "pickup-c", "take-a", "take-c", "take-a-put-a-table",
                "goal1a", "goal1b", "sussman"] do
     let prob ← IO.FS.readFile (dir ++ name ++ ".problem.jsonld")
     let expect := ((← IO.FS.readFile (dir ++ name ++ ".expect")).splitOn "\n").filter (· != "")
-    out := out ++ [{ name := "gtpyhop blocks_gtn: " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
+    out := out ++ [{ name := "gtpyhop " ++ case ++ ": " ++ name, ok := stepKeys (Persona.Jsonld.planOf dom prob) == expect }]
   let sus ← IO.FS.readFile (dir ++ "sussman.problem.jsonld")
   let best := Persona.Jsonld.shortestOf dom sus 40
-  out := out ++ [{ name := "gtpyhop blocks_gtn: the shortest plan for the Sussman anomaly has six actions",
+  out := out ++ [{ name := "gtpyhop " ++ case ++ ": the shortest plan for the Sussman anomaly has six actions",
                    ok := best.contains "\"length\":6" && best.contains "\"optimal\":true" }
-                , { name := "gtpyhop blocks_gtn: a bound of five is refused as limit, since moveblocks is not done while a block can move",
+                , { name := "gtpyhop " ++ case ++ ": a bound of five is refused as limit, since the top task is not done while a block can move",
                     ok := (Persona.Jsonld.shortestOf dom sus 5).contains "limit" }]
   return out
 
@@ -380,8 +380,9 @@ def run : IO UInt32 := do
   let ec ← enumChecks
   let gc ← graphChecks
   let vc ← vocabChecks
-  let bc ← blocksChecks
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc
+  let bc ← blocksChecks "blocks_gtn"
+  let bh ← blocksChecks "blocks_htn"
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"
