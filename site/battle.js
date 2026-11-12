@@ -1,8 +1,8 @@
 // Copyright (c) 2026 K. S. Ernest (iFire) Lee
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// The command battle: a party of four (lead, caster, guard, mender) against one foe a round, 30 rounds for a
+// The command battle: a party of four (lead, caster, guard, mender) against one foe a battle, 30 battles for a
 // normal run and 60 for plus. BattleWitness.lean generates the domain and the first problem; the planner
-// decides which commands are legal, what each does, how the foe replies and what the next round is. This page
+// decides which commands are legal, what each does, how the foe replies and what the next battle is. This page
 // reads the roster and the commands from those files and applies each step from the action's pointer/set
 // entries, so no rule lives here.
 (() => {
@@ -184,8 +184,8 @@
     fillConsole();
   }
   function draw() {
-    const s = state, round = s.run.round, limit = s.run.limit;
-    ui.run.textContent = `Round ${round} / ${limit}` + (limit === 60 ? " (plus)" : " (normal)");
+    const s = state, battle = s.run.battle, limit = s.run.limit;
+    ui.run.textContent = `Battle ${battle} / ${limit}` + (limit === 60 ? " (plus)" : " (normal)");
     ui.modes.replaceChildren(
       button("New normal run (30)", () => newRun(30), true, mode === 30 ? "bt-on" : ""),
       button("New plus run (60)", () => newRun(60), true, mode === 60 ? "bt-on" : ""));
@@ -194,14 +194,14 @@
     ui.cmds.replaceChildren();
     ui.forecast.textContent = "";
     if (s.foe.hp === 0) {
-      const next = ask([["cmd-next-round"]]);
-      if (next.refused) { ui.status.textContent = `Run cleared: all ${limit} rounds won.`; return; }
-      ui.status.textContent = `Round ${round} won. The party heals; the lead keeps its gauge.`;
-      ui.cmds.append(button("Next round", () => act([["cmd-next-round"]])));
+      const next = ask([["cmd-next-battle"]]);
+      if (next.refused) { ui.status.textContent = `Run cleared: all ${limit} battles won.`; return; }
+      ui.status.textContent = `Battle ${battle} won. The party heals; the lead keeps its gauge.`;
+      ui.cmds.append(button("Next battle", () => act([["cmd-next-battle"]])));
       return;
     }
     if (members.every((m) => s[m].hp === 0)) {
-      ui.status.textContent = `The party fell in round ${round} of ${limit}. The run is over.`;
+      ui.status.textContent = `The party fell in battle ${battle} of ${limit}. The run is over.`;
       return;
     }
     const m = members[s.turn.slot];
@@ -214,11 +214,11 @@
     ui.cmds.append(button("Persona's choice", () => act([[m + "-policy"], ["respond"]]), true, "bt-persona"));
     const f = ask([["play-out"]], "forecast");
     if (!f.refused) seen.forecast.doc = planDoc([["play-out"]], f, state, compose(f.steps, state));
-    if (f.refused) ui.forecast.textContent = "The persona could not forecast this round: " + f.refused + ".";
+    if (f.refused) ui.forecast.textContent = "The persona could not forecast this battle: " + f.refused + ".";
     else {
       const steps = f.steps || [], end = steps.length ? steps[steps.length - 1].action : "";
       ui.forecast.textContent = "If the persona plays on from here, it " +
-        (end === "victory" ? "wins" : end === "defeat" ? "loses" : "stops") + ` the round in ${steps.length - 1} steps.`;
+        (end === "victory" ? "wins" : end === "defeat" ? "loses" : "stops") + ` the battle in ${steps.length - 1} steps.`;
     }
   }
 
@@ -226,7 +226,7 @@
   Promise.all([
     import(here + "persona.mjs").then((m) => m.default({ locateFile: (f) => here + f })),
     text(SAMPLES + "domains/command-battle.jsonld"),
-    text(SAMPLES + "problems/command-battle-round-1.jsonld"),
+    text(SAMPLES + "problems/command-battle-start.jsonld"),
   ])
     .then(([mod, d, p]) => {
       if (mod._persona_init() !== 0) throw new Error("persona_init failed");

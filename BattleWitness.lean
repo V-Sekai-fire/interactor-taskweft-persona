@@ -3,12 +3,12 @@
 import Persona.Jsonld
 import Lean.Data.Json
 
-/-! The command battle's gate. It writes the battle domain and its first round's problem, simulates the
+/-! The command battle's gate. It writes the battle domain and its first battle's problem, simulates the
 same rules on its own, and checks that the planner plays a whole run step for step as the simulator does.
 
   `lake exe persona_battle_witness`         checks, exit 0 and print "OK:" when every invariant holds
-  `lake exe persona_battle_witness write`   writes domains/command-battle.jsonld and its round 1 problem
-  `lake exe persona_battle_witness report`  prints each round of a normal, a plus and a weakened run -/
+  `lake exe persona_battle_witness write`   writes domains/command-battle.jsonld and its battle 1 problem
+  `lake exe persona_battle_witness report`  prints each battle of a normal, a plus and a weakened run -/
 
 open Lean
 
@@ -161,7 +161,7 @@ def driver (name : String) (ends : Bool) : Json :=
 
 def domain (c : Cfg) : Json :=
   let heals := members.map fun x => (s!"mender-heal-{x}", act ["hp", "heals_left"]
-      s!"The mender heals the {x} for {c.heal}, up to its maximum; {c.heals} heals a round."
+      s!"The mender heals the {x} for {c.heal}, up to its maximum; {c.heals} heals a battle."
       (turnOf .mender ++ [geC "/mender/heals" 1, geC s!"/{x}/hp" 1])
       [(s!"/{x}/hp", par "hp"), ("/mender/heals", par "heals_left"), ("/turn/slot", nextSeat .mender)])
   let strikes := members.map fun x => (s!"foe-strike-{x}", act ["hp"]
@@ -183,16 +183,16 @@ def domain (c : Cfg) : Json :=
     ("caster-release", act ["foe_hp"] s!"The caster releases the spell: {c.release} damage." (turnOf .caster ++ [eqC "/caster/charge" 1])
       [("/foe/hp", par "foe_hp"), ("/caster/charge", jn 0), ("/turn/slot", nextSeat .caster)]),
     ("guard-attack", act ["foe_hp"] s!"The guard attacks: {c.gAttack} damage." (turnOf .guard) [("/foe/hp", par "foe_hp"), ("/turn/slot", nextSeat .guard)]),
-    ("guard-taunt", act [] "The guard taunts: the foe strikes the guard while it stands, this round." (turnOf .guard ++ [eqC "/guard/taunt" 0])
+    ("guard-taunt", act [] "The guard taunts: the foe strikes the guard while it stands, this battle." (turnOf .guard ++ [eqC "/guard/taunt" 0])
       [("/guard/taunt", jn 1), ("/turn/slot", nextSeat .guard)]),
     ("mender-attack", act ["foe_hp"] s!"The mender attacks: {c.mAttack} damage." (turnOf .mender) [("/foe/hp", par "foe_hp"), ("/turn/slot", nextSeat .mender)])]
     ++ heals ++ strikes ++ skips ++ [
-    ("victory", act [] "The foe is down: the round is won." [eqC "/foe/hp" 0] [("/result/won", jn 1)]),
+    ("victory", act [] "The foe is down: the battle is won." [eqC "/foe/hp" 0] [("/result/won", jn 1)]),
     ("defeat", act [] "The party is down: the run ends." (members.map fun m => eqC s!"/{m}/hp" 0) [("/result/lost", jn 1)]),
-    ("next-round", act ["round", "foe_hp", "foe_atk", "lead_hp", "caster_hp", "guard_hp", "mender_hp"]
-      "The next round: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge."
+    ("next-battle", act ["battle", "foe_hp", "foe_atk", "lead_hp", "caster_hp", "guard_hp", "mender_hp"]
+      "The next battle: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge."
       [eqC "/result/won" 1]
-      [("/run/round", par "round"), ("/foe/hp", par "foe_hp"), ("/foe/max", par "foe_hp"), ("/foe/atk", par "foe_atk"),
+      [("/run/battle", par "battle"), ("/foe/hp", par "foe_hp"), ("/foe/max", par "foe_hp"), ("/foe/atk", par "foe_atk"),
        ("/lead/hp", par "lead_hp"), ("/caster/hp", par "caster_hp"), ("/guard/hp", par "guard_hp"), ("/mender/hp", par "mender_hp"),
        ("/caster/charge", jn 0), ("/guard/taunt", jn 0), ("/mender/heals", jn c.heals), ("/turn/slot", js Seat.lead.ref), ("/result/won", jn 0)])]
   let strikeDmg (x : Seat) : GM Json :=
@@ -224,17 +224,17 @@ def domain (c : Cfg) : Json :=
         (some (mkGraph do
           out "target_seat" targetG
           out "hp" (strikeDmg x))))),
-    ("cmd-next-round", method [alt "go" [eqC "/result/won" 1, geC "/graph/more" 1]
-      [[js "next-round", par "round", par "foe_hp", par "foe_atk", par "lead_hp", par "caster_hp", par "guard_hp", par "mender_hp"]]
+    ("cmd-next-battle", method [alt "go" [eqC "/result/won" 1, geC "/graph/more" 1]
+      [[js "next-battle", par "battle", par "foe_hp", par "foe_atk", par "lead_hp", par "caster_hp", par "guard_hp", par "mender_hp"]]
       (some (mkGraph do
-        out "round" (bin "math/add" (ptr "/run/round") (lit 1))
-        out "foe_hp" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/round") (lit 1)) (lit c.foeHpStep)) (lit (c.foeHp0 - c.foeHpStep)))
-        out "foe_atk" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/round") (lit 1)) (lit c.foeAtkStep)) (lit (c.foeAtk0 - c.foeAtkStep)))
+        out "battle" (bin "math/add" (ptr "/run/battle") (lit 1))
+        out "foe_hp" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/battle") (lit 1)) (lit c.foeHpStep)) (lit (c.foeHp0 - c.foeHpStep)))
+        out "foe_atk" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/battle") (lit 1)) (lit c.foeAtkStep)) (lit (c.foeAtk0 - c.foeAtkStep)))
         out "lead_hp" (ptr "/lead/max")
         out "caster_hp" (ptr "/caster/max")
         out "guard_hp" (ptr "/guard/max")
         out "mender_hp" (ptr "/mender/max")
-        out "more" (sel (bin "math/gt" (ptr "/run/limit") (ptr "/run/round")) (lit 1) (lit 0))))]),
+        out "more" (sel (bin "math/gt" (ptr "/run/limit") (ptr "/run/battle")) (lit 1) (lit 0))))]),
     ("respond", driver "respond" false),
     ("play-out", driver "play-out" true),
     ("lead-policy", method [
@@ -251,11 +251,11 @@ def domain (c : Cfg) : Json :=
       alt "attack" [] [[js "cmd-guard-attack"]]]),
     ("mender-policy", method (healPolicy ++ [alt "attack" [] [[js "cmd-mender-attack"]]]))]
   obj [("@context", ctx), ("@type", js "domain:Definition"), ("name", js "command_battle"),
-    ("source", js "interactor-taskweft-persona"), ("version", js "0.4.0"),
+    ("source", js "interactor-taskweft-persona"), ("version", js "0.5.0"),
     ("description", js ("A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. " ++
       "Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; " ++
-      "a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a round. " ++
-      "A run is 30 rounds (normal) or 60 (plus); the next-round method makes each foe stronger.")),
+      "a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a battle. " ++
+      "A run is 30 battles (normal) or 60 (plus); the next-battle method makes each foe stronger.")),
     ("enums", obj [("seat", arr (Seat.all.map fun s => js s.name))]),
     ("variables", arr (["lead", "caster", "guard", "mender", "foe", "turn", "run", "result"].map fun v =>
       obj [("name", js v), ("type", js "int"), ("init", obj [])])),
@@ -273,7 +273,7 @@ def init (c : Cfg) (limit : Nat) : St :=
    ("guard/hp", c.maxHp .guard), ("guard/max", c.maxHp .guard), ("guard/taunt", 0),
    ("mender/hp", c.maxHp .mender), ("mender/max", c.maxHp .mender), ("mender/heals", c.heals),
    ("foe/hp", c.foeHp0), ("foe/max", c.foeHp0), ("foe/atk", c.foeAtk0),
-   ("turn/slot", 0), ("run/round", 1), ("run/limit", limit), ("result/won", 0), ("result/lost", 0)]
+   ("turn/slot", 0), ("run/battle", 1), ("run/limit", limit), ("result/won", 0), ("result/lost", 0)]
 
 def allDown (s : St) : Bool := members.all fun m => gv s s!"{m}/hp" == 0
 def hitFoe (s : St) (amount : Int) : Int := max (gv s "foe/hp" - amount) 0
@@ -310,7 +310,7 @@ def policy (c : Cfg) (m : Seat) (s : St) : St × String :=
       (put (put s s!"{x}/hp" v) "mender/heals" k, s!"mender-heal-{x}({v},{k})")
     | none => let h := hitFoe s c.mAttack; (put s "foe/hp" h, s!"mender-attack({h})")
 
-/-- The steps of a round played to its end, whether it was won, and the state it ends in. -/
+/-- The steps of a battle played to its end, whether it was won, and the state it ends in. -/
 def sim (c : Cfg) : Nat → St → Array String → Array String × Bool × St
   | 0, s, acc => (acc.push "NO-END", false, s)
   | fuel + 1, s, acc =>
@@ -330,23 +330,23 @@ def sim (c : Cfg) : Nat → St → Array String → Array String × Bool × St
           let (s2, step) := policy c m s
           sim c fuel (put s2 "turn/slot" (slot + 1)) (acc.push step)
 
-def nextRound (c : Cfg) (s : St) : St × String :=
-  let r := gv s "run/round" + 1
+def nextBattle (c : Cfg) (s : St) : St × String :=
+  let r := gv s "run/battle" + 1
   let fh := c.foeHp0 + c.foeHpStep * (r - 1)
   let fa := c.foeAtk0 + c.foeAtkStep * (r - 1)
   let maxes := members.map fun m => gv s s!"{m}/max"
-  let s2 := ([("run/round", r), ("foe/hp", fh), ("foe/max", fh), ("foe/atk", fa)] ++
+  let s2 := ([("run/battle", r), ("foe/hp", fh), ("foe/max", fh), ("foe/atk", fa)] ++
     (members.zip maxes).map (fun (p : Seat × Int) => (s!"{p.1}/hp", p.2)) ++
     [("caster/charge", 0), ("guard/taunt", 0), ("mender/heals", c.heals), ("turn/slot", 0), ("result/won", 0)]).foldl
     (fun a (k, v) => put a k v) s
-  (s2, s!"next-round({r},{fh},{fa}," ++ ",".intercalate (maxes.map toString) ++ ")")
+  (s2, s!"next-battle({r},{fh},{fa}," ++ ",".intercalate (maxes.map toString) ++ ")")
 
 structure RunOut where
   steps : Array String
-  rounds : Nat
+  battles : Nat
   cleared : Bool
   longest : Nat
-  perRound : Array (Nat × Bool × Nat × String)
+  perBattle : Array (Nat × Bool × Nat × String)
 
 def simRun (c : Cfg) (limit : Nat) : RunOut := Id.run do
   let mut s := init c limit
@@ -358,12 +358,12 @@ def simRun (c : Cfg) (limit : Nat) : RunOut := Id.run do
     acc := acc ++ st
     longest := max longest st.size
     per := per.push (r, won, st.size, ",".intercalate (members.map fun m => s!"{m} {gv s1 s!"{m}/hp"}"))
-    if !won then return { steps := acc, rounds := r, cleared := false, longest, perRound := per }
-    if r == limit then return { steps := acc, rounds := r, cleared := true, longest, perRound := per }
-    let (s2, step) := nextRound c s1
+    if !won then return { steps := acc, battles := r, cleared := false, longest, perBattle := per }
+    if r == limit then return { steps := acc, battles := r, cleared := true, longest, perBattle := per }
+    let (s2, step) := nextBattle c s1
     acc := acc.push step
     s := s2
-  return { steps := acc, rounds := limit, cleared := true, longest, perRound := per }
+  return { steps := acc, battles := limit, cleared := true, longest, perBattle := per }
 
 def groups : List String := ["lead", "caster", "guard", "mender", "foe", "turn", "run", "result"]
 
@@ -371,8 +371,8 @@ def problem (c : Cfg) (s : St) (todo : List (List String)) : Json :=
   let v (name : String) : Json := obj [("name", js name), ("type", js "int"),
     ("init", obj ((s.filter (fun (k, _) => k.startsWith (name ++ "/"))).map fun (k, x) => ((k.drop (name.length + 1)).toString, jn x)))]
   obj [("@context", ctx), ("@type", js "domain:Problem"), ("name", js "command_battle_run"),
-    ("domain", js "command_battle"), ("source", js "interactor-taskweft-persona"), ("version", js "0.4.0"),
-    ("description", js s!"The start of a run: round 1, a full party of four, {c.heals} heals. The page sets run/limit to 30 or 60."),
+    ("domain", js "command_battle"), ("source", js "interactor-taskweft-persona"), ("version", js "0.5.0"),
+    ("description", js s!"The start of a run: battle 1, a full party of four, {c.heals} heals. The page sets run/limit to 30 or 60."),
     ("variables", arr (groups.map v)),
     ("todo_list", arr (todo.map fun t => arr (t.map js)))]
 
@@ -392,13 +392,13 @@ def stepKeys (t : String) : List String :=
 def ask (c : Cfg) (dom : String) (s : St) (todo : List (List String)) : List String :=
   stepKeys (Persona.Jsonld.planOf dom (problem c s todo).compress)
 
-def runTodo (rounds : Nat) : List (List String) :=
-  [["play-out"]] ++ (List.replicate (rounds - 1) [["cmd-next-round"], ["play-out"]]).foldl (· ++ ·) []
+def runTodo (battles : Nat) : List (List String) :=
+  [["play-out"]] ++ (List.replicate (battles - 1) [["cmd-next-battle"], ["play-out"]]).foldl (· ++ ·) []
 
 /-- The planner's whole run against the simulator's: the planner's steps, and whether they are the same. -/
 def compareRun (c : Cfg) (dom : String) (limit : Nat) : RunOut × List String × Bool :=
   let r := simRun c limit
-  let got := ask c dom (init c limit) (runTodo r.rounds)
+  let got := ask c dom (init c limit) (runTodo r.battles)
   (r, got, got == r.steps.toList)
 
 structure Check where
@@ -410,18 +410,18 @@ def run (args : List String) : IO UInt32 := do
   let weak : Cfg := { c with heals := 0, block := 0, maxHp := fun | .lead => 100 | .caster => 70 | .guard => 130 | .mender => 70 | .foe => 0 }
   if args == ["write"] then
     IO.FS.writeFile "domains/command-battle.jsonld" ((domain c).pretty ++ "\n")
-    IO.FS.writeFile "problems/command-battle-round-1.jsonld" ((problem c (init c 30) [["play-out"]]).pretty ++ "\n")
-    IO.println "wrote domains/command-battle.jsonld and problems/command-battle-round-1.jsonld"
+    IO.FS.writeFile "problems/command-battle-start.jsonld" ((problem c (init c 30) [["play-out"]]).pretty ++ "\n")
+    IO.println "wrote domains/command-battle.jsonld and problems/command-battle-start.jsonld"
     return 0
   if args == ["report"] then
     for (label, k, lim) in ([("normal", c, 30), ("plus", c, 60), ("weakened", weak, 30)] : List (String × Cfg × Nat)) do
       let r := simRun k lim
-      IO.println s!"{label}: {if r.cleared then "cleared" else "falls in round " ++ toString r.rounds}, longest round {r.longest} steps"
-      for (rd, won, n, hp) in r.perRound do
-        IO.println s!"  round {rd}: {if won then "won " else "LOST"} in {n} steps; {hp}"
+      IO.println s!"{label}: {if r.cleared then "cleared" else "falls in battle " ++ toString r.battles}, longest battle {r.longest} steps"
+      for (rd, won, n, hp) in r.perBattle do
+        IO.println s!"  battle {rd}: {if won then "won " else "LOST"} in {n} steps; {hp}"
     return 0
   let committed ← IO.FS.readFile "domains/command-battle.jsonld"
-  let committedP ← IO.FS.readFile "problems/command-battle-round-1.jsonld"
+  let committedP ← IO.FS.readFile "problems/command-battle-start.jsonld"
   let same (t : String) (j : Json) : Bool := match Json.parse t with | .ok x => x.compress == j.compress | .error _ => false
   let off : Cfg := { c with attack := c.attack + 1 }
   let (nR, nGot, nSame) := compareRun c committed 30
@@ -429,25 +429,25 @@ def run (args : List String) : IO UInt32 := do
   let (wR, _, wSame) := compareRun weak (domain weak).compress 30
   let s1 := init c 30
   let at4 (s : St) : St := put s "turn/slot" 4
-  let won30 := put (put (put (init c 30) "foe/hp" 0) "result/won" 1) "run/round" 30
+  let won30 := put (put (put (init c 30) "foe/hp" 0) "result/won" 1) "run/battle" 30
   let sm := put s1 "turn/slot" 3
   let intP := (problem c sm [["cmd-mender-attack"]]).compress
   let namedP := intP.replace "\"slot\":3" "\"slot\":\"seat.mender\""
   let checks : List Check := [
     { name := "the committed domain is the one this gate generates", ok := same committed (domain c) },
     { name := "a domain with one constant changed is not the committed one", ok := (domain off).compress != (domain c).compress },
-    { name := "the committed round 1 problem is the one this gate generates", ok := same committedP (problem c s1 [["play-out"]]) },
-    { name := s!"normal run: the planner plays all {nR.rounds} rounds ({nGot.length} steps) exactly as the simulator does", ok := nSame },
-    { name := "normal run: the persona's own play clears all 30 rounds, and its last step is victory",
-      ok := nR.cleared && nR.rounds == 30 && nGot.getLast? == some "victory" },
-    { name := s!"plus run: the planner plays all {pR.rounds} rounds exactly as the simulator does", ok := pSame },
-    { name := s!"plus run: the persona's own play ends as pinned ({if pR.cleared then "cleared" else "falls in round " ++ toString pR.rounds})",
-      ok := !pR.cleared && pR.rounds == 57 },
-    { name := s!"weakened party (a third of the HP, no heals, no block): the planner matches the simulator and falls in round {wR.rounds}",
-      ok := wSame && !wR.cleared && wR.rounds < 30 },
-    { name := s!"no play-out is refused, and the longest round ({max nR.longest pR.longest} steps) stays under 400",
+    { name := "the committed battle 1 problem is the one this gate generates", ok := same committedP (problem c s1 [["play-out"]]) },
+    { name := s!"normal run: the planner plays all {nR.battles} battles ({nGot.length} steps) exactly as the simulator does", ok := nSame },
+    { name := "normal run: the persona's own play clears all 30 battles, and its last step is victory",
+      ok := nR.cleared && nR.battles == 30 && nGot.getLast? == some "victory" },
+    { name := s!"plus run: the planner plays all {pR.battles} battles exactly as the simulator does", ok := pSame },
+    { name := s!"plus run: the persona's own play ends as pinned ({if pR.cleared then "cleared" else "falls in battle " ++ toString pR.battles})",
+      ok := !pR.cleared && pR.battles == 57 },
+    { name := s!"weakened party (a third of the HP, no heals, no block): the planner matches the simulator and falls in battle {wR.battles}",
+      ok := wSame && !wR.cleared && wR.battles < 30 },
+    { name := s!"no play-out is refused, and the longest battle ({max nR.longest pR.longest} steps) stays under 400",
       ok := !(nGot ++ pGot).any (·.startsWith "REFUSED") && max nR.longest pR.longest < 400 },
-    { name := "a domain whose attack is 1 stronger does not play round 1 as the simulator does",
+    { name := "a domain whose attack is 1 stronger does not play battle 1 as the simulator does",
       ok := ask c (domain off).compress s1 [["play-out"]] != (sim c 100000 s1 #[]).1.toList },
     { name := "the foe strikes a taunting guard, who blocks 20: 400 - (40 - 20) = 380",
       ok := ask c committed (put (at4 s1) "guard/taunt" 1) [["foe-turn"]] == ["foe-strike-guard(380)"] },
@@ -468,10 +468,10 @@ def run (args : List String) : IO UInt32 := do
     { name := "a caster command on the lead's turn is refused", ok := ask c committed s1 [["cmd-caster-cast"]] == ["REFUSED:unreachable"] },
     { name := "after the lead attacks, respond stops at the caster's turn",
       ok := ask c committed s1 [["cmd-lead-attack"], ["respond"]] == ["lead-attack(215,25)"] },
-    { name := "the next round is refused before the foe is down", ok := ask c committed s1 [["cmd-next-round"]] == ["REFUSED:unreachable"] },
-    { name := "the next round is refused after round 30 of 30", ok := ask c committed won30 [["cmd-next-round"]] == ["REFUSED:unreachable"] },
-    { name := "after a won round 1, the next round is round 2 with a stronger foe and a full party",
-      ok := ask c committed (put (put s1 "foe/hp" 0) "result/won" 1) [["cmd-next-round"]] == ["next-round(2,280,42,300,200,400,220)"] },
+    { name := "the next battle is refused before the foe is down", ok := ask c committed s1 [["cmd-next-battle"]] == ["REFUSED:unreachable"] },
+    { name := "the next battle is refused after battle 30 of 30", ok := ask c committed won30 [["cmd-next-battle"]] == ["REFUSED:unreachable"] },
+    { name := "after a won battle 1, the next battle is battle 2 with a stronger foe and a full party",
+      ok := ask c committed (put (put s1 "foe/hp" 0) "result/won" 1) [["cmd-next-battle"]] == ["next-battle(2,280,42,300,200,400,220)"] },
     { name := "every seat the domain writes is a declared member, the order matches the numbers, and the scan saw them",
       ok := (badSeatRefs committed).isEmpty && (committed.splitOn "\"seat.").length > 20 && Seat.all.map Seat.idx == [0, 1, 2, 3, 4] },
     { name := "a seat name the enum lacks is caught by the scan",

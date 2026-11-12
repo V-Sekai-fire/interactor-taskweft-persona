@@ -1,4 +1,4 @@
-{"version": "0.4.0",
+{"version": "0.5.0",
  "variables":
  [{"type": "int", "name": "lead", "init": {}},
   {"type": "int", "name": "caster", "init": {}},
@@ -879,12 +879,12 @@
        {"type": "math/eq",
         "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/graph/target_seat"}}}]}]},
-  "cmd-next-round":
+  "cmd-next-battle":
   {"params": [],
    "alternatives":
    [{"subtasks":
-     [["next-round",
-       {"param": "round"},
+     [["next-battle",
+       {"param": "battle"},
        {"param": "foe_hp"},
        {"param": "foe_atk"},
        {"param": "lead_hp"},
@@ -894,7 +894,7 @@
      "name": "go",
      "graph":
      {"variables":
-      [{"value": [0], "type": 0, "id": "round"},
+      [{"value": [0], "type": 0, "id": "battle"},
        {"value": [0], "type": 0, "id": "foe_hp"},
        {"value": [0], "type": 0, "id": "foe_atk"},
        {"value": [0], "type": 0, "id": "lead_hp"},
@@ -907,13 +907,13 @@
       [{"flows": {"out": {"socket": "in", "node": 19}}, "declaration": 0},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
         "declaration": 2},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
         "declaration": 2},
@@ -925,7 +925,7 @@
         "declaration": 2},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 7}},
         "declaration": 2},
@@ -952,7 +952,7 @@
         {"type": {"value": [0]}, "pointer": {"value": ["/run/limit"]}}},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"socket": "value", "node": 16},
          "a": {"socket": "value", "node": 15}},
@@ -1646,11 +1646,11 @@
     {"subtasks": [["cmd-caster-attack"]], "name": "attack", "check": []}]}},
  "enums": {"seat": ["lead", "caster", "guard", "mender", "foe"]},
  "description":
- "A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a round. A run is 30 rounds (normal) or 60 (plus); the next-round method makes each foe stronger.",
+ "A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a battle. A run is 30 battles (normal) or 60 (plus); the next-battle method makes each foe stronger.",
  "actions":
  {"victory":
   {"params": [],
-   "description": "The foe is down: the round is won.",
+   "description": "The foe is down: the battle is won.",
    "body":
    [{"eval":
      {"type": "math/eq",
@@ -1709,9 +1709,9 @@
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
     {"value": "seat.guard", "pointer/set": "/turn/slot"}]},
-  "next-round":
+  "next-battle":
   {"params":
-   ["round",
+   ["battle",
     "foe_hp",
     "foe_atk",
     "lead_hp",
@@ -1719,13 +1719,13 @@
     "guard_hp",
     "mender_hp"],
    "description":
-   "The next round: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge.",
+   "The next battle: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge.",
    "body":
    [{"eval":
      {"type": "math/eq",
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/result/won"}}},
-    {"value": {"param": "round"}, "pointer/set": "/run/round"},
+    {"value": {"param": "battle"}, "pointer/set": "/run/battle"},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/max"},
     {"value": {"param": "foe_atk"}, "pointer/set": "/foe/atk"},
@@ -1741,7 +1741,7 @@
   "mender-heal-mender":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the mender for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the mender for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
@@ -1769,7 +1769,7 @@
   "mender-heal-lead":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the lead for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the lead for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
@@ -1797,7 +1797,7 @@
   "mender-heal-guard":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the guard for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the guard for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
@@ -1825,7 +1825,7 @@
   "mender-heal-caster":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the caster for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the caster for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
@@ -1938,7 +1938,7 @@
   "guard-taunt":
   {"params": [],
    "description":
-   "The guard taunts: the foe strikes the guard while it stands, this round.",
+   "The guard taunts: the foe strikes the guard while it stands, this battle.",
    "body":
    [{"eval":
      {"type": "math/eq",

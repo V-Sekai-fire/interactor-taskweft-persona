@@ -1,4 +1,4 @@
-{"version": "0.4.0",
+{"version": "0.5.0",
  "variables":
  [{"type": "int", "name": "lead", "init": {"max": 300, "hp": 300, "gauge": 0}},
   {"type": "int",
@@ -10,14 +10,14 @@
    "init": {"max": 220, "hp": 220, "heals": 3}},
   {"type": "int", "name": "foe", "init": {"max": 260, "hp": 260, "atk": 40}},
   {"type": "int", "name": "turn", "init": {"slot": 0}},
-  {"type": "int", "name": "run", "init": {"round": 1, "limit": 30}},
+  {"type": "int", "name": "run", "init": {"limit": 30, "battle": 1}},
   {"type": "int", "name": "result", "init": {"won": 0, "lost": 0}}],
  "todo_list": [["play-out"]],
  "source": "interactor-taskweft-persona",
  "name": "command_battle_run",
  "domain": "command_battle",
  "description":
- "The start of a run: round 1, a full party of four, 3 heals. The page sets run/limit to 30 or 60.",
+ "The start of a run: battle 1, a full party of four, 3 heals. The page sets run/limit to 30 or 60.",
  "@type": "domain:Problem",
  "@context":
  {"domain": "VSEKAI:planning/domain/", "VSEKAI": "https://v-sekai.org/"}}
