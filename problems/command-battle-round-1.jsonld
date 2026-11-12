@@ -1,0 +1,61 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Problem",
+ "name": "command_battle_round_1",
+ "domain": "command_battle",
+ "source": "interactor-taskweft-persona",
+ "version": "0.2.0",
+ "description": "Round 1: a fresh party against the round's foe. The persona plays the whole round.",
+ "variables": [
+  {
+   "name": "lead",
+   "type": "int",
+   "init": {
+    "hp": 300,
+    "max": 300,
+    "gauge": 0
+   }
+  },
+  {
+   "name": "caster",
+   "type": "int",
+   "init": {
+    "hp": 200,
+    "max": 200,
+    "charge": 0
+   }
+  },
+  {
+   "name": "foe",
+   "type": "int",
+   "init": {
+    "hp": 260,
+    "max": 260,
+    "atk": 40
+   }
+  },
+  {
+   "name": "turn",
+   "type": "int",
+   "init": {
+    "slot": 0
+   }
+  },
+  {
+   "name": "result",
+   "type": "int",
+   "init": {
+    "won": 0,
+    "lost": 0
+   }
+  }
+ ],
+ "todo_list": [
+  [
+   "play-out"
+  ]
+ ]
+}

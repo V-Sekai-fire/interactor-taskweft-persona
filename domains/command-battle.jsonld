@@ -1,0 +1,2516 @@
+{
+ "@context": {
+  "VSEKAI": "https://v-sekai.org/",
+  "domain": "VSEKAI:planning/domain/"
+ },
+ "@type": "domain:Definition",
+ "name": "command_battle",
+ "source": "interactor-taskweft-persona",
+ "version": "0.2.0",
+ "description": "A turn-based command battle. A lead and a caster act in a fixed turn order, then the foe. Attacks build a gauge; a skill spends half of it on the same turn; a full gauge allows a finisher; a spell takes a turn to cast. The page plays one round at a time: 30 rounds for a normal run, 60 for plus.",
+ "variables": [
+  {
+   "name": "lead",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "caster",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "foe",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "turn",
+   "type": "int",
+   "init": {}
+  },
+  {
+   "name": "result",
+   "type": "int",
+   "init": {}
+  }
+ ],
+ "actions": {
+  "lead-attack": {
+   "params": [
+    "h",
+    "g"
+   ],
+   "description": "The lead attacks: 45 damage, +25 gauge.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 0
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/foe/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/lead/gauge",
+     "value": {
+      "param": "g"
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 1
+    }
+   ]
+  },
+  "lead-skill": {
+   "params": [
+    "h",
+    "g"
+   ],
+   "description": "The lead uses a skill: 110 damage for 50 gauge, on the same turn.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 0
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/gauge"
+      },
+      "b": 50
+     }
+    },
+    {
+     "pointer/set": "/foe/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/lead/gauge",
+     "value": {
+      "param": "g"
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 1
+    }
+   ]
+  },
+  "lead-finisher": {
+   "params": [
+    "h"
+   ],
+   "description": "The lead's finisher: needs a full gauge, empties it, 220 damage.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 0
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/gauge"
+      },
+      "b": 100
+     }
+    },
+    {
+     "pointer/set": "/foe/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/lead/gauge",
+     "value": 0
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 1
+    }
+   ]
+  },
+  "caster-attack": {
+   "params": [
+    "h"
+   ],
+   "description": "The caster attacks: 25 damage.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/charge"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/foe/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 2
+    }
+   ]
+  },
+  "caster-cast": {
+   "params": [],
+   "description": "The caster begins a spell; it lands on the caster's next turn.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/charge"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/caster/charge",
+     "value": 1
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 2
+    }
+   ]
+  },
+  "caster-release": {
+   "params": [
+    "h"
+   ],
+   "description": "The caster releases the spell: 130 damage.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/charge"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/foe/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/caster/charge",
+     "value": 0
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 2
+    }
+   ]
+  },
+  "foe-strike-lead": {
+   "params": [
+    "h"
+   ],
+   "description": "The foe strikes the lead.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 2
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/lead/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 0
+    }
+   ]
+  },
+  "foe-strike-caster": {
+   "params": [
+    "h"
+   ],
+   "description": "The foe strikes the caster, once the lead is down.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 2
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 0
+     }
+    },
+    {
+     "eval": {
+      "type": "math/ge",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/hp"
+      },
+      "b": 1
+     }
+    },
+    {
+     "pointer/set": "/caster/hp",
+     "value": {
+      "param": "h"
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 0
+    }
+   ]
+  },
+  "skip-lead": {
+   "params": [],
+   "description": "A fallen lead loses the turn.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 0
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 1
+    }
+   ]
+  },
+  "skip-caster": {
+   "params": [],
+   "description": "A fallen caster loses the turn.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/turn/slot"
+      },
+      "b": 1
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/hp"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/turn/slot",
+     "value": 2
+    }
+   ]
+  },
+  "victory": {
+   "params": [],
+   "description": "The foe is down: the round is won.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/foe/hp"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/result/won",
+     "value": 1
+    }
+   ]
+  },
+  "defeat": {
+   "params": [],
+   "description": "The party is down: the run ends.",
+   "body": [
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/lead/hp"
+      },
+      "b": 0
+     }
+    },
+    {
+     "eval": {
+      "type": "math/eq",
+      "a": {
+       "type": "pointer/get",
+       "pointer": "/caster/hp"
+      },
+      "b": 0
+     }
+    },
+    {
+     "pointer/set": "/result/lost",
+     "value": 1
+    }
+   ]
+  }
+ },
+ "methods": {
+  "cmd-lead-attack": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "go",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "lead-attack",
+       {
+        "param": "h"
+       },
+       {
+        "param": "g"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "g",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "math/add"
+       },
+       {
+        "op": "math/min"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 7,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           45
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 2,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/lead/gauge"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           25
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 5,
+        "values": {
+         "a": {
+          "node": 5,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           100
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 6,
+        "configuration": {
+         "variables": {
+          "value": [
+           0,
+           1
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 3,
+          "socket": "value"
+         },
+         "1": {
+          "node": 6,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "cmd-lead-skill": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "go",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/gauge"
+        },
+        "b": 50
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "lead-skill",
+       {
+        "param": "h"
+       },
+       {
+        "param": "g"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       },
+       {
+        "id": "g",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 6,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           110
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 2,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/lead/gauge"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 4,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           50
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0,
+           1
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 3,
+          "socket": "value"
+         },
+         "1": {
+          "node": 5,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "cmd-lead-finisher": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "go",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/gauge"
+        },
+        "b": 100
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "lead-finisher",
+       {
+        "param": "h"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           220
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 2,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 3,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "cmd-caster-attack": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "go",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/charge"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "caster-attack",
+       {
+        "param": "h"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           25
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 2,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 3,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "cmd-caster-cast": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "go",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/charge"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "caster-cast"
+      ]
+     ]
+    }
+   ]
+  },
+  "cmd-caster-release": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "go",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/charge"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "caster-release",
+       {
+        "param": "h"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           130
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 2,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 3,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "foe-turn": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "lead",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 2
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "foe-strike-lead",
+       {
+        "param": "h"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 5,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/lead/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/atk"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 3,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 4,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "caster",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 2
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "foe-strike-caster",
+       {
+        "param": "h"
+       }
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "h",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/sub"
+       },
+       {
+        "op": "math/max"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 5,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/caster/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/atk"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "node": 2,
+          "socket": "value"
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "a": {
+          "node": 3,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 4,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "respond": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "foe-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "party-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": []
+    },
+    {
+     "name": "foe",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 2
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "foe-turn"
+      ],
+      [
+       "respond"
+      ]
+     ]
+    },
+    {
+     "name": "lead-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "skip-lead"
+      ],
+      [
+       "respond"
+      ]
+     ]
+    },
+    {
+     "name": "caster-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "skip-caster"
+      ],
+      [
+       "respond"
+      ]
+     ]
+    },
+    {
+     "name": "party-to-move",
+     "check": [],
+     "subtasks": []
+    }
+   ]
+  },
+  "play-out": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "foe-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "victory"
+      ]
+     ]
+    },
+    {
+     "name": "party-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "defeat"
+      ]
+     ]
+    },
+    {
+     "name": "foe",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 2
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "foe-turn"
+      ],
+      [
+       "play-out"
+      ]
+     ]
+    },
+    {
+     "name": "lead-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "skip-lead"
+      ],
+      [
+       "play-out"
+      ]
+     ]
+    },
+    {
+     "name": "caster-down",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 1
+       }
+      },
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/hp"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "skip-caster"
+      ],
+      [
+       "play-out"
+      ]
+     ]
+    },
+    {
+     "name": "lead",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 0
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "lead-policy"
+      ],
+      [
+       "play-out"
+      ]
+     ]
+    },
+    {
+     "name": "caster",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/turn/slot"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "caster-policy"
+      ],
+      [
+       "play-out"
+      ]
+     ]
+    }
+   ]
+  },
+  "lead-policy": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "finisher",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/gauge"
+        },
+        "b": 100
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "cmd-lead-finisher"
+      ]
+     ]
+    },
+    {
+     "name": "skill",
+     "check": [
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/lead/gauge"
+        },
+        "b": 50
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/graph/near"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "cmd-lead-skill"
+      ]
+     ],
+     "graph": {
+      "types": [
+       {
+        "signature": "int"
+       },
+       {
+        "signature": "bool"
+       }
+      ],
+      "variables": [
+       {
+        "id": "near",
+        "type": 0,
+        "value": [
+         0
+        ]
+       }
+      ],
+      "declarations": [
+       {
+        "op": "event/onStart"
+       },
+       {
+        "op": "pointer/get"
+       },
+       {
+        "op": "math/le"
+       },
+       {
+        "op": "math/select"
+       },
+       {
+        "op": "variable/set"
+       }
+      ],
+      "nodes": [
+       {
+        "declaration": 0,
+        "flows": {
+         "out": {
+          "node": 4,
+          "socket": "in"
+         }
+        }
+       },
+       {
+        "declaration": 1,
+        "configuration": {
+         "pointer": {
+          "value": [
+           "/foe/hp"
+          ]
+         },
+         "type": {
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 2,
+        "values": {
+         "a": {
+          "node": 1,
+          "socket": "value"
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           110
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 3,
+        "values": {
+         "condition": {
+          "node": 2,
+          "socket": "value"
+         },
+         "a": {
+          "type": 0,
+          "value": [
+           1
+          ]
+         },
+         "b": {
+          "type": 0,
+          "value": [
+           0
+          ]
+         }
+        }
+       },
+       {
+        "declaration": 4,
+        "configuration": {
+         "variables": {
+          "value": [
+           0
+          ]
+         }
+        },
+        "values": {
+         "0": {
+          "node": 3,
+          "socket": "value"
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "attack",
+     "check": [],
+     "subtasks": [
+      [
+       "cmd-lead-attack"
+      ]
+     ]
+    }
+   ]
+  },
+  "caster-policy": {
+   "params": [],
+   "alternatives": [
+    {
+     "name": "release",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/charge"
+        },
+        "b": 1
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "cmd-caster-release"
+      ]
+     ]
+    },
+    {
+     "name": "cast",
+     "check": [
+      {
+       "eval": {
+        "type": "math/eq",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/caster/charge"
+        },
+        "b": 0
+       }
+      },
+      {
+       "eval": {
+        "type": "math/ge",
+        "a": {
+         "type": "pointer/get",
+         "pointer": "/foe/hp"
+        },
+        "b": 130
+       }
+      }
+     ],
+     "subtasks": [
+      [
+       "cmd-caster-cast"
+      ]
+     ]
+    },
+    {
+     "name": "attack",
+     "check": [],
+     "subtasks": [
+      [
+       "cmd-caster-attack"
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}
