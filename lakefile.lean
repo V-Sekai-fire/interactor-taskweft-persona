@@ -41,6 +41,12 @@ lean_exe «persona_plan» where
 lean_exe «persona_a2a» where
   root := `PersonaA2A
 
+-- The command battle's gate: the committed domain is the generated one, and the planner plays every
+-- round of a run as the simulator does. `write` regenerates the domain and its first problem.
+@[default_target]
+lean_exe «persona_battle_witness» where
+  root := `BattleWitness
+
 -- The A2A gate: a positive and a negative control per invariant.
 @[default_target]
 lean_exe «persona_a2a_witness» where
