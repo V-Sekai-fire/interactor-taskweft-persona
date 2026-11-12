@@ -1,2516 +1,2130 @@
-{
- "@context": {
-  "VSEKAI": "https://v-sekai.org/",
-  "domain": "VSEKAI:planning/domain/"
- },
- "@type": "domain:Definition",
- "name": "command_battle",
+{"version": "0.3.0",
+ "variables":
+ [{"type": "int", "name": "lead", "init": {}},
+  {"type": "int", "name": "caster", "init": {}},
+  {"type": "int", "name": "guard", "init": {}},
+  {"type": "int", "name": "mender", "init": {}},
+  {"type": "int", "name": "foe", "init": {}},
+  {"type": "int", "name": "turn", "init": {}},
+  {"type": "int", "name": "run", "init": {}},
+  {"type": "int", "name": "result", "init": {}}],
  "source": "interactor-taskweft-persona",
- "version": "0.2.0",
- "description": "A turn-based command battle. A lead and a caster act in a fixed turn order, then the foe. Attacks build a gauge; a skill spends half of it on the same turn; a full gauge allows a finisher; a spell takes a turn to cast. The page plays one round at a time: 30 rounds for a normal run, 60 for plus.",
- "variables": [
-  {
-   "name": "lead",
-   "type": "int",
-   "init": {}
-  },
-  {
-   "name": "caster",
-   "type": "int",
-   "init": {}
-  },
-  {
-   "name": "foe",
-   "type": "int",
-   "init": {}
-  },
-  {
-   "name": "turn",
-   "type": "int",
-   "init": {}
-  },
-  {
-   "name": "result",
-   "type": "int",
-   "init": {}
-  }
- ],
- "actions": {
-  "lead-attack": {
-   "params": [
-    "h",
-    "g"
-   ],
-   "description": "The lead attacks: 45 damage, +25 gauge.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 0
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "pointer/set": "/foe/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/lead/gauge",
-     "value": {
-      "param": "g"
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 1
-    }
-   ]
-  },
-  "lead-skill": {
-   "params": [
-    "h",
-    "g"
-   ],
-   "description": "The lead uses a skill: 110 damage for 50 gauge, on the same turn.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 0
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/gauge"
-      },
-      "b": 50
-     }
-    },
-    {
-     "pointer/set": "/foe/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/lead/gauge",
-     "value": {
-      "param": "g"
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 1
-    }
-   ]
-  },
-  "lead-finisher": {
-   "params": [
-    "h"
-   ],
-   "description": "The lead's finisher: needs a full gauge, empties it, 220 damage.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 0
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/gauge"
-      },
-      "b": 100
-     }
-    },
-    {
-     "pointer/set": "/foe/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/lead/gauge",
-     "value": 0
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 1
-    }
-   ]
-  },
-  "caster-attack": {
-   "params": [
-    "h"
-   ],
-   "description": "The caster attacks: 25 damage.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/charge"
-      },
-      "b": 0
-     }
-    },
-    {
-     "pointer/set": "/foe/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 2
-    }
-   ]
-  },
-  "caster-cast": {
-   "params": [],
-   "description": "The caster begins a spell; it lands on the caster's next turn.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/charge"
-      },
-      "b": 0
-     }
-    },
-    {
-     "pointer/set": "/caster/charge",
-     "value": 1
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 2
-    }
-   ]
-  },
-  "caster-release": {
-   "params": [
-    "h"
-   ],
-   "description": "The caster releases the spell: 130 damage.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/charge"
-      },
-      "b": 1
-     }
-    },
-    {
-     "pointer/set": "/foe/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/caster/charge",
-     "value": 0
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 2
-    }
-   ]
-  },
-  "foe-strike-lead": {
-   "params": [
-    "h"
-   ],
-   "description": "The foe strikes the lead.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 2
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "pointer/set": "/lead/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 0
-    }
-   ]
-  },
-  "foe-strike-caster": {
-   "params": [
-    "h"
-   ],
-   "description": "The foe strikes the caster, once the lead is down.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 2
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 0
-     }
-    },
-    {
-     "eval": {
-      "type": "math/ge",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/hp"
-      },
-      "b": 1
-     }
-    },
-    {
-     "pointer/set": "/caster/hp",
-     "value": {
-      "param": "h"
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 0
-    }
-   ]
-  },
-  "skip-lead": {
-   "params": [],
-   "description": "A fallen lead loses the turn.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 0
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 0
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 1
-    }
-   ]
-  },
-  "skip-caster": {
-   "params": [],
-   "description": "A fallen caster loses the turn.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/turn/slot"
-      },
-      "b": 1
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/hp"
-      },
-      "b": 0
-     }
-    },
-    {
-     "pointer/set": "/turn/slot",
-     "value": 2
-    }
-   ]
-  },
-  "victory": {
-   "params": [],
-   "description": "The foe is down: the round is won.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/foe/hp"
-      },
-      "b": 0
-     }
-    },
-    {
-     "pointer/set": "/result/won",
-     "value": 1
-    }
-   ]
-  },
-  "defeat": {
-   "params": [],
-   "description": "The party is down: the run ends.",
-   "body": [
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/lead/hp"
-      },
-      "b": 0
-     }
-    },
-    {
-     "eval": {
-      "type": "math/eq",
-      "a": {
-       "type": "pointer/get",
-       "pointer": "/caster/hp"
-      },
-      "b": 0
-     }
-    },
-    {
-     "pointer/set": "/result/lost",
-     "value": 1
-    }
-   ]
-  }
- },
- "methods": {
-  "cmd-lead-attack": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "go",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "lead-attack",
-       {
-        "param": "h"
-       },
-       {
-        "param": "g"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       },
-       {
-        "id": "g",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "math/add"
-       },
-       {
-        "op": "math/min"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 7,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           45
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 2,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/lead/gauge"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "values": {
-         "a": {
-          "node": 4,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           25
-          ]
-         }
-        }
-       },
-       {
+ "name": "command_battle",
+ "methods":
+ {"respond":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["victory"]],
+     "name": "foe-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]},
+    {"subtasks": [["defeat"]],
+     "name": "party-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}}]},
+    {"subtasks": [["foe-turn"], ["respond"]],
+     "name": "foe",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 4,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
+    {"subtasks": [["skip-lead"], ["respond"]],
+     "name": "lead-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}}]},
+    {"subtasks": [["skip-caster"], ["respond"]],
+     "name": "caster-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}}]},
+    {"subtasks": [["skip-guard"], ["respond"]],
+     "name": "guard-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 2,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}}]},
+    {"subtasks": [["skip-mender"], ["respond"]],
+     "name": "mender-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}}]},
+    {"subtasks": [], "name": "party-to-move", "check": []}]},
+  "play-out":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["victory"]],
+     "name": "foe-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]},
+    {"subtasks": [["defeat"]],
+     "name": "party-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}}]},
+    {"subtasks": [["foe-turn"], ["play-out"]],
+     "name": "foe",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 4,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
+    {"subtasks": [["skip-lead"], ["play-out"]],
+     "name": "lead-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}}]},
+    {"subtasks": [["skip-caster"], ["play-out"]],
+     "name": "caster-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}}]},
+    {"subtasks": [["skip-guard"], ["play-out"]],
+     "name": "guard-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 2,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}}]},
+    {"subtasks": [["skip-mender"], ["play-out"]],
+     "name": "mender-down",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}}]},
+    {"subtasks": [["lead-policy"], ["play-out"]],
+     "name": "lead",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
+    {"subtasks": [["caster-policy"], ["play-out"]],
+     "name": "caster",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
+    {"subtasks": [["guard-policy"], ["play-out"]],
+     "name": "guard",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 2,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
+    {"subtasks": [["mender-policy"], ["play-out"]],
+     "name": "mender",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]}]},
+  "mender-policy":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["cmd-mender-heal-guard"]],
+     "name": "heal-guard",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "need"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 6}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 2},
+         "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 4},
+         "b": {"value": [0], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 4},
+       {"values": {"0": {"socket": "value", "node": 5}},
         "declaration": 5,
-        "values": {
-         "a": {
-          "node": 5,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           100
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 6,
-        "configuration": {
-         "variables": {
-          "value": [
-           0,
-           1
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 3,
-          "socket": "value"
-         },
-         "1": {
-          "node": 6,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "cmd-lead-skill": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "go",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/gauge"
-        },
-        "b": 50
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "lead-skill",
-       {
-        "param": "h"
-       },
-       {
-        "param": "g"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       },
-       {
-        "id": "g",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 6,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           110
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 2,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/lead/gauge"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 4,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           50
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0,
-           1
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 3,
-          "socket": "value"
-         },
-         "1": {
-          "node": 5,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "cmd-lead-finisher": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "go",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/gauge"
-        },
-        "b": 100
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "lead-finisher",
-       {
-        "param": "h"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 4,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           220
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 2,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 3,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "cmd-caster-attack": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "go",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/charge"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "caster-attack",
-       {
-        "param": "h"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 4,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           25
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 2,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 3,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "cmd-caster-cast": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "go",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/charge"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "caster-cast"
-      ]
-     ]
-    }
-   ]
-  },
-  "cmd-caster-release": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "go",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/charge"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "caster-release",
-       {
-        "param": "h"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 4,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           130
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 2,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 3,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "foe-turn": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "lead",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 2
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "foe-strike-lead",
-       {
-        "param": "h"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 5,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/lead/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/atk"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "node": 2,
-          "socket": "value"
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 3,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 4,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    },
-    {
-     "name": "caster",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 2
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "foe-strike-caster",
-       {
-        "param": "h"
-       }
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "h",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/sub"
-       },
-       {
-        "op": "math/max"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 5,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/caster/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/atk"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "node": 2,
-          "socket": "value"
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "a": {
-          "node": 3,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 4,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "respond": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "foe-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": []
-    },
-    {
-     "name": "party-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": []
-    },
-    {
-     "name": "foe",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 2
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "foe-turn"
-      ],
-      [
-       "respond"
-      ]
-     ]
-    },
-    {
-     "name": "lead-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "skip-lead"
-      ],
-      [
-       "respond"
-      ]
-     ]
-    },
-    {
-     "name": "caster-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "skip-caster"
-      ],
-      [
-       "respond"
-      ]
-     ]
-    },
-    {
-     "name": "party-to-move",
-     "check": [],
-     "subtasks": []
-    }
-   ]
-  },
-  "play-out": {
-   "params": [],
-   "alternatives": [
-    {
-     "name": "foe-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "victory"
-      ]
-     ]
-    },
-    {
-     "name": "party-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "defeat"
-      ]
-     ]
-    },
-    {
-     "name": "foe",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 2
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "foe-turn"
-      ],
-      [
-       "play-out"
-      ]
-     ]
-    },
-    {
-     "name": "lead-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "skip-lead"
-      ],
-      [
-       "play-out"
-      ]
-     ]
-    },
-    {
-     "name": "caster-down",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 1
-       }
-      },
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/hp"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "skip-caster"
-      ],
-      [
-       "play-out"
-      ]
-     ]
-    },
-    {
-     "name": "lead",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 0
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "lead-policy"
-      ],
-      [
-       "play-out"
-      ]
-     ]
-    },
-    {
-     "name": "caster",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/turn/slot"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "caster-policy"
-      ],
-      [
-       "play-out"
-      ]
-     ]
-    }
-   ]
-  },
-  "lead-policy": {
-   "params": [],
-   "alternatives": [
-    {
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/ge"},
+       {"op": "math/select"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/need"}}}]},
+    {"subtasks": [["cmd-mender-heal-lead"]],
+     "name": "heal-lead",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "need"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 6}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 2},
+         "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 4},
+         "b": {"value": [0], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 4},
+       {"values": {"0": {"socket": "value", "node": 5}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/ge"},
+       {"op": "math/select"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/need"}}}]},
+    {"subtasks": [["cmd-mender-heal-caster"]],
+     "name": "heal-caster",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "need"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 6}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 2},
+         "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 4},
+         "b": {"value": [0], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 4},
+       {"values": {"0": {"socket": "value", "node": 5}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/ge"},
+       {"op": "math/select"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/need"}}}]},
+    {"subtasks": [["cmd-mender-heal-mender"]],
+     "name": "heal-mender",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "need"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 6}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/hp"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 2},
+         "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 4},
+         "b": {"value": [0], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 4},
+       {"values": {"0": {"socket": "value", "node": 5}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/ge"},
+       {"op": "math/select"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/need"}}}]},
+    {"subtasks": [["cmd-mender-attack"]], "name": "attack", "check": []}]},
+  "lead-policy":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["cmd-lead-finisher"]],
      "name": "finisher",
-     "check": [
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/gauge"
-        },
-        "b": 100
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "cmd-lead-finisher"
-      ]
-     ]
-    },
-    {
+     "check":
+     [{"eval":
+       {"type": "math/ge",
+        "b": 100,
+        "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}}]},
+    {"subtasks": [["cmd-lead-skill"]],
      "name": "skill",
-     "check": [
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/lead/gauge"
-        },
-        "b": 50
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/graph/near"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "cmd-lead-skill"
-      ]
-     ],
-     "graph": {
-      "types": [
-       {
-        "signature": "int"
-       },
-       {
-        "signature": "bool"
-       }
-      ],
-      "variables": [
-       {
-        "id": "near",
-        "type": 0,
-        "value": [
-         0
-        ]
-       }
-      ],
-      "declarations": [
-       {
-        "op": "event/onStart"
-       },
-       {
-        "op": "pointer/get"
-       },
-       {
-        "op": "math/le"
-       },
-       {
-        "op": "math/select"
-       },
-       {
-        "op": "variable/set"
-       }
-      ],
-      "nodes": [
-       {
-        "declaration": 0,
-        "flows": {
-         "out": {
-          "node": 4,
-          "socket": "in"
-         }
-        }
-       },
-       {
-        "declaration": 1,
-        "configuration": {
-         "pointer": {
-          "value": [
-           "/foe/hp"
-          ]
-         },
-         "type": {
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 2,
-        "values": {
-         "a": {
-          "node": 1,
-          "socket": "value"
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           110
-          ]
-         }
-        }
-       },
-       {
-        "declaration": 3,
-        "values": {
-         "condition": {
-          "node": 2,
-          "socket": "value"
-         },
-         "a": {
-          "type": 0,
-          "value": [
-           1
-          ]
-         },
-         "b": {
-          "type": 0,
-          "value": [
-           0
-          ]
-         }
-        }
-       },
-       {
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "near"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 4}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [110], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"condition": {"socket": "value", "node": 2},
+         "b": {"value": [0], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 3},
+       {"values": {"0": {"socket": "value", "node": 3}},
         "declaration": 4,
-        "configuration": {
-         "variables": {
-          "value": [
-           0
-          ]
-         }
-        },
-        "values": {
-         "0": {
-          "node": 3,
-          "socket": "value"
-         }
-        }
-       }
-      ]
-     }
-    },
-    {
-     "name": "attack",
-     "check": [],
-     "subtasks": [
-      [
-       "cmd-lead-attack"
-      ]
-     ]
-    }
-   ]
-  },
-  "caster-policy": {
-   "params": [],
-   "alternatives": [
-    {
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/le"},
+       {"op": "math/select"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/ge",
+        "b": 50,
+        "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/near"}}}]},
+    {"subtasks": [["cmd-lead-attack"]], "name": "attack", "check": []}]},
+  "guard-policy":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["cmd-guard-taunt"]],
+     "name": "taunt",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/guard/taunt"}}}]},
+    {"subtasks": [["cmd-guard-attack"]], "name": "attack", "check": []}]},
+  "foe-turn":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["foe-strike-lead", {"param": "h"}]],
+     "name": "lead",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "t"},
+       {"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 20}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/taunt"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"b": {"socket": "value", "node": 4},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 4},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 6}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 8}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 10}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 11},
+         "b": {"value": [3], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 9},
+         "b": {"socket": "value", "node": 12},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 7},
+         "b": {"socket": "value", "node": 13},
+         "a": {"value": [0], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 5},
+         "b": {"socket": "value", "node": 14},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/atk"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 17},
+         "a": {"socket": "value", "node": 16}},
+        "declaration": 6},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 18}},
+        "declaration": 7},
+       {"values":
+        {"1": {"socket": "value", "node": 19},
+         "0": {"socket": "value", "node": 15}},
+        "declaration": 8,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/eq"},
+       {"op": "math/ge"},
+       {"op": "math/and"},
+       {"op": "math/select"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 4,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/graph/t"}}}]},
+    {"subtasks": [["foe-strike-caster", {"param": "h"}]],
+     "name": "caster",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "t"},
+       {"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 20}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/taunt"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"b": {"socket": "value", "node": 4},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 4},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 6}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 8}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 10}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 11},
+         "b": {"value": [3], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 9},
+         "b": {"socket": "value", "node": 12},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 7},
+         "b": {"socket": "value", "node": 13},
+         "a": {"value": [0], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 5},
+         "b": {"socket": "value", "node": 14},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/atk"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 17},
+         "a": {"socket": "value", "node": 16}},
+        "declaration": 6},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 18}},
+        "declaration": 7},
+       {"values":
+        {"1": {"socket": "value", "node": 19},
+         "0": {"socket": "value", "node": 15}},
+        "declaration": 8,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/eq"},
+       {"op": "math/ge"},
+       {"op": "math/and"},
+       {"op": "math/select"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 4,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/t"}}}]},
+    {"subtasks": [["foe-strike-guard", {"param": "h"}]],
+     "name": "guard",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "t"},
+       {"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 22}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/taunt"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"b": {"socket": "value", "node": 4},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 4},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 6}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 8}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 10}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 11},
+         "b": {"value": [3], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 9},
+         "b": {"socket": "value", "node": 12},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 7},
+         "b": {"socket": "value", "node": 13},
+         "a": {"value": [0], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 5},
+         "b": {"socket": "value", "node": 14},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/atk"]}}},
+       {"values":
+        {"b": {"value": [20], "type": 0}, "a": {"socket": "value", "node": 17}},
+        "declaration": 6},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 18}},
+        "declaration": 7},
+       {"values":
+        {"b": {"socket": "value", "node": 19},
+         "a": {"socket": "value", "node": 16}},
+        "declaration": 6},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 20}},
+        "declaration": 7},
+       {"values":
+        {"1": {"socket": "value", "node": 21},
+         "0": {"socket": "value", "node": 15}},
+        "declaration": 8,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/eq"},
+       {"op": "math/ge"},
+       {"op": "math/and"},
+       {"op": "math/select"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 4,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 2,
+        "a": {"type": "pointer/get", "pointer": "/graph/t"}}}]},
+    {"subtasks": [["foe-strike-mender", {"param": "h"}]],
+     "name": "mender",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "t"},
+       {"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 20}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/taunt"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 3},
+       {"values":
+        {"b": {"socket": "value", "node": 4},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 4},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 6}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 8}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 10}},
+        "declaration": 3},
+       {"values":
+        {"condition": {"socket": "value", "node": 11},
+         "b": {"value": [3], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 9},
+         "b": {"socket": "value", "node": 12},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 7},
+         "b": {"socket": "value", "node": 13},
+         "a": {"value": [0], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"condition": {"socket": "value", "node": 5},
+         "b": {"socket": "value", "node": 14},
+         "a": {"value": [2], "type": 0}},
+        "declaration": 5},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/hp"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/atk"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 17},
+         "a": {"socket": "value", "node": 16}},
+        "declaration": 6},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 18}},
+        "declaration": 7},
+       {"values":
+        {"1": {"socket": "value", "node": 19},
+         "0": {"socket": "value", "node": 15}},
+        "declaration": 8,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/eq"},
+       {"op": "math/ge"},
+       {"op": "math/and"},
+       {"op": "math/select"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 4,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/graph/t"}}}]}]},
+  "cmd-next-round":
+  {"params": [],
+   "alternatives":
+   [{"subtasks":
+     [["next-round",
+       {"param": "r"},
+       {"param": "fh"},
+       {"param": "fa"},
+       {"param": "lh"},
+       {"param": "ch"},
+       {"param": "gh"},
+       {"param": "mh"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "r"},
+       {"value": [0], "type": 0, "id": "fh"},
+       {"value": [0], "type": 0, "id": "fa"},
+       {"value": [0], "type": 0, "id": "lh"},
+       {"value": [0], "type": 0, "id": "ch"},
+       {"value": [0], "type": 0, "id": "gh"},
+       {"value": [0], "type": 0, "id": "mh"},
+       {"value": [0], "type": 0, "id": "more"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 19}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [20], "type": 0}, "a": {"socket": "value", "node": 4}},
+        "declaration": 3},
+       {"values":
+        {"b": {"value": [240], "type": 0}, "a": {"socket": "value", "node": 5}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 7}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [2], "type": 0}, "a": {"socket": "value", "node": 8}},
+        "declaration": 3},
+       {"values":
+        {"b": {"value": [38], "type": 0}, "a": {"socket": "value", "node": 9}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/max"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/limit"]}}},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 16},
+         "a": {"socket": "value", "node": 15}},
+        "declaration": 4},
+       {"values":
+        {"condition": {"socket": "value", "node": 17},
+         "b": {"value": [0], "type": 0},
+         "a": {"value": [1], "type": 0}},
+        "declaration": 5},
+       {"values":
+        {"7": {"socket": "value", "node": 18},
+         "6": {"socket": "value", "node": 14},
+         "5": {"socket": "value", "node": 13},
+         "4": {"socket": "value", "node": 12},
+         "3": {"socket": "value", "node": 11},
+         "2": {"socket": "value", "node": 10},
+         "1": {"socket": "value", "node": 6},
+         "0": {"socket": "value", "node": 2}},
+        "declaration": 6,
+        "configuration": {"variables": {"value": [0, 1, 2, 3, 4, 5, 6, 7]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/add"},
+       {"op": "math/mul"},
+       {"op": "math/gt"},
+       {"op": "math/select"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/result/won"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/graph/more"}}}]}]},
+  "cmd-mender-heal-mender":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["mender-heal-mender", {"param": "v"}, {"param": "k"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "v"},
+       {"value": [0], "type": 0, "id": "k"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 7}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/hp"]}}},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/max"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 3},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/heals"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 5}},
+        "declaration": 4},
+       {"values":
+        {"1": {"socket": "value", "node": 6},
+         "0": {"socket": "value", "node": 4}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/add"},
+       {"op": "math/min"},
+       {"op": "math/sub"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}}]}]},
+  "cmd-mender-heal-lead":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["mender-heal-lead", {"param": "v"}, {"param": "k"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "v"},
+       {"value": [0], "type": 0, "id": "k"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 7}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/hp"]}}},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/max"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 3},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/heals"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 5}},
+        "declaration": 4},
+       {"values":
+        {"1": {"socket": "value", "node": 6},
+         "0": {"socket": "value", "node": 4}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/add"},
+       {"op": "math/min"},
+       {"op": "math/sub"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}}]}]},
+  "cmd-mender-heal-guard":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["mender-heal-guard", {"param": "v"}, {"param": "k"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "v"},
+       {"value": [0], "type": 0, "id": "k"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 7}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/hp"]}}},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/guard/max"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 3},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/heals"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 5}},
+        "declaration": 4},
+       {"values":
+        {"1": {"socket": "value", "node": 6},
+         "0": {"socket": "value", "node": 4}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/add"},
+       {"op": "math/min"},
+       {"op": "math/sub"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}}]}]},
+  "cmd-mender-heal-caster":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["mender-heal-caster", {"param": "v"}, {"param": "k"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "v"},
+       {"value": [0], "type": 0, "id": "k"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 7}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/hp"]}}},
+       {"values":
+        {"b": {"value": [60], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/caster/max"]}}},
+       {"values":
+        {"b": {"socket": "value", "node": 3},
+         "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/mender/heals"]}}},
+       {"values":
+        {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 5}},
+        "declaration": 4},
+       {"values":
+        {"1": {"socket": "value", "node": 6},
+         "0": {"socket": "value", "node": 4}},
+        "declaration": 5,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/add"},
+       {"op": "math/min"},
+       {"op": "math/sub"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}}]}]},
+  "cmd-mender-attack":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["mender-attack", {"param": "h"}]],
+     "name": "go",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 4}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [20], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"values": {"0": {"socket": "value", "node": 3}},
+        "declaration": 4,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 3,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]}]},
+  "cmd-lead-skill":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["lead-skill", {"param": "h"}, {"param": "g"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "h"},
+       {"value": [0], "type": 0, "id": "g"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 6}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [110], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/gauge"]}}},
+       {"values":
+        {"b": {"value": [50], "type": 0}, "a": {"socket": "value", "node": 4}},
+        "declaration": 2},
+       {"values":
+        {"1": {"socket": "value", "node": 5},
+         "0": {"socket": "value", "node": 3}},
+        "declaration": 4,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 50,
+        "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}}]}]},
+  "cmd-lead-finisher":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["lead-finisher", {"param": "h"}]],
+     "name": "go",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 4}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [220], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"values": {"0": {"socket": "value", "node": 3}},
+        "declaration": 4,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 100,
+        "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}}]}]},
+  "cmd-lead-attack":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["lead-attack", {"param": "h"}, {"param": "g"}]],
+     "name": "go",
+     "graph":
+     {"variables":
+      [{"value": [0], "type": 0, "id": "h"},
+       {"value": [0], "type": 0, "id": "g"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 7}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [45], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/lead/gauge"]}}},
+       {"values":
+        {"b": {"value": [25], "type": 0}, "a": {"socket": "value", "node": 4}},
+        "declaration": 4},
+       {"values":
+        {"b": {"value": [100], "type": 0}, "a": {"socket": "value", "node": 5}},
+        "declaration": 5},
+       {"values":
+        {"1": {"socket": "value", "node": 6},
+         "0": {"socket": "value", "node": 3}},
+        "declaration": 6,
+        "configuration": {"variables": {"value": [0, 1]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "math/add"},
+       {"op": "math/min"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]}]},
+  "cmd-guard-taunt":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["guard-taunt"]],
+     "name": "go",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 2,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/guard/taunt"}}}]}]},
+  "cmd-guard-attack":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["guard-attack", {"param": "h"}]],
+     "name": "go",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 4}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [30], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"values": {"0": {"socket": "value", "node": 3}},
+        "declaration": 4,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 2,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]}]},
+  "cmd-caster-release":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["caster-release", {"param": "h"}]],
+     "name": "go",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 4}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [130], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"values": {"0": {"socket": "value", "node": 3}},
+        "declaration": 4,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/charge"}}}]}]},
+  "cmd-caster-cast":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["caster-cast"]],
+     "name": "go",
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/charge"}}}]}]},
+  "cmd-caster-attack":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["caster-attack", {"param": "h"}]],
+     "name": "go",
+     "graph":
+     {"variables": [{"value": [0], "type": 0, "id": "h"}],
+      "types": [{"signature": "int"}, {"signature": "bool"}],
+      "nodes":
+      [{"flows": {"out": {"socket": "in", "node": 4}}, "declaration": 0},
+       {"declaration": 1,
+        "configuration":
+        {"type": {"value": [0]}, "pointer": {"value": ["/foe/hp"]}}},
+       {"values":
+        {"b": {"value": [25], "type": 0}, "a": {"socket": "value", "node": 1}},
+        "declaration": 2},
+       {"values":
+        {"b": {"value": [0], "type": 0}, "a": {"socket": "value", "node": 2}},
+        "declaration": 3},
+       {"values": {"0": {"socket": "value", "node": 3}},
+        "declaration": 4,
+        "configuration": {"variables": {"value": [0]}}}],
+      "declarations":
+      [{"op": "event/onStart"},
+       {"op": "pointer/get"},
+       {"op": "math/sub"},
+       {"op": "math/max"},
+       {"op": "variable/set"}]},
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+      {"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/charge"}}}]}]},
+  "caster-policy":
+  {"params": [],
+   "alternatives":
+   [{"subtasks": [["cmd-caster-release"]],
      "name": "release",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/charge"
-        },
-        "b": 1
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "cmd-caster-release"
-      ]
-     ]
-    },
-    {
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 1,
+        "a": {"type": "pointer/get", "pointer": "/caster/charge"}}}]},
+    {"subtasks": [["cmd-caster-cast"]],
      "name": "cast",
-     "check": [
-      {
-       "eval": {
-        "type": "math/eq",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/caster/charge"
-        },
-        "b": 0
-       }
-      },
-      {
-       "eval": {
-        "type": "math/ge",
-        "a": {
-         "type": "pointer/get",
-         "pointer": "/foe/hp"
-        },
-        "b": 130
-       }
-      }
-     ],
-     "subtasks": [
-      [
-       "cmd-caster-cast"
-      ]
-     ]
-    },
-    {
-     "name": "attack",
-     "check": [],
-     "subtasks": [
-      [
-       "cmd-caster-attack"
-      ]
-     ]
-    }
-   ]
-  }
- }
-}
+     "check":
+     [{"eval":
+       {"type": "math/eq",
+        "b": 0,
+        "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
+      {"eval":
+       {"type": "math/ge",
+        "b": 130,
+        "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]},
+    {"subtasks": [["cmd-caster-attack"]], "name": "attack", "check": []}]}},
+ "description":
+ "A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a round. A run is 30 rounds (normal) or 60 (plus); the next-round method makes each foe stronger.",
+ "actions":
+ {"victory":
+  {"params": [],
+   "description": "The foe is down: the round is won.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"value": 1, "pointer/set": "/result/won"}]},
+  "skip-mender":
+  {"params": [],
+   "description": "A fallen mender loses the turn.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 3,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"value": 4, "pointer/set": "/turn/slot"}]},
+  "skip-lead":
+  {"params": [],
+   "description": "A fallen lead loses the turn.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"value": 1, "pointer/set": "/turn/slot"}]},
+  "skip-guard":
+  {"params": [],
+   "description": "A fallen guard loses the turn.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 2,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+    {"value": 3, "pointer/set": "/turn/slot"}]},
+  "skip-caster":
+  {"params": [],
+   "description": "A fallen caster loses the turn.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"value": 2, "pointer/set": "/turn/slot"}]},
+  "next-round":
+  {"params": ["r", "fh", "fa", "lh", "ch", "gh", "mh"],
+   "description":
+   "The next round: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/result/won"}}},
+    {"value": {"param": "r"}, "pointer/set": "/run/round"},
+    {"value": {"param": "fh"}, "pointer/set": "/foe/hp"},
+    {"value": {"param": "fh"}, "pointer/set": "/foe/max"},
+    {"value": {"param": "fa"}, "pointer/set": "/foe/atk"},
+    {"value": {"param": "lh"}, "pointer/set": "/lead/hp"},
+    {"value": {"param": "ch"}, "pointer/set": "/caster/hp"},
+    {"value": {"param": "gh"}, "pointer/set": "/guard/hp"},
+    {"value": {"param": "mh"}, "pointer/set": "/mender/hp"},
+    {"value": 0, "pointer/set": "/caster/charge"},
+    {"value": 0, "pointer/set": "/guard/taunt"},
+    {"value": 3, "pointer/set": "/mender/heals"},
+    {"value": 0, "pointer/set": "/turn/slot"},
+    {"value": 0, "pointer/set": "/result/won"}]},
+  "mender-heal-mender":
+  {"params": ["v", "k"],
+   "description":
+   "The mender heals the mender for 60, up to its maximum; 3 heals a round.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 3,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"value": {"param": "v"}, "pointer/set": "/mender/hp"},
+    {"value": {"param": "k"}, "pointer/set": "/mender/heals"},
+    {"value": 4, "pointer/set": "/turn/slot"}]},
+  "mender-heal-lead":
+  {"params": ["v", "k"],
+   "description":
+   "The mender heals the lead for 60, up to its maximum; 3 heals a round.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 3,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"value": {"param": "v"}, "pointer/set": "/lead/hp"},
+    {"value": {"param": "k"}, "pointer/set": "/mender/heals"},
+    {"value": 4, "pointer/set": "/turn/slot"}]},
+  "mender-heal-guard":
+  {"params": ["v", "k"],
+   "description":
+   "The mender heals the guard for 60, up to its maximum; 3 heals a round.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 3,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+    {"value": {"param": "v"}, "pointer/set": "/guard/hp"},
+    {"value": {"param": "k"}, "pointer/set": "/mender/heals"},
+    {"value": 4, "pointer/set": "/turn/slot"}]},
+  "mender-heal-caster":
+  {"params": ["v", "k"],
+   "description":
+   "The mender heals the caster for 60, up to its maximum; 3 heals a round.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 3,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/heals"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"value": {"param": "v"}, "pointer/set": "/caster/hp"},
+    {"value": {"param": "k"}, "pointer/set": "/mender/heals"},
+    {"value": 4, "pointer/set": "/turn/slot"}]},
+  "mender-attack":
+  {"params": ["h"],
+   "description": "The mender attacks: 20 damage.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 3,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": 4, "pointer/set": "/turn/slot"}]},
+  "lead-skill":
+  {"params": ["h", "g"],
+   "description":
+   "The lead uses a skill: 110 damage for 50 gauge, on the same turn.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 50,
+      "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": {"param": "g"}, "pointer/set": "/lead/gauge"},
+    {"value": 1, "pointer/set": "/turn/slot"}]},
+  "lead-finisher":
+  {"params": ["h"],
+   "description":
+   "The lead's finisher: needs a full gauge, empties it, 220 damage.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 100,
+      "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": 0, "pointer/set": "/lead/gauge"},
+    {"value": 1, "pointer/set": "/turn/slot"}]},
+  "lead-attack":
+  {"params": ["h", "g"],
+   "description": "The lead attacks: 45 damage, +25 gauge.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": {"param": "g"}, "pointer/set": "/lead/gauge"},
+    {"value": 1, "pointer/set": "/turn/slot"}]},
+  "guard-taunt":
+  {"params": [],
+   "description":
+   "The guard taunts: the foe strikes the guard while it stands, this round.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 2,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/guard/taunt"}}},
+    {"value": 1, "pointer/set": "/guard/taunt"},
+    {"value": 3, "pointer/set": "/turn/slot"}]},
+  "guard-attack":
+  {"params": ["h"],
+   "description": "The guard attacks: 30 damage.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 2,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": 3, "pointer/set": "/turn/slot"}]},
+  "foe-strike-mender":
+  {"params": ["h"],
+   "description": "The foe strikes the mender.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 4,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/mender/hp"},
+    {"value": 0, "pointer/set": "/turn/slot"}]},
+  "foe-strike-lead":
+  {"params": ["h"],
+   "description": "The foe strikes the lead.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 4,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/lead/hp"},
+    {"value": 0, "pointer/set": "/turn/slot"}]},
+  "foe-strike-guard":
+  {"params": ["h"],
+   "description": "The foe strikes the guard, who blocks 20 of it.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 4,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/guard/hp"},
+    {"value": 0, "pointer/set": "/turn/slot"}]},
+  "foe-strike-caster":
+  {"params": ["h"],
+   "description": "The foe strikes the caster.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 4,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"value": {"param": "h"}, "pointer/set": "/caster/hp"},
+    {"value": 0, "pointer/set": "/turn/slot"}]},
+  "defeat":
+  {"params": [],
+   "description": "The party is down: the run ends.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
+    {"value": 1, "pointer/set": "/result/lost"}]},
+  "caster-release":
+  {"params": ["h"],
+   "description": "The caster releases the spell: 130 damage.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": 0, "pointer/set": "/caster/charge"},
+    {"value": 2, "pointer/set": "/turn/slot"}]},
+  "caster-cast":
+  {"params": [],
+   "description":
+   "The caster begins a spell; it lands on the caster's next turn.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
+    {"value": 1, "pointer/set": "/caster/charge"},
+    {"value": 2, "pointer/set": "/turn/slot"}]},
+  "caster-attack":
+  {"params": ["h"],
+   "description": "The caster attacks: 25 damage.",
+   "body":
+   [{"eval":
+     {"type": "math/eq",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
+    {"eval":
+     {"type": "math/ge",
+      "b": 1,
+      "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
+    {"eval":
+     {"type": "math/eq",
+      "b": 0,
+      "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
+    {"value": {"param": "h"}, "pointer/set": "/foe/hp"},
+    {"value": 2, "pointer/set": "/turn/slot"}]}},
+ "@type": "domain:Definition",
+ "@context":
+ {"domain": "VSEKAI:planning/domain/", "VSEKAI": "https://v-sekai.org/"}}
