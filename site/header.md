@@ -38,3 +38,4 @@ title: interactor-taskweft-persona
   .pg-console textarea { width: 100%; box-sizing: border-box; font: 12px/1.35 Menlo, monospace; }
 </style>
 <script src="{{ '/assets/playground.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/navigator.js' | relative_url }}" defer></script>
