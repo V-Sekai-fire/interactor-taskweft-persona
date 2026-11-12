@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- Copyright (c) 2026 K. S. Ernest (iFire) Lee. SPDX-License-Identifier: Apache-2.0 OR MIT -->
+<!-- The primer theme's default layout, with the footer's edit link pointing at the files this page is
+     built from (the theme's own link names a root index.md this repository does not have), an inline icon
+     so the browser does not ask for /favicon.ico, and no third-party anchor script. -->
+<html lang="{{ page.lang | default: site.lang | default: "en-US" }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+{% seo %}
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231a5fb4'/%3E%3Cpath d='M4 12 12 4M9 4h3v3' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      {% if site.title and site.title != page.title %}
+      <h1><a href="{{ "/" | absolute_url }}">{{ site.title }}</a></h1>
+      {% endif %}
+
+      {{ content }}
+
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. Improve
+        <a href="https://github.com/V-Sekai-fire/interactor-taskweft-persona/blob/main/site/battle.js">the battle page</a>,
+        <a href="https://github.com/V-Sekai-fire/interactor-taskweft-persona/blob/main/BattleWitness.lean">its rules</a> or
+        <a href="https://github.com/V-Sekai-fire/interactor-taskweft-persona/blob/main/site/index.md">this layout</a>.
+      </div>
+    </div>
+  </body>
+</html>

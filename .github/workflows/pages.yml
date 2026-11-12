@@ -1,4 +1,4 @@
-# The persona on GitHub Pages: the README as the page, and the planner running in the browser.
+# The persona on GitHub Pages: the command battle, with the planner running in the browser.
 name: pages
 on:
   push:
