@@ -33,38 +33,48 @@
     if (tag) seen[tag] = { request, raw };
     return JSON.parse(raw);
   }
-  // Each step's effects come from the action's own pointer/set entries in the domain, not from this page.
+  // A step's effects, read from its action's pointer/set entries in the domain: which pointer each one
+  // sets, to what value, and from which named argument. Applying and explaining a step both use this, so
+  // the page holds no rule and assumes nothing about argument order.
+  function effects(s) {
+    const a = domain.actions[s.action];
+    if (!a) throw new Error("the plan names an action the domain lacks: " + s.action);
+    const names = a.params || [];
+    const args = Object.fromEntries(names.map((n, i) => [n, Number(s.params[i])]));
+    const sets = [];
+    for (const b of a.body || []) {
+      if (!("pointer/set" in b)) continue;
+      const ptr = b["pointer/set"];
+      if (ptr.includes("[")) throw new Error("templated pointer " + ptr + " is not applied by this page");
+      const param = typeof b.value === "object" ? b.value.param : null;
+      const val = param ? args[param] : b.value;
+      if (!Number.isFinite(val)) throw new Error(s.action + " sets " + ptr + " to " + val);
+      sets.push({ ptr, val, param });
+    }
+    return { description: a.description || "", sets };
+  }
+  const label = (ptr) => ptr.slice(1).replace("/", " ");
+  const quiet = (ptr) => ptr === "/turn/slot" || ptr.startsWith("/result/");
+  // Applies the steps and returns them explained, one block per step, for the console.
   function apply(steps) {
-    for (const s of steps) {
-      const a = domain.actions[s.action];
-      if (!a) throw new Error("the plan names an action the domain lacks: " + s.action);
-      const args = Object.fromEntries((a.params || []).map((p, i) => [p, Number(s.params[i])]));
-      for (const b of a.body || []) {
-        if (!("pointer/set" in b)) continue;
-        const ptr = b["pointer/set"];
-        if (ptr.includes("[")) throw new Error("templated pointer " + ptr + " is not applied by this page");
+    const lines = [];
+    steps.forEach((s, i) => {
+      const e = effects(s);
+      lines.push(`${i + 1}. ${s.action}(${(s.params || []).join(", ")}): ${e.description}`);
+      const changes = [];
+      for (const { ptr, val, param } of e.sets) {
         const [, v, k] = ptr.split("/");
-        const val = typeof b.value === "object" ? args[b.value.param] : b.value;
-        if (!Number.isFinite(val)) throw new Error(s.action + " sets " + ptr + " to " + val);
+        const was = state[v][k];
+        lines.push(param ? `     ${param} = ${val}  sets ${ptr}, which was ${was}` : `     sets ${ptr} to ${val}, which was ${was}`);
+        if (!quiet(ptr) && was !== val) changes.push(`${label(ptr)} ${was} \u2192 ${val}`);
         state[v][k] = val;
       }
-      ui.log.prepend(h("li", {}, say(s)));
-    }
+      const name = s.action.charAt(0).toUpperCase() + s.action.slice(1).replace(/-/g, " ");
+      ui.log.prepend(h("li", {}, changes.length ? `${name}: ${changes.join(", ")}.` : e.description));
+    });
     while (ui.log.children.length > 16) ui.log.lastChild.remove();
+    return lines.length ? lines.join("\n") : "The planner answered with no steps.";
   }
-  function say(s) {
-    const p = s.params || [];
-    const [who, ...rest] = s.action.split("-");
-    const what = rest.join(" ");
-    if (s.action.startsWith("foe-strike-")) return `Foe strikes the ${s.action.slice(11)}, down to ${p[0]} HP.`;
-    if (s.action.startsWith("mender-heal-")) return `Mender heals the ${s.action.slice(12)} to ${p[0]} HP (${p[1]} heals left).`;
-    if (s.action.startsWith("skip-")) return `The ${s.action.slice(5)} is down and loses the turn.`;
-    if (s.action === "next-round") return `Round ${p[0]}: a foe with ${p[1]} HP that strikes for ${p[2]}. The party is back to full.`;
-    if (s.action === "victory") return "The foe is down.";
-    if (s.action === "defeat") return "The whole party is down.";
-    return `${cap(who)} ${what}` + (p.length ? ` (foe at ${p[0]} HP)` : "") + ".";
-  }
-
   const ui = {
     run: h("p", { class: "bt-run" }),
     modes: h("div", { class: "bt-row" }),
@@ -79,7 +89,8 @@
   ui.console.hidden = true;
   const panes = {};
   for (const [key, title] of [["domain", "Domain (JSON-LD)"], ["problem", "Problem sent with the last command (JSON-LD)"],
-    ["answer", "Planner's answer to the last command"], ["forecast", "Planner's answer to the forecast (play-out)"]]) {
+    ["answer", "Planner's answer to the last command"], ["explain", "Last command, step by step"],
+    ["forecast", "Planner's answer to the forecast (play-out)"]]) {
     const ta = h("textarea", { rows: "10", readonly: "", spellcheck: "false", wrap: "off", "aria-label": title });
     ui.console.append(h("label", { class: "bt-pane" }, title), ta);
     panes[key] = ta;
@@ -90,6 +101,7 @@
     if (!panes.domain.value) panes.domain.value = pretty(domainText);
     panes.problem.value = seen.command ? pretty(seen.command.request) : "No command yet. Pick one, or press Persona's choice.";
     panes.answer.value = seen.command ? pretty(seen.command.raw) : "";
+    panes.explain.value = seen.command ? seen.command.explain || "" : "";
     panes.forecast.value = seen.forecast ? pretty(seen.forecast.raw) : "No forecast for this state.";
   }
   ui.toggle.addEventListener("click", () => {
@@ -136,8 +148,13 @@
   }
   function act(todo) {
     const r = ask(todo, "command");
-    if (r.refused) { ui.status.textContent = "The planner refused that: " + r.refused + "."; return; }
-    apply(r.steps || []);
+    if (r.refused) {
+      seen.command.explain = "Refused: " + r.refused + ". No step was applied.";
+      ui.status.textContent = "The planner refused that: " + r.refused + ".";
+      fillConsole();
+      return;
+    }
+    seen.command.explain = apply(r.steps || []);
     render();
   }
   function render() {

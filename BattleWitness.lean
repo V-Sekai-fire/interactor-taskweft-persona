@@ -141,80 +141,80 @@ def driver (name : String) (ends : Bool) : Json :=
     alt "foe" [eqC "/turn/slot" 4] [[js "foe-turn"], [js name]]] ++ downs ++ moves)
 
 def domain (c : Cfg) : Json :=
-  let heals := members.map fun x => (s!"mender-heal-{x}", act ["v", "k"]
+  let heals := members.map fun x => (s!"mender-heal-{x}", act ["hp", "heals_left"]
       s!"The mender heals the {x} for {c.heal}, up to its maximum; {c.heals} heals a round."
       (turnOf "mender" ++ [geC "/mender/heals" 1, geC s!"/{x}/hp" 1])
-      [(s!"/{x}/hp", par "v"), ("/mender/heals", par "k"), ("/turn/slot", nextSeat "mender")])
-  let strikes := members.map fun x => (s!"foe-strike-{x}", act ["h"]
+      [(s!"/{x}/hp", par "hp"), ("/mender/heals", par "heals_left"), ("/turn/slot", nextSeat "mender")])
+  let strikes := members.map fun x => (s!"foe-strike-{x}", act ["hp"]
       (if x == "guard" then s!"The foe strikes the guard, who blocks {c.block} of it." else s!"The foe strikes the {x}.")
-      [eqC "/turn/slot" 4, geC "/foe/hp" 1, geC s!"/{x}/hp" 1] [(s!"/{x}/hp", par "h"), ("/turn/slot", jn 0)])
+      [eqC "/turn/slot" 4, geC "/foe/hp" 1, geC s!"/{x}/hp" 1] [(s!"/{x}/hp", par "hp"), ("/turn/slot", jn 0)])
   let skips := members.map fun x => (s!"skip-{x}", act [] s!"A fallen {x} loses the turn."
       [eqC "/turn/slot" (seat x), eqC s!"/{x}/hp" 0] [("/turn/slot", nextSeat x)])
   let actions := [
-    ("lead-attack", act ["h", "g"] s!"The lead attacks: {c.attack} damage, +{c.gaugeStep} gauge." (turnOf "lead")
-      [("/foe/hp", par "h"), ("/lead/gauge", par "g"), ("/turn/slot", nextSeat "lead")]),
-    ("lead-skill", act ["h", "g"] s!"The lead uses a skill: {c.skill} damage for {c.skillCost} gauge, on the same turn."
-      (turnOf "lead" ++ [geC "/lead/gauge" c.skillCost]) [("/foe/hp", par "h"), ("/lead/gauge", par "g"), ("/turn/slot", nextSeat "lead")]),
-    ("lead-finisher", act ["h"] s!"The lead's finisher: needs a full gauge, empties it, {c.finisher} damage."
-      (turnOf "lead" ++ [geC "/lead/gauge" c.gaugeFull]) [("/foe/hp", par "h"), ("/lead/gauge", jn 0), ("/turn/slot", nextSeat "lead")]),
-    ("caster-attack", act ["h"] s!"The caster attacks: {c.cAttack} damage." (turnOf "caster" ++ [eqC "/caster/charge" 0])
-      [("/foe/hp", par "h"), ("/turn/slot", nextSeat "caster")]),
+    ("lead-attack", act ["foe_hp", "gauge"] s!"The lead attacks: {c.attack} damage, +{c.gaugeStep} gauge." (turnOf "lead")
+      [("/foe/hp", par "foe_hp"), ("/lead/gauge", par "gauge"), ("/turn/slot", nextSeat "lead")]),
+    ("lead-skill", act ["foe_hp", "gauge"] s!"The lead uses a skill: {c.skill} damage for {c.skillCost} gauge, on the same turn."
+      (turnOf "lead" ++ [geC "/lead/gauge" c.skillCost]) [("/foe/hp", par "foe_hp"), ("/lead/gauge", par "gauge"), ("/turn/slot", nextSeat "lead")]),
+    ("lead-finisher", act ["foe_hp"] s!"The lead's finisher: needs a full gauge, empties it, {c.finisher} damage."
+      (turnOf "lead" ++ [geC "/lead/gauge" c.gaugeFull]) [("/foe/hp", par "foe_hp"), ("/lead/gauge", jn 0), ("/turn/slot", nextSeat "lead")]),
+    ("caster-attack", act ["foe_hp"] s!"The caster attacks: {c.cAttack} damage." (turnOf "caster" ++ [eqC "/caster/charge" 0])
+      [("/foe/hp", par "foe_hp"), ("/turn/slot", nextSeat "caster")]),
     ("caster-cast", act [] "The caster begins a spell; it lands on the caster's next turn." (turnOf "caster" ++ [eqC "/caster/charge" 0])
       [("/caster/charge", jn 1), ("/turn/slot", nextSeat "caster")]),
-    ("caster-release", act ["h"] s!"The caster releases the spell: {c.release} damage." (turnOf "caster" ++ [eqC "/caster/charge" 1])
-      [("/foe/hp", par "h"), ("/caster/charge", jn 0), ("/turn/slot", nextSeat "caster")]),
-    ("guard-attack", act ["h"] s!"The guard attacks: {c.gAttack} damage." (turnOf "guard") [("/foe/hp", par "h"), ("/turn/slot", nextSeat "guard")]),
+    ("caster-release", act ["foe_hp"] s!"The caster releases the spell: {c.release} damage." (turnOf "caster" ++ [eqC "/caster/charge" 1])
+      [("/foe/hp", par "foe_hp"), ("/caster/charge", jn 0), ("/turn/slot", nextSeat "caster")]),
+    ("guard-attack", act ["foe_hp"] s!"The guard attacks: {c.gAttack} damage." (turnOf "guard") [("/foe/hp", par "foe_hp"), ("/turn/slot", nextSeat "guard")]),
     ("guard-taunt", act [] "The guard taunts: the foe strikes the guard while it stands, this round." (turnOf "guard" ++ [eqC "/guard/taunt" 0])
       [("/guard/taunt", jn 1), ("/turn/slot", nextSeat "guard")]),
-    ("mender-attack", act ["h"] s!"The mender attacks: {c.mAttack} damage." (turnOf "mender") [("/foe/hp", par "h"), ("/turn/slot", nextSeat "mender")])]
+    ("mender-attack", act ["foe_hp"] s!"The mender attacks: {c.mAttack} damage." (turnOf "mender") [("/foe/hp", par "foe_hp"), ("/turn/slot", nextSeat "mender")])]
     ++ heals ++ strikes ++ skips ++ [
     ("victory", act [] "The foe is down: the round is won." [eqC "/foe/hp" 0] [("/result/won", jn 1)]),
     ("defeat", act [] "The party is down: the run ends." (members.map fun m => eqC s!"/{m}/hp" 0) [("/result/lost", jn 1)]),
-    ("next-round", act ["r", "fh", "fa", "lh", "ch", "gh", "mh"]
+    ("next-round", act ["round", "foe_hp", "foe_atk", "lead_hp", "caster_hp", "guard_hp", "mender_hp"]
       "The next round: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge."
       [eqC "/result/won" 1]
-      [("/run/round", par "r"), ("/foe/hp", par "fh"), ("/foe/max", par "fh"), ("/foe/atk", par "fa"),
-       ("/lead/hp", par "lh"), ("/caster/hp", par "ch"), ("/guard/hp", par "gh"), ("/mender/hp", par "mh"),
+      [("/run/round", par "round"), ("/foe/hp", par "foe_hp"), ("/foe/max", par "foe_hp"), ("/foe/atk", par "foe_atk"),
+       ("/lead/hp", par "lead_hp"), ("/caster/hp", par "caster_hp"), ("/guard/hp", par "guard_hp"), ("/mender/hp", par "mender_hp"),
        ("/caster/charge", jn 0), ("/guard/taunt", jn 0), ("/mender/heals", jn c.heals), ("/turn/slot", jn 0), ("/result/won", jn 0)])]
   let strikeDmg (x : String) : GM Json :=
     if x == "guard" then bin "math/max" (bin "math/sub" (ptr "/guard/hp") (bin "math/max" (bin "math/sub" (ptr "/foe/atk") (lit c.block)) (lit 0))) (lit 0)
     else bin "math/max" (bin "math/sub" (ptr s!"/{x}/hp") (ptr "/foe/atk")) (lit 0)
   let healCmds := members.map fun x => (s!"cmd-mender-heal-{x}",
-    cmdM (turnOf "mender" ++ [geC "/mender/heals" 1, geC s!"/{x}/hp" 1]) s!"mender-heal-{x}" ["v", "k"] (mkGraph do
-      out "v" (bin "math/min" (bin "math/add" (ptr s!"/{x}/hp") (lit c.heal)) (ptr s!"/{x}/max"))
-      out "k" (bin "math/sub" (ptr "/mender/heals") (lit 1))))
+    cmdM (turnOf "mender" ++ [geC "/mender/heals" 1, geC s!"/{x}/hp" 1]) s!"mender-heal-{x}" ["hp", "heals_left"] (mkGraph do
+      out "hp" (bin "math/min" (bin "math/add" (ptr s!"/{x}/hp") (lit c.heal)) (ptr s!"/{x}/max"))
+      out "heals_left" (bin "math/sub" (ptr "/mender/heals") (lit 1))))
   let healPolicy := healOrder.map fun x => alt s!"heal-{x}" [geC "/mender/heals" 1, geC s!"/{x}/hp" 1, geC "/graph/need" 1]
     [[js s!"cmd-mender-heal-{x}"]]
     (some (mkGraph (out "need" (sel (bin "math/ge" (bin "math/sub" (ptr s!"/{x}/max") (ptr s!"/{x}/hp")) (lit c.heal)) (lit 1) (lit 0)))))
   let methods := [
-    ("cmd-lead-attack", cmdM (turnOf "lead") "lead-attack" ["h", "g"] (mkGraph do
-      out "h" (hit c.attack)
-      out "g" (bin "math/min" (bin "math/add" (ptr "/lead/gauge") (lit c.gaugeStep)) (lit c.gaugeFull)))),
-    ("cmd-lead-skill", cmdM (turnOf "lead" ++ [geC "/lead/gauge" c.skillCost]) "lead-skill" ["h", "g"] (mkGraph do
-      out "h" (hit c.skill)
-      out "g" (bin "math/sub" (ptr "/lead/gauge") (lit c.skillCost)))),
-    ("cmd-lead-finisher", cmdM (turnOf "lead" ++ [geC "/lead/gauge" c.gaugeFull]) "lead-finisher" ["h"] (mkGraph (out "h" (hit c.finisher)))),
-    ("cmd-caster-attack", cmdM (turnOf "caster" ++ [eqC "/caster/charge" 0]) "caster-attack" ["h"] (mkGraph (out "h" (hit c.cAttack)))),
+    ("cmd-lead-attack", cmdM (turnOf "lead") "lead-attack" ["foe_hp", "gauge"] (mkGraph do
+      out "foe_hp" (hit c.attack)
+      out "gauge" (bin "math/min" (bin "math/add" (ptr "/lead/gauge") (lit c.gaugeStep)) (lit c.gaugeFull)))),
+    ("cmd-lead-skill", cmdM (turnOf "lead" ++ [geC "/lead/gauge" c.skillCost]) "lead-skill" ["foe_hp", "gauge"] (mkGraph do
+      out "foe_hp" (hit c.skill)
+      out "gauge" (bin "math/sub" (ptr "/lead/gauge") (lit c.skillCost)))),
+    ("cmd-lead-finisher", cmdM (turnOf "lead" ++ [geC "/lead/gauge" c.gaugeFull]) "lead-finisher" ["foe_hp"] (mkGraph (out "foe_hp" (hit c.finisher)))),
+    ("cmd-caster-attack", cmdM (turnOf "caster" ++ [eqC "/caster/charge" 0]) "caster-attack" ["foe_hp"] (mkGraph (out "foe_hp" (hit c.cAttack)))),
     ("cmd-caster-cast", method [alt "go" (turnOf "caster" ++ [eqC "/caster/charge" 0]) [[js "caster-cast"]]]),
-    ("cmd-caster-release", cmdM (turnOf "caster" ++ [eqC "/caster/charge" 1]) "caster-release" ["h"] (mkGraph (out "h" (hit c.release)))),
-    ("cmd-guard-attack", cmdM (turnOf "guard") "guard-attack" ["h"] (mkGraph (out "h" (hit c.gAttack)))),
+    ("cmd-caster-release", cmdM (turnOf "caster" ++ [eqC "/caster/charge" 1]) "caster-release" ["foe_hp"] (mkGraph (out "foe_hp" (hit c.release)))),
+    ("cmd-guard-attack", cmdM (turnOf "guard") "guard-attack" ["foe_hp"] (mkGraph (out "foe_hp" (hit c.gAttack)))),
     ("cmd-guard-taunt", method [alt "go" (turnOf "guard" ++ [eqC "/guard/taunt" 0]) [[js "guard-taunt"]]]),
-    ("cmd-mender-attack", cmdM (turnOf "mender") "mender-attack" ["h"] (mkGraph (out "h" (hit c.mAttack))))] ++ healCmds ++ [
+    ("cmd-mender-attack", cmdM (turnOf "mender") "mender-attack" ["foe_hp"] (mkGraph (out "foe_hp" (hit c.mAttack))))] ++ healCmds ++ [
     ("foe-turn", method (members.map fun x =>
-      alt x [eqC "/turn/slot" 4, geC "/foe/hp" 1, eqC "/graph/t" (seat x)] [[js s!"foe-strike-{x}", par "h"]]
+      alt x [eqC "/turn/slot" 4, geC "/foe/hp" 1, eqC "/graph/target_seat" (seat x)] [[js s!"foe-strike-{x}", par "hp"]]
         (some (mkGraph do
-          out "t" targetG
-          out "h" (strikeDmg x))))),
+          out "target_seat" targetG
+          out "hp" (strikeDmg x))))),
     ("cmd-next-round", method [alt "go" [eqC "/result/won" 1, geC "/graph/more" 1]
-      [[js "next-round", par "r", par "fh", par "fa", par "lh", par "ch", par "gh", par "mh"]]
+      [[js "next-round", par "round", par "foe_hp", par "foe_atk", par "lead_hp", par "caster_hp", par "guard_hp", par "mender_hp"]]
       (some (mkGraph do
-        out "r" (bin "math/add" (ptr "/run/round") (lit 1))
-        out "fh" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/round") (lit 1)) (lit c.foeHpStep)) (lit (c.foeHp0 - c.foeHpStep)))
-        out "fa" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/round") (lit 1)) (lit c.foeAtkStep)) (lit (c.foeAtk0 - c.foeAtkStep)))
-        out "lh" (ptr "/lead/max")
-        out "ch" (ptr "/caster/max")
-        out "gh" (ptr "/guard/max")
-        out "mh" (ptr "/mender/max")
+        out "round" (bin "math/add" (ptr "/run/round") (lit 1))
+        out "foe_hp" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/round") (lit 1)) (lit c.foeHpStep)) (lit (c.foeHp0 - c.foeHpStep)))
+        out "foe_atk" (bin "math/add" (bin "math/mul" (bin "math/add" (ptr "/run/round") (lit 1)) (lit c.foeAtkStep)) (lit (c.foeAtk0 - c.foeAtkStep)))
+        out "lead_hp" (ptr "/lead/max")
+        out "caster_hp" (ptr "/caster/max")
+        out "guard_hp" (ptr "/guard/max")
+        out "mender_hp" (ptr "/mender/max")
         out "more" (sel (bin "math/gt" (ptr "/run/limit") (ptr "/run/round")) (lit 1) (lit 0))))]),
     ("respond", driver "respond" false),
     ("play-out", driver "play-out" true),
@@ -232,7 +232,7 @@ def domain (c : Cfg) : Json :=
       alt "attack" [] [[js "cmd-guard-attack"]]]),
     ("mender-policy", method (healPolicy ++ [alt "attack" [] [[js "cmd-mender-attack"]]]))]
   obj [("@context", ctx), ("@type", js "domain:Definition"), ("name", js "command_battle"),
-    ("source", js "interactor-taskweft-persona"), ("version", js "0.3.0"),
+    ("source", js "interactor-taskweft-persona"), ("version", js "0.3.1"),
     ("description", js ("A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. " ++
       "Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; " ++
       "a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a round. " ++
@@ -351,7 +351,7 @@ def problem (c : Cfg) (s : St) (todo : List (List String)) : Json :=
   let v (name : String) : Json := obj [("name", js name), ("type", js "int"),
     ("init", obj ((s.filter (fun (k, _) => k.startsWith (name ++ "/"))).map fun (k, x) => ((k.drop (name.length + 1)).toString, jn x)))]
   obj [("@context", ctx), ("@type", js "domain:Problem"), ("name", js "command_battle_run"),
-    ("domain", js "command_battle"), ("source", js "interactor-taskweft-persona"), ("version", js "0.3.0"),
+    ("domain", js "command_battle"), ("source", js "interactor-taskweft-persona"), ("version", js "0.3.1"),
     ("description", js s!"The start of a run: round 1, a full party of four, {c.heals} heals. The page sets run/limit to 30 or 60."),
     ("variables", arr (groups.map v)),
     ("todo_list", arr (todo.map fun t => arr (t.map js)))]
