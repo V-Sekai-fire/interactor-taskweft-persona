@@ -21,12 +21,17 @@
 
   let plan = null, domainText = "", domain = null, start = null, members = [], cmds = {};
   let mode = 30, state = null;
+  // What the console shows: the exact text sent to the planner and the exact text it answered, for the
+  // command the player picked and for the forecast. Legality probes for the buttons are not recorded.
+  const seen = { command: null, forecast: null };
 
   const copy = (o) => JSON.parse(JSON.stringify(o));
-  function ask(todo) {
+  function ask(todo, tag) {
     const p = Object.assign(copy(start.problem), {
       variables: Object.entries(state).map(([name, init]) => ({ name, type: "int", init })), todo_list: todo });
-    return JSON.parse(plan(domainText, JSON.stringify(p), ""));
+    const request = JSON.stringify(p), raw = plan(domainText, request, "");
+    if (tag) seen[tag] = { request, raw };
+    return JSON.parse(raw);
   }
   // Each step's effects come from the action's own pointer/set entries in the domain, not from this page.
   function apply(steps) {
@@ -68,9 +73,33 @@
     cmds: h("div", { class: "bt-row bt-cmds" }),
     forecast: h("p", { class: "bt-forecast" }),
     log: h("ol", { class: "bt-log", "aria-live": "polite", reversed: "" }),
+    toggle: h("button", { type: "button", class: "bt-toggle", "aria-pressed": "false", "aria-controls": "bt-console" }, "Console"),
+    console: h("div", { class: "bt-console", id: "bt-console" }),
   };
-  host.replaceChildren(h("h2", { class: "bt-title" }, "Command battle"), ui.run, ui.modes, ui.units, ui.status,
-    ui.cmds, ui.forecast, ui.log);
+  ui.console.hidden = true;
+  const panes = {};
+  for (const [key, title] of [["domain", "Domain (JSON-LD)"], ["problem", "Problem sent with the last command (JSON-LD)"],
+    ["answer", "Planner's answer to the last command"], ["forecast", "Planner's answer to the forecast (play-out)"]]) {
+    const ta = h("textarea", { rows: "10", readonly: "", spellcheck: "false", wrap: "off", "aria-label": title });
+    ui.console.append(h("label", { class: "bt-pane" }, title), ta);
+    panes[key] = ta;
+  }
+  const pretty = (s) => { try { return JSON.stringify(JSON.parse(s), null, 1); } catch (e) { return s; } };
+  function fillConsole() {
+    if (ui.console.hidden) return;
+    if (!panes.domain.value) panes.domain.value = pretty(domainText);
+    panes.problem.value = seen.command ? pretty(seen.command.request) : "No command yet. Pick one, or press Persona's choice.";
+    panes.answer.value = seen.command ? pretty(seen.command.raw) : "";
+    panes.forecast.value = seen.forecast ? pretty(seen.forecast.raw) : "No forecast for this state.";
+  }
+  ui.toggle.addEventListener("click", () => {
+    ui.console.hidden = !ui.console.hidden;
+    ui.toggle.setAttribute("aria-pressed", String(!ui.console.hidden));
+    fillConsole();
+  });
+  const head = h("div", { class: "bt-head" });
+  head.append(h("h2", { class: "bt-title" }, "Command battle"), ui.toggle);
+  host.replaceChildren(head, ui.run, ui.modes, ui.units, ui.status, ui.cmds, ui.forecast, ui.log, ui.console);
 
   function bar(label, hp, max, extra) {
     const row = h("div", { class: "bt-unit" + (hp === 0 ? " bt-down" : "") });
@@ -101,16 +130,22 @@
     mode = m;
     state = Object.fromEntries(start.problem.variables.map((v) => [v.name, copy(v.init)]));
     state.run.limit = m;
+    seen.command = null;
     ui.log.replaceChildren();
     render();
   }
   function act(todo) {
-    const r = ask(todo);
+    const r = ask(todo, "command");
     if (r.refused) { ui.status.textContent = "The planner refused that: " + r.refused + "."; return; }
     apply(r.steps || []);
     render();
   }
   function render() {
+    seen.forecast = null;
+    draw();
+    fillConsole();
+  }
+  function draw() {
     const s = state, round = s.run.round, limit = s.run.limit;
     ui.run.textContent = `Round ${round} / ${limit}` + (limit === 60 ? " (plus)" : " (normal)");
     ui.modes.replaceChildren(
@@ -139,7 +174,7 @@
       ui.cmds.append(button(label, () => act([[id], ["respond"]]), legal));
     }
     ui.cmds.append(button("Persona's choice", () => act([[m + "-policy"], ["respond"]]), true, "bt-persona"));
-    const f = ask([["play-out"]]);
+    const f = ask([["play-out"]], "forecast");
     if (f.refused) ui.forecast.textContent = "The persona could not forecast this round: " + f.refused + ".";
     else {
       const steps = f.steps || [], end = steps.length ? steps[steps.length - 1].action : "";

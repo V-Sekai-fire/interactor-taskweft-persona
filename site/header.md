@@ -29,6 +29,13 @@ title: interactor-taskweft-persona
   .bt-status { margin: .4rem 0 0; font-weight: 600; }
   .bt-forecast { margin: .2rem 0 0; color: #666; font-size: 13px; }
   .bt-log { margin: .3rem 0 0; padding-left: 1.4rem; max-height: 12rem; overflow: auto; font-size: 13px; }
+  .bt-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+  .bt-head .bt-title { margin: 0; }
+  .battle button.bt-toggle[aria-pressed="true"] { background: #1a5fb4; color: #fff; border-color: #1a5fb4; }
+  .bt-console { margin: .5rem 0 0; }
+  .bt-pane { display: block; margin: .5rem 0 .15rem; font-size: 12px; font-weight: 600; color: #444; }
+  .bt-console textarea { display: block; width: 100%; box-sizing: border-box; height: 12rem; resize: vertical;
+    font: 12px/1.35 Menlo, monospace; white-space: pre; overflow: auto; }
 </style>
 <style>
   .playground { margin: 0 0 1.5rem; padding: .6rem .8rem; border: 1px solid #ddd;
