@@ -38,6 +38,11 @@ jobs:
         # non-zero and fails the workflow.
         run: lake exe persona_witness
 
+      - name: The command battle gate
+        # The committed battle domain is the generated one, and the planner plays each round as the
+        # simulator does.
+        run: lake exe persona_battle_witness
+
       - name: The ask surface answers the default goal
         run: lake exe persona
 

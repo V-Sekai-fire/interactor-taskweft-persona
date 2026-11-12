@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // The command battle: a lead and a caster against one foe a round, 30 rounds for a normal run and 60 for
 // plus. The planner decides which commands are legal, what each one does and how the foe replies; the page
-// only keeps the run between rounds. Round scaling and party maximums mirror tools/command_battle.py.
+// only keeps the run between rounds. Round scaling and party maximums mirror BattleWitness.lean, which generates the domain.
 (() => {
   const here = document.currentScript ? document.currentScript.src.replace(/[^/]*$/, "") : "assets/";
   const host = document.getElementById("battle");
