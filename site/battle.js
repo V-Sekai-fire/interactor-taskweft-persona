@@ -1,33 +1,17 @@
 // Copyright (c) 2026 K. S. Ernest (iFire) Lee
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// The command battle: a lead and a caster against one foe a round, 30 rounds for a normal run and 60 for
-// plus. The planner decides which commands are legal, what each one does and how the foe replies; the page
-// only keeps the run between rounds. Round scaling and party maximums mirror BattleWitness.lean, which generates the domain.
+// The command battle: a party of four (lead, caster, guard, mender) against one foe a round, 30 rounds for a
+// normal run and 60 for plus. BattleWitness.lean generates the domain and the first problem; the planner
+// decides which commands are legal, what each does, how the foe replies and what the next round is. This page
+// reads the roster and the commands from those files and applies each step from the action's pointer/set
+// entries, so no rule lives here.
 (() => {
   const here = document.currentScript ? document.currentScript.src.replace(/[^/]*$/, "") : "assets/";
   const host = document.getElementById("battle");
   if (!host) return;
-  const DOMAIN_URL = new URL("../samples/domains/command-battle.jsonld", here).href;
-  const CTX = { VSEKAI: "https://v-sekai.org/", domain: "VSEKAI:planning/domain/" };
-  const foeFor = (r) => ({ hp: 260 + 20 * (r - 1), atk: 40 + 2 * (r - 1) });
-  const COMMANDS = [
-    [["cmd-lead-attack", "Attack"], ["cmd-lead-skill", "Skill"], ["cmd-lead-finisher", "Finisher"]],
-    [["cmd-caster-attack", "Attack"], ["cmd-caster-cast", "Cast"], ["cmd-caster-release", "Release"]],
-  ];
-  const POLICY = ["lead-policy", "caster-policy"];
-  const NAME = ["Lead", "Caster"];
-  const SAY = {
-    "lead-attack": (p) => `Lead attacks. Foe at ${p[0]} HP, gauge ${p[1]}.`,
-    "lead-skill": (p) => `Lead uses a skill. Foe at ${p[0]} HP, gauge ${p[1]}.`,
-    "lead-finisher": (p) => `Lead's finisher. Foe at ${p[0]} HP, gauge empty.`,
-    "caster-attack": (p) => `Caster attacks. Foe at ${p[0]} HP.`,
-    "caster-cast": () => "Caster begins a spell.",
-    "caster-release": (p) => `Caster releases the spell. Foe at ${p[0]} HP.`,
-    "foe-strike-lead": (p) => `Foe strikes the lead, down to ${p[0]} HP.`,
-    "foe-strike-caster": (p) => `Foe strikes the caster, down to ${p[0]} HP.`,
-    "skip-lead": () => "The lead is down and loses the turn.",
-    "skip-caster": () => "The caster is down and loses the turn.",
-  };
+  const SAMPLES = new URL("../samples/", here).href;
+  const NOT_UNITS = new Set(["foe", "turn", "run", "result"]);
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const h = (tag, attrs = {}, text) => {
     const e = document.createElement(tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]);
@@ -35,34 +19,45 @@
     return e;
   };
 
-  let plan = null, domainText = "", actions = {}, mode = 30, run = null, state = null;
+  let plan = null, domainText = "", domain = null, start = null, members = [], cmds = {};
+  let mode = 30, state = null;
 
-  const fresh = (round, gauge) => {
-    const f = foeFor(round);
-    return { lead: { hp: 300, max: 300, gauge }, caster: { hp: 200, max: 200, charge: 0 },
-      foe: { hp: f.hp, max: f.hp, atk: f.atk }, turn: { slot: 0 }, result: { won: 0, lost: 0 } };
-  };
+  const copy = (o) => JSON.parse(JSON.stringify(o));
   function ask(todo) {
-    const p = { "@context": CTX, "@type": "domain:Problem", name: "command_battle_round_" + run.round,
-      domain: "command_battle", variables: Object.entries(state).map(([name, init]) => ({ name, type: "int", init })),
-      todo_list: todo };
+    const p = Object.assign(copy(start.problem), {
+      variables: Object.entries(state).map(([name, init]) => ({ name, type: "int", init })), todo_list: todo });
     return JSON.parse(plan(domainText, JSON.stringify(p), ""));
   }
   // Each step's effects come from the action's own pointer/set entries in the domain, not from this page.
   function apply(steps) {
     for (const s of steps) {
-      const a = actions[s.action];
+      const a = domain.actions[s.action];
       if (!a) throw new Error("the plan names an action the domain lacks: " + s.action);
       const args = Object.fromEntries((a.params || []).map((p, i) => [p, Number(s.params[i])]));
       for (const b of a.body || []) {
         if (!("pointer/set" in b)) continue;
-        const [, v, k] = b["pointer/set"].split("/");
-        state[v][k] = typeof b.value === "object" ? args[b.value.param] : b.value;
+        const ptr = b["pointer/set"];
+        if (ptr.includes("[")) throw new Error("templated pointer " + ptr + " is not applied by this page");
+        const [, v, k] = ptr.split("/");
+        const val = typeof b.value === "object" ? args[b.value.param] : b.value;
+        if (!Number.isFinite(val)) throw new Error(s.action + " sets " + ptr + " to " + val);
+        state[v][k] = val;
       }
-      const say = SAY[s.action];
-      if (say) ui.log.prepend(h("li", {}, say(s.params || [])));
+      ui.log.prepend(h("li", {}, say(s)));
     }
-    while (ui.log.children.length > 14) ui.log.lastChild.remove();
+    while (ui.log.children.length > 16) ui.log.lastChild.remove();
+  }
+  function say(s) {
+    const p = s.params || [];
+    const [who, ...rest] = s.action.split("-");
+    const what = rest.join(" ");
+    if (s.action.startsWith("foe-strike-")) return `Foe strikes the ${s.action.slice(11)}, down to ${p[0]} HP.`;
+    if (s.action.startsWith("mender-heal-")) return `Mender heals the ${s.action.slice(12)} to ${p[0]} HP (${p[1]} heals left).`;
+    if (s.action.startsWith("skip-")) return `The ${s.action.slice(5)} is down and loses the turn.`;
+    if (s.action === "next-round") return `Round ${p[0]}: a foe with ${p[1]} HP that strikes for ${p[2]}. The party is back to full.`;
+    if (s.action === "victory") return "The foe is down.";
+    if (s.action === "defeat") return "The whole party is down.";
+    return `${cap(who)} ${what}` + (p.length ? ` (foe at ${p[0]} HP)` : "") + ".";
   }
 
   const ui = {
@@ -94,10 +89,18 @@
     b.addEventListener("click", onClick);
     return b;
   }
+  function extra(m) {
+    const u = state[m];
+    if ("gauge" in u) return `gauge ${u.gauge}/100`;
+    if ("charge" in u) return u.charge ? "spell ready" : "";
+    if ("taunt" in u) return u.taunt ? "taunting" : "";
+    if ("heals" in u) return `${u.heals} heals`;
+    return "";
+  }
   function newRun(m) {
     mode = m;
-    run = { round: 1, limit: m };
-    state = fresh(1, 0);
+    state = Object.fromEntries(start.problem.variables.map((v) => [v.name, copy(v.init)]));
+    state.run.limit = m;
     ui.log.replaceChildren();
     render();
   }
@@ -108,35 +111,34 @@
     render();
   }
   function render() {
-    const s = state;
-    ui.run.textContent = `Round ${run.round} / ${run.limit}` + (run.limit === 60 ? " (plus)" : " (normal)");
+    const s = state, round = s.run.round, limit = s.run.limit;
+    ui.run.textContent = `Round ${round} / ${limit}` + (limit === 60 ? " (plus)" : " (normal)");
     ui.modes.replaceChildren(
       button("New normal run (30)", () => newRun(30), true, mode === 30 ? "bt-on" : ""),
       button("New plus run (60)", () => newRun(60), true, mode === 60 ? "bt-on" : ""));
-    ui.units.replaceChildren(
-      bar("Lead", s.lead.hp, s.lead.max, `gauge ${s.lead.gauge}/100`),
-      bar("Caster", s.caster.hp, s.caster.max, s.caster.charge ? "spell ready" : ""),
+    ui.units.replaceChildren(...members.map((m) => bar(cap(m), s[m].hp, s[m].max, extra(m))),
       bar("Foe", s.foe.hp, s.foe.max, `strikes for ${s.foe.atk}`));
     ui.cmds.replaceChildren();
     ui.forecast.textContent = "";
     if (s.foe.hp === 0) {
-      if (run.round >= run.limit) { ui.status.textContent = `Run cleared: all ${run.limit} rounds won.`; return; }
-      ui.status.textContent = `Round ${run.round} won. The party heals; the lead keeps its gauge.`;
-      ui.cmds.append(button("Next round", () => { run.round += 1; state = fresh(run.round, s.lead.gauge); render(); }));
+      const next = ask([["cmd-next-round"]]);
+      if (next.refused) { ui.status.textContent = `Run cleared: all ${limit} rounds won.`; return; }
+      ui.status.textContent = `Round ${round} won. The party heals; the lead keeps its gauge.`;
+      ui.cmds.append(button("Next round", () => act([["cmd-next-round"]])));
       return;
     }
-    if (s.lead.hp === 0 && s.caster.hp === 0) {
-      ui.status.textContent = `The party fell in round ${run.round} of ${run.limit}. The run is over.`;
+    if (members.every((m) => s[m].hp === 0)) {
+      ui.status.textContent = `The party fell in round ${round} of ${limit}. The run is over.`;
       return;
     }
-    const slot = s.turn.slot;
-    if (slot !== 0 && slot !== 1) { ui.status.textContent = "The planner left the turn with the foe; this is a bug."; return; }
-    ui.status.textContent = NAME[slot] + "'s turn. Pick a command.";
-    for (const [id, label] of COMMANDS[slot]) {
+    const m = members[s.turn.slot];
+    if (!m) { ui.status.textContent = "The planner left the turn with the foe; this is a bug."; return; }
+    ui.status.textContent = cap(m) + "'s turn. Pick a command.";
+    for (const [id, label] of cmds[m]) {
       const legal = !ask([[id]]).refused;
       ui.cmds.append(button(label, () => act([[id], ["respond"]]), legal));
     }
-    ui.cmds.append(button("Persona's choice", () => act([[POLICY[slot]], ["respond"]]), true, "bt-persona"));
+    ui.cmds.append(button("Persona's choice", () => act([[m + "-policy"], ["respond"]]), true, "bt-persona"));
     const f = ask([["play-out"]]);
     if (f.refused) ui.forecast.textContent = "The persona could not forecast this round: " + f.refused + ".";
     else {
@@ -146,15 +148,23 @@
     }
   }
 
+  const text = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.text(); });
   Promise.all([
     import(here + "persona.mjs").then((m) => m.default({ locateFile: (f) => here + f })),
-    fetch(DOMAIN_URL).then((r) => { if (!r.ok) throw new Error("domain " + r.status); return r.text(); }),
+    text(SAMPLES + "domains/command-battle.jsonld"),
+    text(SAMPLES + "problems/command-battle-round-1.jsonld"),
   ])
-    .then(([mod, text]) => {
+    .then(([mod, d, p]) => {
       if (mod._persona_init() !== 0) throw new Error("persona_init failed");
       plan = mod.cwrap("persona_plan_jsonld", "string", ["string", "string", "string"]);
-      domainText = text;
-      actions = JSON.parse(text).actions;
+      domainText = d;
+      domain = JSON.parse(d);
+      start = { problem: JSON.parse(p) };
+      members = start.problem.variables.map((v) => v.name).filter((n) => !NOT_UNITS.has(n));
+      for (const m of members) {
+        cmds[m] = Object.keys(domain.methods).filter((k) => k.startsWith("cmd-" + m + "-"))
+          .map((k) => [k, cap(k.slice(5 + m.length).replace(/-/g, " "))]);
+      }
       newRun(30);
     })
     .catch((e) => { ui.status.textContent = "The battle did not load: " + e; });
