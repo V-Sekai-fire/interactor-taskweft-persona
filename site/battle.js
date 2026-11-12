@@ -33,38 +33,53 @@
     if (tag) seen[tag] = { request, raw };
     return JSON.parse(raw);
   }
-  // Each step's effects come from the action's own pointer/set entries in the domain, not from this page.
-  function apply(steps) {
+  // The planner answers with action names and positional arguments. Composing that answer with the domain
+  // gives each step its action's description, its arguments by name, and the world variables each one
+  // sets, with the value before and after. Applying a command and showing the forecast both use this, so
+  // the page holds no rule; it never changes the world it is given.
+  function composeStep(s, world) {
+    const a = domain.actions[s.action];
+    if (!a) throw new Error("the plan names an action the domain lacks: " + s.action);
+    const names = a.params || [];
+    if (names.length !== (s.params || []).length) throw new Error(s.action + " has " + (s.params || []).length + " arguments, the domain names " + names.length);
+    const args = Object.fromEntries(names.map((n, i) => [n, Number(s.params[i])]));
+    const sets = [];
+    for (const b of a.body || []) {
+      if (!("pointer/set" in b)) continue;
+      const ptr = b["pointer/set"];
+      if (ptr.includes("[")) throw new Error("templated pointer " + ptr + " is not applied by this page");
+      const param = typeof b.value === "object" ? b.value.param : null;
+      const value = param ? args[param] : b.value;
+      if (!Number.isFinite(value)) throw new Error(s.action + " sets " + ptr + " to " + value);
+      const [, v, k] = ptr.split("/");
+      if (!world[v] || !(k in world[v])) throw new Error(s.action + " sets " + ptr + ", which the world does not hold");
+      sets.push(Object.assign({ pointer: ptr, was: world[v][k], value }, param ? { from: param } : {}));
+      world[v][k] = value;
+    }
+    return { action: s.action, description: a.description || "", arguments: args, duration: s.duration, sets };
+  }
+  function compose(steps, world) {
+    const w = copy(world);
+    return { steps: (steps || []).map((s) => composeStep(s, w)), world: w };
+  }
+  const variables = (world) => Object.entries(world).map(([name, init]) => ({ name, type: "int", init }));
+  // The planner's answer as one JSON-LD plan document, composed with the domain and the world it ran on.
+  function planDoc(todo, answer, before, composed) {
+    return Object.assign({ "@context": domain["@context"], "@type": "domain:Plan",
+      domain: domain.name + " " + domain.version, problem: start.problem.name, todo_list: todo },
+      answer.refused ? { refused: answer.refused } : { reached: answer.reached !== false },
+      { world_before: variables(before), steps: composed.steps, world_after: variables(composed.world) });
+  }
+  const label = (ptr) => ptr.slice(1).replace("/", " ");
+  const quiet = (ptr) => ptr === "/turn/slot" || ptr.startsWith("/result/");
+  function logSteps(steps) {
     for (const s of steps) {
-      const a = domain.actions[s.action];
-      if (!a) throw new Error("the plan names an action the domain lacks: " + s.action);
-      const args = Object.fromEntries((a.params || []).map((p, i) => [p, Number(s.params[i])]));
-      for (const b of a.body || []) {
-        if (!("pointer/set" in b)) continue;
-        const ptr = b["pointer/set"];
-        if (ptr.includes("[")) throw new Error("templated pointer " + ptr + " is not applied by this page");
-        const [, v, k] = ptr.split("/");
-        const val = typeof b.value === "object" ? args[b.value.param] : b.value;
-        if (!Number.isFinite(val)) throw new Error(s.action + " sets " + ptr + " to " + val);
-        state[v][k] = val;
-      }
-      ui.log.prepend(h("li", {}, say(s)));
+      const changes = s.sets.filter((x) => !quiet(x.pointer) && x.was !== x.value).map((x) => `${label(x.pointer)} ${x.was} \u2192 ${x.value}`);
+      const name = s.action.charAt(0).toUpperCase() + s.action.slice(1).replace(/-/g, " ");
+      ui.log.prepend(h("li", {}, changes.length ? `${name}: ${changes.join(", ")}.` : s.description));
     }
     while (ui.log.children.length > 16) ui.log.lastChild.remove();
   }
-  function say(s) {
-    const p = s.params || [];
-    const [who, ...rest] = s.action.split("-");
-    const what = rest.join(" ");
-    if (s.action.startsWith("foe-strike-")) return `Foe strikes the ${s.action.slice(11)}, down to ${p[0]} HP.`;
-    if (s.action.startsWith("mender-heal-")) return `Mender heals the ${s.action.slice(12)} to ${p[0]} HP (${p[1]} heals left).`;
-    if (s.action.startsWith("skip-")) return `The ${s.action.slice(5)} is down and loses the turn.`;
-    if (s.action === "next-round") return `Round ${p[0]}: a foe with ${p[1]} HP that strikes for ${p[2]}. The party is back to full.`;
-    if (s.action === "victory") return "The foe is down.";
-    if (s.action === "defeat") return "The whole party is down.";
-    return `${cap(who)} ${what}` + (p.length ? ` (foe at ${p[0]} HP)` : "") + ".";
-  }
-
   const ui = {
     run: h("p", { class: "bt-run" }),
     modes: h("div", { class: "bt-row" }),
@@ -78,8 +93,9 @@
   };
   ui.console.hidden = true;
   const panes = {};
-  for (const [key, title] of [["domain", "Domain (JSON-LD)"], ["problem", "Problem sent with the last command (JSON-LD)"],
-    ["answer", "Planner's answer to the last command"], ["forecast", "Planner's answer to the forecast (play-out)"]]) {
+  for (const [key, title] of [["world", "World variables, now"], ["command", "Last command: the planner's answer composed with the domain"],
+    ["forecast", "Forecast (play-out), composed with the domain"], ["problem", "Problem sent with the last command"],
+    ["raw", "Planner's raw answer to the last command"], ["domain", "Domain"]]) {
     const ta = h("textarea", { rows: "10", readonly: "", spellcheck: "false", wrap: "off", "aria-label": title });
     ui.console.append(h("label", { class: "bt-pane" }, title), ta);
     panes[key] = ta;
@@ -88,9 +104,12 @@
   function fillConsole() {
     if (ui.console.hidden) return;
     if (!panes.domain.value) panes.domain.value = pretty(domainText);
-    panes.problem.value = seen.command ? pretty(seen.command.request) : "No command yet. Pick one, or press Persona's choice.";
-    panes.answer.value = seen.command ? pretty(seen.command.raw) : "";
-    panes.forecast.value = seen.forecast ? pretty(seen.forecast.raw) : "No forecast for this state.";
+    panes.world.value = JSON.stringify({ variables: variables(state) }, null, 1);
+    const none = "No command yet. Pick one, or press Persona's choice.";
+    panes.command.value = seen.command && seen.command.doc ? JSON.stringify(seen.command.doc, null, 1) : none;
+    panes.problem.value = seen.command ? pretty(seen.command.request) : none;
+    panes.raw.value = seen.command ? pretty(seen.command.raw) : none;
+    panes.forecast.value = seen.forecast && seen.forecast.doc ? JSON.stringify(seen.forecast.doc, null, 1) : "No forecast for this state.";
   }
   ui.toggle.addEventListener("click", () => {
     ui.console.hidden = !ui.console.hidden;
@@ -136,8 +155,17 @@
   }
   function act(todo) {
     const r = ask(todo, "command");
-    if (r.refused) { ui.status.textContent = "The planner refused that: " + r.refused + "."; return; }
-    apply(r.steps || []);
+    const before = copy(state);
+    if (r.refused) {
+      seen.command.doc = planDoc(todo, r, before, { steps: [], world: before });
+      ui.status.textContent = "The planner refused that: " + r.refused + ".";
+      fillConsole();
+      return;
+    }
+    const c = compose(r.steps, state);
+    seen.command.doc = planDoc(todo, r, before, c);
+    state = c.world;
+    logSteps(c.steps);
     render();
   }
   function render() {
@@ -175,6 +203,7 @@
     }
     ui.cmds.append(button("Persona's choice", () => act([[m + "-policy"], ["respond"]]), true, "bt-persona"));
     const f = ask([["play-out"]], "forecast");
+    if (!f.refused) seen.forecast.doc = planDoc([["play-out"]], f, state, compose(f.steps, state));
     if (f.refused) ui.forecast.textContent = "The persona could not forecast this round: " + f.refused + ".";
     else {
       const steps = f.steps || [], end = steps.length ? steps[steps.length - 1].action : "";
