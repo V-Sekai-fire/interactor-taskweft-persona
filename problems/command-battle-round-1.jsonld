@@ -1,4 +1,4 @@
-{"version": "0.3.1",
+{"version": "0.4.0",
  "variables":
  [{"type": "int", "name": "lead", "init": {"max": 300, "hp": 300, "gauge": 0}},
   {"type": "int",

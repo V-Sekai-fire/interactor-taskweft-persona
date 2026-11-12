@@ -37,6 +37,15 @@
   // gives each step its action's description, its arguments by name, and the world variables each one
   // sets, with the value before and after. Applying a command and showing the forecast both use this, so
   // the page holds no rule; it never changes the world it is given.
+  // A domain writes a value as a number or as an enum member, "seat.caster"; the world holds numbers, so a
+  // member resolves to its place in the domain's enum list, and its name is kept to show.
+  function member(text) {
+    const [en, m] = String(text).split(".");
+    const list = domain.enums && domain.enums[en];
+    const i = Array.isArray(list) ? list.indexOf(m) : -1;
+    if (i < 0) throw new Error(text + " is not a member of an enum the domain declares");
+    return i;
+  }
   function composeStep(s, world) {
     const a = domain.actions[s.action];
     if (!a) throw new Error("the plan names an action the domain lacks: " + s.action);
@@ -49,11 +58,12 @@
       const ptr = b["pointer/set"];
       if (ptr.includes("[")) throw new Error("templated pointer " + ptr + " is not applied by this page");
       const param = typeof b.value === "object" ? b.value.param : null;
-      const value = param ? args[param] : b.value;
+      const named = !param && typeof b.value === "string" ? b.value : null;
+      const value = param ? args[param] : named ? member(named) : b.value;
       if (!Number.isFinite(value)) throw new Error(s.action + " sets " + ptr + " to " + value);
       const [, v, k] = ptr.split("/");
       if (!world[v] || !(k in world[v])) throw new Error(s.action + " sets " + ptr + ", which the world does not hold");
-      sets.push(Object.assign({ pointer: ptr, was: world[v][k], value }, param ? { from: param } : {}));
+      sets.push(Object.assign({ pointer: ptr, was: world[v][k], value }, param ? { from: param } : {}, named ? { member: named } : {}));
       world[v][k] = value;
     }
     return { action: s.action, description: a.description || "", arguments: args, duration: s.duration, sets };
