@@ -71,8 +71,7 @@
     const token = /^acquire-token-(.+)-(owned|access)$/.exec(action);
     if (settle) {
       const n = byN.get(+settle[1]);
-      const a = h("a", { href: n ? "#" + n.id : "#" }, "RFD66606-" + settle[1] + (n ? " " + n.t : ""));
-      li.append("Settle ", a);
+      li.append("Settle RFD66606-" + settle[1] + (n ? " " + n.t : ""));
     } else if (token) {
       const repo = tokenRepo.get(token[1]);
       const how = token[2] === "owned" ? "ours" : "third party, we have access";
@@ -146,10 +145,8 @@
     const rn = /^\/rfd\/(\d+)$/.exec(goal);
     const node = rn ? byN.get(+rn[1]) : null;
     const name = rn ? "RFD66606-" + rn[1] + (node ? " " + node.t : "") : goal;
-    // The destination is a real link, so it opens in place, in a new tab, or by middle click.
-    const dest = node ? h("a", { href: "#" + node.id, class: "nv-dest" }, name) : name;
     const p = h("p");
-    p.append(answer.reached ? "Reached " : "Did not reach ", dest,
+    p.append(answer.reached ? "Reached " : "Did not reach ", name,
       " in " + steps.length + " steps (" + settles + " RFDs to settle).");
     ui.out.append(p);
     showNeeds(goal, answer);
