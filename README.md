@@ -83,13 +83,13 @@ plan" below. `persona_goals(domain, problem)` lists the goals the problem asks, 
 variable declares it and whether it already holds. `persona_plan_jsonld(domain, problem, goal)` plans
 the one goal named, or every goal of the problem when `goal` is empty, and answers with the plan
 document or a refusal by name (`bad_domain`, `bad_problem`, `no_goal`, `undeclared_goal`,
-`unreachable`). The RFD site's persona navigator calls these two.
+`unreachable`). The navigator on this site, at https://v-sekai-fire.github.io/interactor-taskweft-persona/, calls these two.
 
 The planner reads documents in two shapes. The pointer shape names a goal by its variable (`/rfd/3`)
 and decomposes it through the methods keyed by that pointer. The engine shape names a goal as a task
 such as `reach-rfd-3`: a method's first alternative `held` checks that the variable is already 1
 (`math/ge` over a `pointer/get`), the next alternatives settle what it needs, and the problem's
-`todo_list` is `[["reach-rfd-3"]]`. The RFD site writes its campus domain in the engine shape. Both
+`todo_list` is `[["reach-rfd-3"]]`. The RFD site publishes its campus domain in the engine shape; this site's navigator reads it from https://v-sekai-fire.github.io/rfds/assets/campus.domain.jsonld. Both
 shapes plan through `persona_plan_jsonld`; the C++ engine is not part of the build.
 
     elixir tools/build_wasm.exs <core-dir> <out-dir>
