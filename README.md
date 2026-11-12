@@ -89,7 +89,7 @@ The planner reads documents in two shapes. The pointer shape names a goal by its
 and decomposes it through the methods keyed by that pointer. The engine shape names a goal as a task
 such as `reach-rfd-3`: a method's first alternative `held` checks that the variable is already 1
 (`math/ge` over a `pointer/get`), the next alternatives settle what it needs, and the problem's
-`todo_list` is `[["reach-rfd-3"]]`. The RFD site publishes its campus domain in the engine shape; this site's navigator reads it from https://v-sekai-fire.github.io/rfds/assets/campus.domain.jsonld. Both
+`todo_list` is `[["reach-rfd-3"]]`. The navigator's campus domain is in the engine shape. It ships with this site under `site/campus/`, a snapshot of the documents the RFD site generates, refreshed by copying them again. Both
 shapes plan through `persona_plan_jsonld`; the C++ engine is not part of the build.
 
     elixir tools/build_wasm.exs <core-dir> <out-dir>

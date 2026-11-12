@@ -7,7 +7,7 @@ title: interactor-taskweft-persona
   <noscript>The playground needs a script. The README below describes the same planner.</noscript>
 </div>
 <div id="navigator" class="navigator" markdown="0">
-  <noscript>The navigator needs a script. The RFD site lists the same RFDs.</noscript>
+  <noscript>The navigator needs a script.</noscript>
 </div>
 <style>
   .navigator { margin: 0 0 1rem; padding: .6rem .8rem; border: 1px solid #ddd;

@@ -10,6 +10,8 @@ mkdir -p "$out/assets" "$out/samples/domains" "$out/samples/problems" "$out/samp
 cp site/_config.yml "$out/"
 cp site/playground.js "$out/assets/playground.js"
 cp site/navigator.js "$out/assets/navigator.js"
+mkdir -p "$out/assets/campus"
+cp site/campus/* "$out/assets/campus/"
 cp domains/*.jsonld "$out/samples/domains/"
 cp problems/*.jsonld "$out/samples/problems/"
 cp plans/*.jsonld "$out/samples/plans/"

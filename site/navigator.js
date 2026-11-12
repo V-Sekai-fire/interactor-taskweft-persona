@@ -7,11 +7,11 @@
   const here = document.currentScript ? document.currentScript.src.replace(/[^/]*$/, "") : "assets/";
   const host = document.getElementById("navigator");
   if (!host) return;
-  // The RFD site publishes the tree and the campus documents; this page is a separate site.
-  const RFD = "https://v-sekai-fire.github.io/rfds/assets/";
-  const data = await fetch(RFD + "campus.tree.json").then((r) => r.json()).catch(() => null);
+  // The campus tree, domain and problem ship with this site, under assets/campus/.
+  const DATA = here + "campus/";
+  const data = await fetch(DATA + "campus.tree.json").then((r) => r.json()).catch(() => null);
   if (!data) {
-    host.textContent = "The navigator could not load the RFD tree from " + RFD + ", so there is no route to show.";
+    host.textContent = "The navigator could not load its campus tree, so there is no route to show.";
     return;
   }
   const byN = new Map(data.nodes.map((n) => [n.n, n]));
@@ -214,8 +214,8 @@
 
   Promise.all([
     import(here + "persona.mjs").then((m) => m.default({ locateFile: (f) => here + f })),
-    fetch(RFD + "campus.domain.jsonld").then((r) => r.text()),
-    fetch(RFD + "campus.problem.jsonld").then((r) => r.text()),
+    fetch(DATA + "campus.domain.jsonld").then((r) => r.text()),
+    fetch(DATA + "campus.problem.jsonld").then((r) => r.text()),
   ])
     .then(([mod, domain, problem]) => {
       if (mod._persona_init() !== 0) throw new Error("persona_init failed");
