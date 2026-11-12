@@ -39,7 +39,7 @@ jobs:
         run: lake exe persona_witness
 
       - name: The command battle gate
-        # The committed battle domain is the generated one, and the planner plays each round as the
+        # The committed battle domain is the generated one, and the planner plays each battle as the
         # simulator does.
         run: lake exe persona_battle_witness
 

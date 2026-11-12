@@ -1,4 +1,4 @@
-{"version": "0.3.1",
+{"version": "0.5.0",
  "variables":
  [{"type": "int", "name": "lead", "init": {}},
   {"type": "int", "name": "caster", "init": {}},
@@ -45,14 +45,14 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 4,
+        "b": "seat.foe",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
     {"subtasks": [["skip-lead"], ["respond"]],
      "name": "lead-down",
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -63,7 +63,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -74,7 +74,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 2,
+        "b": "seat.guard",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -85,7 +85,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -126,14 +126,14 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 4,
+        "b": "seat.foe",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
     {"subtasks": [["skip-lead"], ["play-out"]],
      "name": "lead-down",
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -144,7 +144,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -155,7 +155,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 2,
+        "b": "seat.guard",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -166,7 +166,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/eq",
@@ -177,28 +177,28 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
     {"subtasks": [["caster-policy"], ["play-out"]],
      "name": "caster",
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
     {"subtasks": [["guard-policy"], ["play-out"]],
      "name": "guard",
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 2,
+        "b": "seat.guard",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]},
     {"subtasks": [["mender-policy"], ["play-out"]],
      "name": "mender",
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}}]}]},
   "mender-policy":
   {"params": [],
@@ -551,7 +551,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 4,
+        "b": "seat.foe",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -559,7 +559,7 @@
         "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
       {"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/graph/target_seat"}}}]},
     {"subtasks": [["foe-strike-caster", {"param": "hp"}]],
      "name": "caster",
@@ -655,7 +655,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 4,
+        "b": "seat.foe",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -663,7 +663,7 @@
         "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
       {"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/graph/target_seat"}}}]},
     {"subtasks": [["foe-strike-guard", {"param": "hp"}]],
      "name": "guard",
@@ -765,7 +765,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 4,
+        "b": "seat.foe",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -773,7 +773,7 @@
         "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
       {"eval":
        {"type": "math/eq",
-        "b": 2,
+        "b": "seat.guard",
         "a": {"type": "pointer/get", "pointer": "/graph/target_seat"}}}]},
     {"subtasks": [["foe-strike-mender", {"param": "hp"}]],
      "name": "mender",
@@ -869,7 +869,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 4,
+        "b": "seat.foe",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -877,14 +877,14 @@
         "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
       {"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/graph/target_seat"}}}]}]},
-  "cmd-next-round":
+  "cmd-next-battle":
   {"params": [],
    "alternatives":
    [{"subtasks":
-     [["next-round",
-       {"param": "round"},
+     [["next-battle",
+       {"param": "battle"},
        {"param": "foe_hp"},
        {"param": "foe_atk"},
        {"param": "lead_hp"},
@@ -894,7 +894,7 @@
      "name": "go",
      "graph":
      {"variables":
-      [{"value": [0], "type": 0, "id": "round"},
+      [{"value": [0], "type": 0, "id": "battle"},
        {"value": [0], "type": 0, "id": "foe_hp"},
        {"value": [0], "type": 0, "id": "foe_atk"},
        {"value": [0], "type": 0, "id": "lead_hp"},
@@ -907,13 +907,13 @@
       [{"flows": {"out": {"socket": "in", "node": 19}}, "declaration": 0},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 1}},
         "declaration": 2},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 3}},
         "declaration": 2},
@@ -925,7 +925,7 @@
         "declaration": 2},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"value": [1], "type": 0}, "a": {"socket": "value", "node": 7}},
         "declaration": 2},
@@ -952,7 +952,7 @@
         {"type": {"value": [0]}, "pointer": {"value": ["/run/limit"]}}},
        {"declaration": 1,
         "configuration":
-        {"type": {"value": [0]}, "pointer": {"value": ["/run/round"]}}},
+        {"type": {"value": [0]}, "pointer": {"value": ["/run/battle"]}}},
        {"values":
         {"b": {"socket": "value", "node": 16},
          "a": {"socket": "value", "node": 15}},
@@ -1037,7 +1037,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1102,7 +1102,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1167,7 +1167,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1232,7 +1232,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1281,7 +1281,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 3,
+        "b": "seat.mender",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1332,7 +1332,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1377,7 +1377,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1437,7 +1437,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 0,
+        "b": "seat.lead",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1455,7 +1455,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 2,
+        "b": "seat.guard",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1500,7 +1500,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 2,
+        "b": "seat.guard",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1541,7 +1541,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1563,7 +1563,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1608,7 +1608,7 @@
      "check":
      [{"eval":
        {"type": "math/eq",
-        "b": 1,
+        "b": "seat.caster",
         "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
       {"eval":
        {"type": "math/ge",
@@ -1644,12 +1644,13 @@
         "b": 130,
         "a": {"type": "pointer/get", "pointer": "/foe/hp"}}}]},
     {"subtasks": [["cmd-caster-attack"]], "name": "attack", "check": []}]}},
+ "enums": {"seat": ["lead", "caster", "guard", "mender", "foe"]},
  "description":
- "A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a round. A run is 30 rounds (normal) or 60 (plus); the next-round method makes each foe stronger.",
+ "A turn-based command battle. A party of four (lead, caster, guard, mender) acts in seat order, then the foe. Attacks build the lead's gauge; a skill spends half of it; a full gauge allows a finisher; a spell takes a turn to cast; a taunting guard draws the foe's strikes and blocks part of each; the mender heals a few times a battle. A run is 30 battles (normal) or 60 (plus); the next-battle method makes each foe stronger.",
  "actions":
  {"victory":
   {"params": [],
-   "description": "The foe is down: the round is won.",
+   "description": "The foe is down: the battle is won.",
    "body":
    [{"eval":
      {"type": "math/eq",
@@ -1662,55 +1663,55 @@
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 3,
+      "b": "seat.mender",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/eq",
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
-    {"value": 4, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.foe", "pointer/set": "/turn/slot"}]},
   "skip-lead":
   {"params": [],
    "description": "A fallen lead loses the turn.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 0,
+      "b": "seat.lead",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/eq",
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
-    {"value": 1, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.caster", "pointer/set": "/turn/slot"}]},
   "skip-guard":
   {"params": [],
    "description": "A fallen guard loses the turn.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 2,
+      "b": "seat.guard",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/eq",
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
-    {"value": 3, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.mender", "pointer/set": "/turn/slot"}]},
   "skip-caster":
   {"params": [],
    "description": "A fallen caster loses the turn.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 1,
+      "b": "seat.caster",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/eq",
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
-    {"value": 2, "pointer/set": "/turn/slot"}]},
-  "next-round":
+    {"value": "seat.guard", "pointer/set": "/turn/slot"}]},
+  "next-battle":
   {"params":
-   ["round",
+   ["battle",
     "foe_hp",
     "foe_atk",
     "lead_hp",
@@ -1718,13 +1719,13 @@
     "guard_hp",
     "mender_hp"],
    "description":
-   "The next round: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge.",
+   "The next battle: a stronger foe, the party back to full, taunt and spell cleared, heals restored; the lead keeps its gauge.",
    "body":
    [{"eval":
      {"type": "math/eq",
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/result/won"}}},
-    {"value": {"param": "round"}, "pointer/set": "/run/round"},
+    {"value": {"param": "battle"}, "pointer/set": "/run/battle"},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/max"},
     {"value": {"param": "foe_atk"}, "pointer/set": "/foe/atk"},
@@ -1735,16 +1736,16 @@
     {"value": 0, "pointer/set": "/caster/charge"},
     {"value": 0, "pointer/set": "/guard/taunt"},
     {"value": 3, "pointer/set": "/mender/heals"},
-    {"value": 0, "pointer/set": "/turn/slot"},
+    {"value": "seat.lead", "pointer/set": "/turn/slot"},
     {"value": 0, "pointer/set": "/result/won"}]},
   "mender-heal-mender":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the mender for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the mender for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 3,
+      "b": "seat.mender",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1764,15 +1765,15 @@
       "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/mender/hp"},
     {"value": {"param": "heals_left"}, "pointer/set": "/mender/heals"},
-    {"value": 4, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.foe", "pointer/set": "/turn/slot"}]},
   "mender-heal-lead":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the lead for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the lead for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 3,
+      "b": "seat.mender",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1792,15 +1793,15 @@
       "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/lead/hp"},
     {"value": {"param": "heals_left"}, "pointer/set": "/mender/heals"},
-    {"value": 4, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.foe", "pointer/set": "/turn/slot"}]},
   "mender-heal-guard":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the guard for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the guard for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 3,
+      "b": "seat.mender",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1820,15 +1821,15 @@
       "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/guard/hp"},
     {"value": {"param": "heals_left"}, "pointer/set": "/mender/heals"},
-    {"value": 4, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.foe", "pointer/set": "/turn/slot"}]},
   "mender-heal-caster":
   {"params": ["hp", "heals_left"],
    "description":
-   "The mender heals the caster for 60, up to its maximum; 3 heals a round.",
+   "The mender heals the caster for 60, up to its maximum; 3 heals a battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 3,
+      "b": "seat.mender",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1848,14 +1849,14 @@
       "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/caster/hp"},
     {"value": {"param": "heals_left"}, "pointer/set": "/mender/heals"},
-    {"value": 4, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.foe", "pointer/set": "/turn/slot"}]},
   "mender-attack":
   {"params": ["foe_hp"],
    "description": "The mender attacks: 20 damage.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 3,
+      "b": "seat.mender",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1866,7 +1867,7 @@
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
-    {"value": 4, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.foe", "pointer/set": "/turn/slot"}]},
   "lead-skill":
   {"params": ["foe_hp", "gauge"],
    "description":
@@ -1874,7 +1875,7 @@
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 0,
+      "b": "seat.lead",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1890,7 +1891,7 @@
       "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
     {"value": {"param": "gauge"}, "pointer/set": "/lead/gauge"},
-    {"value": 1, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.caster", "pointer/set": "/turn/slot"}]},
   "lead-finisher":
   {"params": ["foe_hp"],
    "description":
@@ -1898,7 +1899,7 @@
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 0,
+      "b": "seat.lead",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1914,14 +1915,14 @@
       "a": {"type": "pointer/get", "pointer": "/lead/gauge"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
     {"value": 0, "pointer/set": "/lead/gauge"},
-    {"value": 1, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.caster", "pointer/set": "/turn/slot"}]},
   "lead-attack":
   {"params": ["foe_hp", "gauge"],
    "description": "The lead attacks: 45 damage, +25 gauge.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 0,
+      "b": "seat.lead",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1933,15 +1934,15 @@
       "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
     {"value": {"param": "gauge"}, "pointer/set": "/lead/gauge"},
-    {"value": 1, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.caster", "pointer/set": "/turn/slot"}]},
   "guard-taunt":
   {"params": [],
    "description":
-   "The guard taunts: the foe strikes the guard while it stands, this round.",
+   "The guard taunts: the foe strikes the guard while it stands, this battle.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 2,
+      "b": "seat.guard",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1956,14 +1957,14 @@
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/guard/taunt"}}},
     {"value": 1, "pointer/set": "/guard/taunt"},
-    {"value": 3, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.mender", "pointer/set": "/turn/slot"}]},
   "guard-attack":
   {"params": ["foe_hp"],
    "description": "The guard attacks: 30 damage.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 2,
+      "b": "seat.guard",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1974,14 +1975,14 @@
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/foe/hp"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
-    {"value": 3, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.mender", "pointer/set": "/turn/slot"}]},
   "foe-strike-mender":
   {"params": ["hp"],
    "description": "The foe strikes the mender.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 4,
+      "b": "seat.foe",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -1992,14 +1993,14 @@
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/mender/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/mender/hp"},
-    {"value": 0, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.lead", "pointer/set": "/turn/slot"}]},
   "foe-strike-lead":
   {"params": ["hp"],
    "description": "The foe strikes the lead.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 4,
+      "b": "seat.foe",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -2010,14 +2011,14 @@
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/lead/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/lead/hp"},
-    {"value": 0, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.lead", "pointer/set": "/turn/slot"}]},
   "foe-strike-guard":
   {"params": ["hp"],
    "description": "The foe strikes the guard, who blocks 20 of it.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 4,
+      "b": "seat.foe",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -2028,14 +2029,14 @@
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/guard/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/guard/hp"},
-    {"value": 0, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.lead", "pointer/set": "/turn/slot"}]},
   "foe-strike-caster":
   {"params": ["hp"],
    "description": "The foe strikes the caster.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 4,
+      "b": "seat.foe",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -2046,7 +2047,7 @@
       "b": 1,
       "a": {"type": "pointer/get", "pointer": "/caster/hp"}}},
     {"value": {"param": "hp"}, "pointer/set": "/caster/hp"},
-    {"value": 0, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.lead", "pointer/set": "/turn/slot"}]},
   "defeat":
   {"params": [],
    "description": "The party is down: the run ends.",
@@ -2074,7 +2075,7 @@
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 1,
+      "b": "seat.caster",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -2090,7 +2091,7 @@
       "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
     {"value": 0, "pointer/set": "/caster/charge"},
-    {"value": 2, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.guard", "pointer/set": "/turn/slot"}]},
   "caster-cast":
   {"params": [],
    "description":
@@ -2098,7 +2099,7 @@
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 1,
+      "b": "seat.caster",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -2113,14 +2114,14 @@
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
     {"value": 1, "pointer/set": "/caster/charge"},
-    {"value": 2, "pointer/set": "/turn/slot"}]},
+    {"value": "seat.guard", "pointer/set": "/turn/slot"}]},
   "caster-attack":
   {"params": ["foe_hp"],
    "description": "The caster attacks: 25 damage.",
    "body":
    [{"eval":
      {"type": "math/eq",
-      "b": 1,
+      "b": "seat.caster",
       "a": {"type": "pointer/get", "pointer": "/turn/slot"}}},
     {"eval":
      {"type": "math/ge",
@@ -2135,7 +2136,7 @@
       "b": 0,
       "a": {"type": "pointer/get", "pointer": "/caster/charge"}}},
     {"value": {"param": "foe_hp"}, "pointer/set": "/foe/hp"},
-    {"value": 2, "pointer/set": "/turn/slot"}]}},
+    {"value": "seat.guard", "pointer/set": "/turn/slot"}]}},
  "@type": "domain:Definition",
  "@context":
  {"domain": "VSEKAI:planning/domain/", "VSEKAI": "https://v-sekai.org/"}}

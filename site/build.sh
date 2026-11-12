@@ -13,7 +13,7 @@ cp site/_layouts/default.html "$out/_layouts/"
 cp site/404.md "$out/404.md"
 cp site/battle.js "$out/assets/battle.js"
 cp domains/command-battle.jsonld "$out/samples/domains/"
-cp problems/command-battle-round-1.jsonld "$out/samples/problems/"
+cp problems/command-battle-start.jsonld "$out/samples/problems/"
 tag="$(gh release list --repo V-Sekai-fire/interactor-taskweft-persona --limit 1 --json tagName --jq '.[0].tagName')"
 gh release download "$tag" --repo V-Sekai-fire/interactor-taskweft-persona --dir "$out/assets" --pattern 'persona.*'
 cp site/index.md "$out/index.md"
