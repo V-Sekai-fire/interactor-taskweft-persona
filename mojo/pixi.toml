@@ -1,0 +1,16 @@
+[workspace]
+name = "persona-mojo"
+description = "interactor-taskweft-persona in Mojo, tested with contract-witness-mojo"
+channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[dependencies]
+mojo = "==1.3.0.dev2026111316"
+python = "3.12.*"
+
+[tasks]
+test = "mojo build -I src -I thirdparty/witness-mojo/src tests/test_persona.mojo -o build/test_persona && build/test_persona"
+mutants = "python tools/mutants.py"
+parity = "tools/parity.sh"
+ask = "mojo build -I src app/ask.mojo -o build/ask && build/ask"
+vocabulary = "mojo build -I src app/ask.mojo -o build/ask && build/ask --vocabulary"
