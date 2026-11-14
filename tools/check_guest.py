@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """persona.elf loaded in a pinned double-precision Godot with the godot-sandbox addon, and called.
 
-    python3 tools/check_guest.py --elf=<persona.elf> [--boxed] [--work=<dir>]
-
---boxed is for a guest that reads its arguments as Variant pointers (the Mojo guest).
+    python3 tools/check_guest.py --elf=<persona.elf> [--work=<dir>]
 
 The engine and the addon are release binaries from service-godot-build, pinned by tag and
 sha256. tests/guest/gate_guest.gd loads the ELF from bytes into a Sandbox, calls
@@ -106,10 +104,10 @@ def setup(h, work):
     return engine
 
 
-def godot(engine, elf, boxed=False):
+def godot(engine, elf):
     """One Godot process, under a wall clock. A guest that hangs the emulator is a failure."""
     cmd = [str(engine), "--headless", "--audio-driver", "Dummy", "--path", str(PROJECT),
-           "--script", "gate_guest.gd", "--", f"--elf={elf}"] + (["--boxed"] if boxed else [])
+           "--script", "gate_guest.gd", "--", f"--elf={elf}"]
     say("$ " + " ".join(cmd))
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=WALL_S)
@@ -170,7 +168,7 @@ def control(results, name, problem):
 def main(argv):
     kv = dict(a.removeprefix("--").partition("=")[::2] for a in argv[1:])
     if "elf" not in kv:
-        fail("usage: check_guest.py --elf=<persona.elf> [--boxed] [--work=<dir>]")
+        fail("usage: check_guest.py --elf=<persona.elf> [--work=<dir>]")
     elf = Path(kv["elf"]).resolve()
     if not elf.is_file():
         fail(f"no {elf}")
@@ -179,14 +177,13 @@ def main(argv):
     engine = setup(host(), work)
     say(f"persona.elf: sha256 {sha256(elf)}")
 
-    boxed = "boxed" in kv
-    first = godot(engine, elf, boxed)
-    second = godot(engine, elf, boxed)
+    first = godot(engine, elf)
+    second = godot(engine, elf)
     (work / "godot.log").write_text(first["out"])
     blob = elf.read_bytes()
     truncated = work / "truncated.elf"
     truncated.write_bytes(blob[: len(blob) // 2])
-    cut = godot(engine, truncated, boxed)
+    cut = godot(engine, truncated)
     (work / "truncated.log").write_text(cut["out"])
 
     results = []

@@ -1,9 +1,0 @@
-# pixi environments
-.pixi/*
-!.pixi/config.toml
-**.mojoc
-poster
-docs/superpowers
-.superpowers
-.DS_Store
-*.conda

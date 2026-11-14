@@ -25,9 +25,6 @@ func _run(a: Dictionary) -> int:
 	print("elf_bytes %d" % elf.size())
 	var sb = ClassDB.instantiate("Sandbox")
 	sb.set_redirect_stdout(func(line): print("guest| ", line))
-	# A Mojo guest takes its arguments as Variant pointers, so the host must not unbox them.
-	if a.has("boxed"):
-		sb.set("unboxed_arguments", false)
 	sb.load_buffer(elf)
 	for f in ["persona_version", "persona_ask"]:
 		if not sb.has_function(f):
