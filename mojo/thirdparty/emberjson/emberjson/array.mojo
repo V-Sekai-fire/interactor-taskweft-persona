@@ -173,6 +173,8 @@ struct Array(JsonValue, Sized):
     def to_list(self, out l: List[Value]):
         l = self._data.copy()
 
+    comptime ConversionToPythonErrorType = Error
+
     def to_python_object(self) raises -> PythonObject:
         var l = Python.list()
         for ref item in self._data:

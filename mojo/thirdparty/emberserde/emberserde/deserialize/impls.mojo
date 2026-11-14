@@ -450,6 +450,9 @@ __extension Tuple(Deserializable):
         comptime assert Self.Ts.all_conforms_to[
             Defaultable
         ](), "Tuple deserialize requires Defaultable elements"
+        comptime assert Self.Ts.all_conforms_to[
+            Movable
+        ](), "Tuple deserialize requires Movable elements"
         var result = Self()
 
         def dispose[idx: Int](var elt: Self.Ts[idx]) {imm}:

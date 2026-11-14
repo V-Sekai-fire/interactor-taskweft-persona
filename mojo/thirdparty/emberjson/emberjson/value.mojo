@@ -61,6 +61,8 @@ struct Null(JsonValue, TrivialRegisterPassable):
     def write_repr_to(self, mut writer: Some[Writer]):
         writer.write("Null()")
 
+    comptime ConversionToPythonErrorType = Error
+
     def to_python_object(self) raises -> PythonObject:
         return {}
 
@@ -476,6 +478,8 @@ struct Value(JsonValue, Sized):
         # Sound because the only self-describing format in scope
         # (`EmberJsonDeserializer`) declares `comptime Value = Value`.
         return rebind_var[Self](d.deserialize_any())
+
+    comptime ConversionToPythonErrorType = Error
 
     def to_python_object(self) raises -> PythonObject:
         if self.is_int():

@@ -187,9 +187,8 @@ def _structural_index[
 
     var write_pos = 0
 
-    @__parameter
     @always_inline("nodebug")
-    def emit(base_idx: UInt32, bits: UInt64):
+    def emit(base_idx: UInt32, bits: UInt64) {mut write_pos, out_ptr}:
         """Writes the offset of each set bit into `positions`.
 
         Four unconditional slots, then pairs (simdjson #2869: typical
@@ -402,9 +401,8 @@ def _structural_index_x86[
         global_constant[_BIT_OFFSETS]().unsafe_ptr().unsafe_bitcast[UInt8]()
     )
 
-    @__parameter
     @always_inline("nodebug")
-    def emit(base_idx: UInt32, bits: UInt64):
+    def emit(base_idx: UInt32, bits: UInt64) {mut out, offsets}:
         var base = SIMD[DType.uint32, 8](base_idx)
         comptime for j in range(8):
             var byte = Int((bits >> UInt64(8 * j)) & 0xFF)
@@ -414,9 +412,8 @@ def _structural_index_x86[
             )
             out = out.unsafe_offset(Int(pop_count(UInt8(byte))))
 
-    @__parameter
     @always_inline("nodebug")
-    def step(input: SimdInput, base_idx: UInt32):
+    def step(input: SimdInput, base_idx: UInt32) {mut escape_scanner, mut string_scanner, mut backslashes, mut prev_structurals, mut prev_scalar_carry, emit}:
         var block = classify(input)
         var backslash = input.eq(UInt8(0x5C))
         var all_quotes = input.eq(UInt8(0x22))

@@ -446,6 +446,8 @@ struct Object(JsonValue, Sized):
         for item in self.items():
             d[item.key] = item.value.copy()
 
+    comptime ConversionToPythonErrorType = Error
+
     def to_python_object(self) raises -> PythonObject:
         var d = Python.dict()
         for item in self.items():
