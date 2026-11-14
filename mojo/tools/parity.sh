@@ -10,7 +10,7 @@ T="$(mktemp -d "${TMPDIR:-/tmp}/parity.XXXXXX")"
 python3 parity/gen_cases.py > "$T/cases.hex"
 pixi run mojo build -I "$SRC" app/grid_dump.mojo -o "$T/grid_dump"
 "$T/grid_dump" "$T/cases.hex" > "$T/mojo.out"
-(cd .. && lake env lean --run mojo/parity/GridOracle.lean "$T/cases.hex") > "$T/lean.out"
+(cd .. && lake env lean --run mojo/parity/GridOracle.lean "$T/cases.hex") > "$T/lean.out" || { echo "the Lean oracle failed:"; head -20 "$T/lean.out"; exit 2; }
 n=$(wc -l < "$T/lean.out")
 [ "$n" -gt 1000 ] || { echo "oracle gave only $n lines"; exit 2; }
 if diff "$T/lean.out" "$T/mojo.out" > "$T/diff"; then
