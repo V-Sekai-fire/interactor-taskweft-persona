@@ -64,10 +64,9 @@ jobs:
         working-directory: mojo
         run: pixi run parity-plan
       - name: The ask surface prints what Lean prints
-        working-directory: mojo
         run: |
-          pixi run ask > "$RUNNER_TEMP/ask.mojo"
-          pixi run vocabulary > "$RUNNER_TEMP/vocab.mojo"
+          (cd mojo && pixi run ask) > "$RUNNER_TEMP/ask.mojo"
+          (cd mojo && pixi run vocabulary) > "$RUNNER_TEMP/vocab.mojo"
           lake exe persona > "$RUNNER_TEMP/ask.lean"
           lake exe persona --vocabulary > "$RUNNER_TEMP/vocab.lean"
           diff "$RUNNER_TEMP/ask.lean" "$RUNNER_TEMP/ask.mojo"
