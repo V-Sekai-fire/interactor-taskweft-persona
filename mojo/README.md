@@ -46,7 +46,7 @@ reads as null, a node is an index.
 | ISO-8601 durations, datestamps | `Planner/Iso8601Duration.lean`, `Jsonld.lean` | `src/persona/timeutil.mojo` | ported |
 | A2A peer | `PersonaA2A.lean`, `thirdparty/a2a` | | dropped, not part of the Mojo port |
 | riscv64 guest ELF | `guest/` | `guest/persona_guest.mojo` | ported, loads in Godot, answers match Lean |
-| wasm shim | `wasm/` | | not yet |
+| wasm shim | `wasm/`, `tools/build_wasm.exs` | | cannot be ported: Mojo 1.3 has no WebAssembly backend; the Lean build stays the browser path |
 
 
 The Lean gate's 29 invariants split across the two Mojo gates: 18 in `test`, and the campus, reach, chain, temporal, GTN and web checks
@@ -59,7 +59,7 @@ The Lean `A2AWitness` is dropped with the A2A peer, and `BattleWitness` is not p
 `persona.guest.answer_json`. It is 0.9 MB, against 5.4 MB for the Lean one.
 
     SYSROOT_REPO=<repository-riscv64-sysroot checkout> pixi run -e guest build-guest  # guest/build/persona.elf
-    pixi run test-guest                                                      # a pinned double-precision Godot loads it and calls it
+    pixi run -e guest test-guest                                             # a pinned double-precision Godot loads it and calls it
 
 `test-guest` is `tools/check_guest.py --boxed`: the same seven checks as the Lean guest, which include the exact plan and refusal text, the
 same bytes from two processes, and controls (an ELF cut in half, a changed plan, a changed version) that must fail. `--boxed` sets
@@ -75,6 +75,13 @@ same bytes from two processes, and controls (an ELF cut in half, a changed plan,
 - `memcpy.c` replaces glibc's memcpy. That one is an IFUNC, and the linker reaches it through a stub in `.iplt`, outside `.text`. The pinned
   godot-sandbox addon runs only `.text`, so the first call faulted with "Illegal opcode executed", while the functions still answered.
   interactor-mojo-guest's own ELF faults the same way in this addon. With glibc's memcpy out of the link there is no IRELATIVE relocation and no stub.
+
+## No wasm
+
+`mojo build --target-triple=wasm32-unknown-emscripten` (and `wasm32-unknown-wasi`, `wasm32-unknown-unknown`, `wasm64-unknown-unknown`) all stop with
+"No available targets are compatible with triple". `mojo build --print-supported-targets` lists aarch64, arm64, riscv32, riscv64 and x86, and nothing
+else, so there is no object to hand to `emcc`. `wasm/shim.c` and `tools/build_wasm.exs` keep building the browser module from the Lean. Running
+`persona.elf` in the browser would take a RISC-V emulator compiled to wasm and the Sandbox host calls (`ecall` 547, 517, 519), which is a project of its own.
 
 ## What differs from the Lean
 
