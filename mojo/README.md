@@ -44,13 +44,13 @@ reads as null, a node is an index.
 | RECTGTN JSON-LD planner, temporal schedule, shortest plan, web entries | `Persona/Jsonld.lean`, `Persona/Web.lean` | `src/persona/jsonld.mojo`, `app/plan.mojo` | ported, Lean parity on 397 pairs |
 | KHR_interactivity graphs | `Persona/Khr.lean` | `src/persona/khr.mojo` | ported, 19 graphs plus one extra |
 | ISO-8601 durations, datestamps | `Planner/Iso8601Duration.lean`, `Jsonld.lean` | `src/persona/timeutil.mojo` | ported |
-| A2A peer | `PersonaA2A.lean`, `thirdparty/a2a` | | not yet |
+| A2A peer | `PersonaA2A.lean`, `thirdparty/a2a` | | dropped, not part of the Mojo port |
 | riscv64 guest ELF, wasm shim | `guest/`, `wasm/` | | not yet |
 
 
 The Lean gate's 29 invariants split across the two Mojo gates: 18 in `test`, and the campus, reach, chain, temporal, GTN and web checks
 in `test-jsonld`, together with every file-driven case under `tests/` (enums, vocab, params, graph, the GTPyhop cases and the 19 KHR graphs).
-The Lean `A2AWitness` and `BattleWitness` are not ported; the battle domain is compared through `parity-plan` only.
+The Lean `A2AWitness` is dropped with the A2A peer, and `BattleWitness` is not ported; the battle domain is compared through `parity-plan` only.
 
 ## What differs from the Lean
 
