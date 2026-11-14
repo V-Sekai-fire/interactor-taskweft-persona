@@ -10,7 +10,12 @@ python = "3.12.*"
 
 [tasks]
 test = "mojo build -I src -I thirdparty/witness-mojo/src tests/test_persona.mojo -o build/test_persona && build/test_persona"
+test-jsonld = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde tests/test_jsonld.mojo -o build/test_jsonld && build/test_jsonld"
+test-props = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde -I thirdparty/witness-mojo/src tests/test_jsonld_props.mojo -o build/test_props && build/test_props"
+build-plan = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde app/plan.mojo -o build/plan"
 mutants = "python tools/mutants.py"
+mutants-jsonld = "python tools/mutants_jsonld.py"
 parity = "tools/parity.sh"
+parity-plan = { cmd = "python tools/parity_plan.py", depends-on = ["build-plan"] }
 ask = "mojo build -I src app/ask.mojo -o build/ask && build/ask"
 vocabulary = "mojo build -I src app/ask.mojo -o build/ask && build/ask --vocabulary"
