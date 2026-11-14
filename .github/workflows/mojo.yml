@@ -59,7 +59,7 @@ jobs:
           cache: false
       - name: Skill grids, 1505 specs
         working-directory: mojo
-        run: pixi run parity
+        run: pixi run bash -x tools/parity.sh
       - name: Plan documents, 397 pairs
         working-directory: mojo
         run: pixi run parity-plan

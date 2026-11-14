@@ -15,7 +15,7 @@ test-props = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde
 build-plan = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde app/plan.mojo -o build/plan"
 mutants = "python tools/mutants.py"
 mutants-jsonld = "python tools/mutants_jsonld.py"
-parity = "tools/parity.sh"
+parity = "bash tools/parity.sh"
 parity-plan = { cmd = "python tools/parity_plan.py", depends-on = ["build-plan"] }
 ask = "mojo build -I src app/ask.mojo -o build/ask && build/ask"
 vocabulary = "mojo build -I src app/ask.mojo -o build/ask && build/ask --vocabulary"
