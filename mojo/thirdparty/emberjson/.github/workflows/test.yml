@@ -1,0 +1,20 @@
+name: Run the testing suite
+
+on:
+    workflow_call:
+
+jobs:
+    test:
+        permissions:
+            contents: read
+        timeout-minutes: 30
+        name: Run tests
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - uses: prefix-dev/setup-pixi@v0.8.1
+            - name: Run the test suite
+              run: |
+                pixi run check_lock_compilers
+                pixi run test
