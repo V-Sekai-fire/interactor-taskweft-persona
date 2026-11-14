@@ -28,7 +28,7 @@ neither compiles on 1.3 as it stands. `Patch EmberJson 0.5.0 and EmberSerde 0.2.
 - `Value`, `Object` and `Array` name `ConversionToPythonErrorType = Error`, which 1.3's `ConvertibleToPython` asks for;
 - EmberSerde's `Tuple` deserializer asserts its elements are `Movable`.
 
-All 38 of EmberJson's own test files pass on 1.3 with the patch (about 590 tests, run with `-D ASSERT=all`). The patch should go upstream as a pull request.
+All 38 of EmberJson's own test files pass on 1.3 with the patch (about 590 tests, run with `-D ASSERT=all`). The patch stays in this repo and is not sent upstream.
 
 `src/persona/jdoc.mojo` copies a parsed `Value` once into an arena shaped like Lean's `Json`: an object's entries sorted by key, a missing key
 reads as null, a node is an index.
