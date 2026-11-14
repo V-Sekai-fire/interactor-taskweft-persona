@@ -45,12 +45,36 @@ reads as null, a node is an index.
 | KHR_interactivity graphs | `Persona/Khr.lean` | `src/persona/khr.mojo` | ported, 19 graphs plus one extra |
 | ISO-8601 durations, datestamps | `Planner/Iso8601Duration.lean`, `Jsonld.lean` | `src/persona/timeutil.mojo` | ported |
 | A2A peer | `PersonaA2A.lean`, `thirdparty/a2a` | | dropped, not part of the Mojo port |
-| riscv64 guest ELF, wasm shim | `guest/`, `wasm/` | | not yet |
+| riscv64 guest ELF | `guest/` | `guest/persona_guest.mojo` | ported, loads in Godot, answers match Lean |
+| wasm shim | `wasm/` | | not yet |
 
 
 The Lean gate's 29 invariants split across the two Mojo gates: 18 in `test`, and the campus, reach, chain, temporal, GTN and web checks
 in `test-jsonld`, together with every file-driven case under `tests/` (enums, vocab, params, graph, the GTPyhop cases and the 19 KHR graphs).
 The Lean `A2AWitness` is dropped with the A2A peer, and `BattleWitness` is not ported; the battle domain is compared through `parity-plan` only.
+
+## The guest ELF
+
+`persona.elf` in Mojo: `persona_version() -> String` and `persona_ask(goal) -> String`, the same surface as the Lean guest, answered by
+`persona.guest.answer_json`. It is 0.9 MB, against 5.4 MB for the Lean one.
+
+    SYSROOT_REPO=<repository-riscv64-sysroot checkout> pixi run build-guest   # guest/build/persona.elf
+    pixi run test-guest                                                      # a pinned double-precision Godot loads it and calls it
+
+`test-guest` is `tools/check_guest.py --boxed`: the same seven checks as the Lean guest, which include the exact plan and refusal text, the
+same bytes from two processes, and controls (an ELF cut in half, a changed plan, a changed version) that must fail. `--boxed` sets
+`unboxed_arguments = false`, because the C glue reads Variant pointers. The sysroot is found through `SYSROOT_REPO`, or at
+`../../../../5-repository/riscv64-sysroot` in a workspace checkout, or at `../../../riscv64-sysroot` beside the repo.
+
+`guest/runtime/` is a fork of the parts of Modular's runtime that Mojo's startup calls, copied from
+[interactor-mojo-guest](https://github.com/V-Sekai-fire/interactor-mojo-guest) (the files under `upstream/` are Modular's `Globals.cpp` and
+`System.cpp`, Apache-2.0 with LLVM exceptions; `AsyncRT.cpp` runs a pool of one worker). Two files are this repo's:
+
+- `sandbox_abi.c` is that repo's host-contract file cut down to the persona: the `.sandbox_variant` section, `fast_exit`, the two String
+  conversions and the registration of the two functions.
+- `memcpy.c` replaces glibc's memcpy. That one is an IFUNC, and the linker reaches it through a stub in `.iplt`, outside `.text`. The pinned
+  godot-sandbox addon runs only `.text`, so the first call faulted with "Illegal opcode executed", while the functions still answered.
+  interactor-mojo-guest's own ELF faults the same way in this addon. With glibc's memcpy out of the link there is no IRELATIVE relocation and no stub.
 
 ## What differs from the Lean
 
