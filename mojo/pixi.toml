@@ -7,13 +7,8 @@ platforms = ["osx-arm64", "linux-64"]
 [dependencies]
 mojo = "==1.3.0.dev2026111316"
 python = "3.12.*"
-clangxx = ">=18"
-lld = ">=18"
-elixir = "*"
 
 [tasks]
-build-guest = "elixir guest/tools/build.exs"
-test-guest = { cmd = "python ../tools/check_guest.py --elf=guest/build/persona.elf --boxed", depends-on = ["build-guest"] }
 test = "mojo build -I src -I thirdparty/witness-mojo/src tests/test_persona.mojo -o build/test_persona && build/test_persona"
 test-jsonld = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde tests/test_jsonld.mojo -o build/test_jsonld && build/test_jsonld"
 test-props = "mojo build -I src -I thirdparty/emberjson -I thirdparty/emberserde -I thirdparty/witness-mojo/src tests/test_jsonld_props.mojo -o build/test_props && build/test_props"
@@ -24,3 +19,19 @@ parity = "bash tools/parity.sh"
 parity-plan = { cmd = "python tools/parity_plan.py", depends-on = ["build-plan"] }
 ask = "mojo build -I src app/ask.mojo -o build/ask && build/ask"
 vocabulary = "mojo build -I src app/ask.mojo -o build/ask && build/ask --vocabulary"
+
+# The guest links for riscv64 with clang and lld. Those pull in a conda gcc and sysroot that break
+# the native links of the tests above, so they live in their own environment:
+#   pixi run -e guest build-guest
+[feature.guest.dependencies]
+clangxx = ">=18"
+lld = ">=18"
+elixir = "*"
+
+[feature.guest.tasks]
+build-guest = "elixir guest/tools/build.exs"
+test-guest = { cmd = "python ../tools/check_guest.py --elf=guest/build/persona.elf --boxed", depends-on = ["build-guest"] }
+
+[environments]
+default = []
+guest = ["guest"]

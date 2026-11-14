@@ -83,16 +83,17 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           manifest-path: mojo/pixi.toml
+          environments: guest
           locked: true
           cache: false
       - name: persona.elf, built from the Mojo
         working-directory: mojo
         env:
           SYSROOT_REPO: ${{ runner.temp }}/riscv64-sysroot
-        run: pixi run build-guest
+        run: pixi run -e guest build-guest
       - name: It loads in Godot and answers what Lean answers, with controls
         working-directory: mojo
-        run: pixi run python ../tools/check_guest.py --elf=guest/build/persona.elf --boxed --work="$RUNNER_TEMP/guest"
+        run: pixi run -e guest python ../tools/check_guest.py --elf=guest/build/persona.elf --boxed --work="$RUNNER_TEMP/guest"
       - uses: actions/upload-artifact@v4
         with:
           name: persona-mojo-elf-${{ github.sha }}

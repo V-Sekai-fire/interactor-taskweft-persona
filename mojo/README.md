@@ -58,7 +58,7 @@ The Lean `A2AWitness` is dropped with the A2A peer, and `BattleWitness` is not p
 `persona.elf` in Mojo: `persona_version() -> String` and `persona_ask(goal) -> String`, the same surface as the Lean guest, answered by
 `persona.guest.answer_json`. It is 0.9 MB, against 5.4 MB for the Lean one.
 
-    SYSROOT_REPO=<repository-riscv64-sysroot checkout> pixi run build-guest   # guest/build/persona.elf
+    SYSROOT_REPO=<repository-riscv64-sysroot checkout> pixi run -e guest build-guest  # guest/build/persona.elf
     pixi run test-guest                                                      # a pinned double-precision Godot loads it and calls it
 
 `test-guest` is `tools/check_guest.py --boxed`: the same seven checks as the Lean guest, which include the exact plan and refusal text, the
