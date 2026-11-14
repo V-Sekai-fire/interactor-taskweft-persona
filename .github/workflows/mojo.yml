@@ -1,0 +1,95 @@
+# The Mojo port of the persona: its gates, and Lean as the oracle.
+#
+# gates: the witness-ladder tests and the planted-bug run for the core, on Mojo 1.3
+# (mojo/pixi.toml pins the nightly).
+# parity: the same inputs through the Lean build and the Mojo build; the answers must match.
+# mutants-jsonld: 18 planted bugs in the planner, run by hand (about half an hour).
+
+name: Mojo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mojo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          manifest-path: mojo/pixi.toml
+          locked: true
+          cache: false
+      - name: Core, grid and guest surface
+        run: pixi run test
+      - name: Planner properties
+        run: pixi run test-props
+      - name: JSON-LD planner, KHR graphs and the cases under tests/
+        run: pixi run test-jsonld
+      - name: Planted bugs in the core
+        run: pixi run mutants
+
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lean from elan, at the release the repo pins
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain="$(cat lean-toolchain)"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: The Lean oracle
+        run: lake build persona persona_plan
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          manifest-path: mojo/pixi.toml
+          locked: true
+          cache: false
+      - name: Skill grids, 1505 specs
+        working-directory: mojo
+        run: pixi run parity
+      - name: Plan documents, 397 pairs
+        working-directory: mojo
+        run: pixi run parity-plan
+      - name: The ask surface prints what Lean prints
+        working-directory: mojo
+        run: |
+          pixi run ask > "$RUNNER_TEMP/ask.mojo"
+          pixi run vocabulary > "$RUNNER_TEMP/vocab.mojo"
+          lake exe persona > "$RUNNER_TEMP/ask.lean"
+          lake exe persona --vocabulary > "$RUNNER_TEMP/vocab.lean"
+          diff "$RUNNER_TEMP/ask.lean" "$RUNNER_TEMP/ask.mojo"
+          diff "$RUNNER_TEMP/vocab.lean" "$RUNNER_TEMP/vocab.mojo"
+
+  mutants-jsonld:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lean from elan, at the release the repo pins
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain="$(cat lean-toolchain)"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - run: lake build persona_plan
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          manifest-path: mojo/pixi.toml
+          locked: true
+          cache: false
+      - name: Planted bugs in the planner, KHR runner and time codecs
+        working-directory: mojo
+        run: pixi run mutants-jsonld
