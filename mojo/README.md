@@ -46,7 +46,7 @@ reads as null, a node is an index.
 | ISO-8601 durations, datestamps | `Planner/Iso8601Duration.lean`, `Jsonld.lean` | `src/persona/timeutil.mojo` | ported |
 | A2A peer | `PersonaA2A.lean`, `thirdparty/a2a` | | dropped, not part of the Mojo port |
 | riscv64 guest ELF | `guest/` | `guest/persona_guest.mojo` | ported, loads in Godot, answers match Lean |
-| wasm shim | `wasm/`, `tools/build_wasm.exs` | | cannot be ported: Mojo 1.3 has no WebAssembly backend; the Lean build stays the browser path |
+| browser module | `mojo/wasm/` | `wasm/persona_host.cpp` | the guest under libriscv in WebAssembly; replaces the Lean `wasm/shim.c` |
 
 
 The Lean gate's 29 invariants split across the two Mojo gates: 18 in `test`, and the campus, reach, chain, temporal, GTN and web checks
@@ -76,12 +76,40 @@ same bytes from two processes, and controls (an ELF cut in half, a changed plan,
   godot-sandbox addon runs only `.text`, so the first call faulted with "Illegal opcode executed", while the functions still answered.
   interactor-mojo-guest's own ELF faults the same way in this addon. With glibc's memcpy out of the link there is no IRELATIVE relocation and no stub.
 
-## No wasm
+## In the browser
 
-`mojo build --target-triple=wasm32-unknown-emscripten` (and `wasm32-unknown-wasi`, `wasm32-unknown-unknown`, `wasm64-unknown-unknown`) all stop with
-"No available targets are compatible with triple". `mojo build --print-supported-targets` lists aarch64, arm64, riscv32, riscv64 and x86, and nothing
-else, so there is no object to hand to `emcc`. `wasm/shim.c` and `tools/build_wasm.exs` keep building the browser module from the Lean. Running
-`persona.elf` in the browser would take a RISC-V emulator compiled to wasm and the Sandbox host calls (`ecall` 547, 517, 519), which is a project of its own.
+`persona.mjs` and `persona.wasm` are the guest running under [libriscv](https://github.com/libriscv/libriscv) compiled to WebAssembly, the
+same emulator godot-sandbox uses, with libriscv's binary translation compiled in. They replace the Lean build that `wasm/shim.c` and
+`tools/build_wasm.exs` made, and export what the Pages site's `battle.js` calls: `persona_init`, `persona_plan_jsonld`, and
+`persona_goals`, `persona_plan_shortest`, `persona_plan` and `persona_ask`, `persona_version`.
+
+    pixi run -e guest build-guest                                  # guest/build/persona.elf
+    EMSDK_PYTHON=<python 3.10 or newer> wasm/build.sh <libriscv checkout> <out-dir>
+    node wasm/check.mjs <out-dir>/final ..                         # 22 checks, with controls
+
+`wasm/persona_host.cpp` is the host half of the sandbox contract (ecall 547 registers a guest function, 517 makes a String, 519 reads one).
+libriscv is pinned to `9adb3f6618308111a3b1c5e3c407fdc246ce1916`.
+
+**Binary translation is generated in wasm.** libriscv's translation is found by a hash that covers the layout of its `Machine` struct, so C99
+emitted by a 64-bit host never matches a wasm32 build (the log reads "No embedded translation found" and the guest runs interpreted, with correct
+answers). `build.sh` builds the module once without the translation, runs it under node to emit the C99 (`--gen`), then builds it again with that
+C99 compiled in. `--verbose` prints "Found embedded translation for hash ..." when it is in use.
+
+**Measured**, on an M2 Pro, planning the command battle (74 KB domain, 803 byte answer, 59.5 M guest instructions for 30 plans, byte-identical to Lean):
+
+| build | ms per plan | wasm size |
+| --- | --- | --- |
+| interpreter, threaded dispatch | 131 | 1.8 MB |
+| translation, `-O1` or `-O3` on the translated C | 47 | 15 MB |
+| translation, register caching | 67 (slower in wasm) | 16 MB |
+| translation, power-of-two address mask (the build) | 31 | 8.7 MB |
+| the Lean module this replaces | 5.6 | 1.8 MB |
+
+So the Mojo module is about five times slower than the Lean one on this input and about five times larger. The address mask wraps a stray guest
+address inside the arena instead of trapping. The guest's memory is a fixed 512 MB arena either way, so the host is not at risk.
+`build.sh` takes the other settings as arguments (`ON` for register caching, `-O3`) and `NBIT=OFF` turns the mask off.
+
+On the page, the same 8 turns of the command battle played through `battle.js` against each module give identical text on every turn.
 
 ## What differs from the Lean
 

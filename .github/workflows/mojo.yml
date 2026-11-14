@@ -4,6 +4,7 @@
 # (mojo/pixi.toml pins the nightly).
 # parity: the same inputs through the Lean build and the Mojo build; the answers must match.
 # guest: persona.elf from the Mojo, linked for riscv64, loaded in a pinned double-precision Godot and called.
+# wasm: the guest under libriscv in WebAssembly with binary translation, checked in node against the Lean golds.
 # mutants-jsonld: 18 planted bugs in the planner, run by hand (about half an hour).
 
 name: Mojo
@@ -98,6 +99,43 @@ jobs:
         with:
           name: persona-mojo-elf-${{ github.sha }}
           path: mojo/guest/build/persona.elf
+
+  wasm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: The riscv64 sysroot the guest links against
+        run: git clone -q --depth 1 https://github.com/V-Sekai-fire/repository-riscv64-sysroot "$RUNNER_TEMP/riscv64-sysroot"
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          manifest-path: mojo/pixi.toml
+          environments: guest
+          locked: true
+          cache: false
+      - name: persona.elf, built from the Mojo
+        working-directory: mojo
+        env:
+          SYSROOT_REPO: ${{ runner.temp }}/riscv64-sysroot
+        run: pixi run -e guest build-guest
+      - name: libriscv, at the commit the build was measured on
+        run: |
+          git clone -q https://github.com/libriscv/libriscv "$RUNNER_TEMP/libriscv"
+          git -C "$RUNNER_TEMP/libriscv" checkout -q 9adb3f6618308111a3b1c5e3c407fdc246ce1916
+      - uses: mymindstorm/setup-emsdk@v14
+      - name: persona.mjs and persona.wasm, with the binary translation generated in wasm
+        working-directory: mojo
+        run: |
+          sudo apt-get install -y -q ninja-build xxd
+          wasm/build.sh "$RUNNER_TEMP/libriscv" "$RUNNER_TEMP/wasm" module
+      - name: It answers what Lean answers, with controls
+        run: node mojo/wasm/check.mjs "$RUNNER_TEMP/wasm/final" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: persona-mojo-wasm-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/wasm/final/persona.mjs
+            ${{ runner.temp }}/wasm/final/persona.wasm
 
   mutants-jsonld:
     if: github.event_name == 'workflow_dispatch'

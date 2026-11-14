@@ -71,10 +71,12 @@ with `getrandom`, because a sandbox has no `/dev/urandom` (`interactor-lean-gues
 reads back (`guest/main.cpp`).
 
 ## Run the planner in a browser
-`wasm/shim.c` and `tools/build_wasm.exs` build the persona as `persona.mjs` and `persona.wasm`
-(about 1.3 MB). The module exports `persona_init` and `persona_plan`. A request is a skill grid as
-text, one `skill ID DONE NEED...` line a skill and one `goal ID` line, and the answer is the
-activation order, `{"plan":["activate-2",...],"reached":true}`, or a refusal by name
+`mojo/wasm/build.sh` builds the persona as `persona.mjs` and `persona.wasm`: the Mojo guest
+(`persona.elf`) runs under libriscv compiled to WebAssembly, with its binary translation compiled in.
+The module exports `persona_init`, `persona_version`, `persona_ask`, `persona_plan`,
+`persona_goals`, `persona_plan_jsonld` and `persona_plan_shortest`. A `persona_plan` request is a
+skill grid as text, one `skill ID DONE NEED...` line a skill and one `goal ID` line, and the answer
+is the activation order, `{"plan":["activate-2",...],"reached":true}`, or a refusal by name
 (`bad_spec`, `undeclared_goal`, `unreachable`). A skill needs the skills whose variables an action
 requires, which is the `requires` field of a domain.
 
@@ -92,11 +94,10 @@ such as `reach-rfd-3`: a method's first alternative `held` checks that the varia
 `todo_list` is `[["reach-rfd-3"]]`. The RFD site publishes its campus domain in the engine shape. Both
 shapes plan through `persona_plan_jsonld`; the C++ engine is not part of the build.
 
-    elixir tools/build_wasm.exs <core-dir> <out-dir>
+    mojo/wasm/build.sh <libriscv-checkout> <out-dir>
 
-`<core-dir>` holds the C emitted for the toolchain's Init and Std (`c/`), `gen/include` and
-`lean4/src`, the layout `interactor-lean-guest` builds for its riscv64 core. The build needs
-`emcc` on the path.
+The build needs `emcc` (with Python 3.10 or newer), `cmake`, `ninja`, `node` and `xxd`, and the guest
+at `mojo/guest/build/persona.elf`. See `mojo/README.md`, "In the browser".
 
 ## Domain, problem and plan
 A planning task is three documents, each a RECTGTN JSON-LD file under the `VSEKAI` prefix:
