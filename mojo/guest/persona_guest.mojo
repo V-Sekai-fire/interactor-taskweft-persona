@@ -10,6 +10,8 @@
 from std.ffi import external_call
 from std.sys import exit
 from persona.guest import answer_json, VERSION_TEXT
+from persona.jsonld import plan_with, goals_of, shortest_of
+from persona.grid import plan_of as grid_plan
 
 
 def _copy_out(s: String, dst: Int, cap: Int) -> Int:
@@ -41,6 +43,47 @@ def mojo_persona_ask(req: Int, req_len: Int, dst: Int, cap: Int) abi("C") -> Int
     except:
         return -22
     return _copy_out(answer_json(goal), dst, cap)
+
+
+def _text(addr: Int, n: Int) -> String:
+    """The UTF-8 text at `addr`, or the empty String when it is not UTF-8."""
+    var bytes = List[UInt8](capacity=n)
+    var p = ImmPointer[UInt8, ImmUntrackedOrigin](unsafe_from_address=addr)
+    for i in range(n):
+        bytes.append(p[unsafe_offset=i])
+    try:
+        return String(from_utf8=bytes)
+    except:
+        return String("")
+
+
+@export
+def mojo_persona_plan_jsonld(
+    d: Int, dl: Int, p: Int, pl: Int, g: Int, gl: Int, dst: Int, cap: Int
+) abi("C") -> Int:
+    return _copy_out(plan_with(_text(d, dl), _text(p, pl), _text(g, gl)), dst, cap)
+
+
+@export
+def mojo_persona_goals(d: Int, dl: Int, p: Int, pl: Int, dst: Int, cap: Int) abi("C") -> Int:
+    return _copy_out(goals_of(_text(d, dl), _text(p, pl)), dst, cap)
+
+
+@export
+def mojo_persona_plan(spec: Int, n: Int, dst: Int, cap: Int) abi("C") -> Int:
+    return _copy_out(grid_plan(_text(spec, n)), dst, cap)
+
+
+@export
+def mojo_persona_plan_shortest(
+    d: Int, dl: Int, p: Int, pl: Int, lim: Int, ll: Int, dst: Int, cap: Int
+) abi("C") -> Int:
+    var limit = 0
+    try:
+        limit = Int(_text(lim, ll))
+    except:
+        return -22
+    return _copy_out(shortest_of(_text(d, dl), _text(p, pl), limit), dst, cap)
 
 
 def main():

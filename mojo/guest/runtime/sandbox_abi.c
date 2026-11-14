@@ -109,7 +109,21 @@ int sandbox_variant_get_string(const struct GuestVariant *v, char *buf, size_t c
 extern long mojo_persona_ask(const char *req, long req_len, char *out, long cap) __attribute__((weak));
 extern long mojo_persona_version(char *out, long cap) __attribute__((weak));
 
+extern long mojo_persona_plan_jsonld(const char *d, long dl, const char *p, long pl, const char *g, long gl,
+                                     char *out, long cap) __attribute__((weak));
+extern long mojo_persona_goals(const char *d, long dl, const char *p, long pl, char *out, long cap)
+    __attribute__((weak));
+
+extern long mojo_persona_plan(const char *spec, long n, char *out, long cap) __attribute__((weak));
+extern long mojo_persona_plan_shortest(const char *d, long dl, const char *p, long pl, const char *lim,
+                                       long limlen, char *out, long cap) __attribute__((weak));
+
 #define ANSWER_CAP 16384
+/* A domain is about 75 KB (the command battle); room for four of them, and a megabyte of answer. */
+#define DOMAIN_CAP (256 * 1024)
+#define PROBLEM_CAP (64 * 1024)
+#define GOAL_CAP 1024
+#define BIG_ANSWER_CAP (1024 * 1024)
 
 static void persona_version(struct GuestVariant *ret) {
     static char out[64];
@@ -130,8 +144,69 @@ static void persona_ask(struct GuestVariant *ret, const struct GuestVariant *goa
     if (n >= 0) sandbox_variant_set_string(ret, out, (size_t)n);
 }
 
+/* persona_plan_jsonld(domain, problem, goal) -> String: a RECTGTN domain and problem in, the plan
+ * document out. An empty goal plans every goal of the problem. */
+static void persona_plan_jsonld(struct GuestVariant *ret, const struct GuestVariant *d,
+                                const struct GuestVariant *p, const struct GuestVariant *g) {
+    static char dom[DOMAIN_CAP], prob[PROBLEM_CAP], goal[GOAL_CAP];
+    static char out[BIG_ANSWER_CAP];
+    size_t dn = 0, pn = 0, gn = 0;
+    ret->type = VARIANT_NIL;
+    if (sandbox_variant_get_string(d, dom, sizeof dom, &dn)) return;
+    if (sandbox_variant_get_string(p, prob, sizeof prob, &pn)) return;
+    if (sandbox_variant_get_string(g, goal, sizeof goal, &gn)) return;
+    long n = mojo_persona_plan_jsonld(dom, (long)dn, prob, (long)pn, goal, (long)gn, out, sizeof out);
+    if (n >= 0) sandbox_variant_set_string(ret, out, (size_t)n);
+}
+
+/* persona_goals(domain, problem) -> String: the goals the problem asks, and whether each holds. */
+static void persona_goals(struct GuestVariant *ret, const struct GuestVariant *d,
+                          const struct GuestVariant *p) {
+    static char dom[DOMAIN_CAP], prob[PROBLEM_CAP];
+    static char out[ANSWER_CAP];
+    size_t dn = 0, pn = 0;
+    ret->type = VARIANT_NIL;
+    if (sandbox_variant_get_string(d, dom, sizeof dom, &dn)) return;
+    if (sandbox_variant_get_string(p, prob, sizeof prob, &pn)) return;
+    long n = mojo_persona_goals(dom, (long)dn, prob, (long)pn, out, sizeof out);
+    if (n >= 0) sandbox_variant_set_string(ret, out, (size_t)n);
+}
+
+/* persona_plan(spec) -> String: a skill grid, one `skill ID DONE NEED...` line a skill and one
+ * `goal ID` line, in; the activation order out. */
+static void persona_plan(struct GuestVariant *ret, const struct GuestVariant *spec) {
+    static char req[DOMAIN_CAP];
+    static char out[ANSWER_CAP];
+    size_t rn = 0;
+    ret->type = VARIANT_NIL;
+    if (sandbox_variant_get_string(spec, req, sizeof req, &rn)) return;
+    long n = mojo_persona_plan(req, (long)rn, out, sizeof out);
+    if (n >= 0) sandbox_variant_set_string(ret, out, (size_t)n);
+}
+
+/* persona_plan_shortest(domain, problem, limit) -> String: the plan with the fewest actions; the
+ * limit, the longest plan tried, is the decimal text of a number. */
+static void persona_plan_shortest(struct GuestVariant *ret, const struct GuestVariant *d,
+                                  const struct GuestVariant *p, const struct GuestVariant *lim) {
+    static char dom[DOMAIN_CAP], prob[PROBLEM_CAP], limit[GOAL_CAP];
+    static char out[BIG_ANSWER_CAP];
+    size_t dn = 0, pn = 0, ln = 0;
+    ret->type = VARIANT_NIL;
+    if (sandbox_variant_get_string(d, dom, sizeof dom, &dn)) return;
+    if (sandbox_variant_get_string(p, prob, sizeof prob, &pn)) return;
+    if (sandbox_variant_get_string(lim, limit, sizeof limit, &ln)) return;
+    long n = mojo_persona_plan_shortest(dom, (long)dn, prob, (long)pn, limit, (long)ln, out, sizeof out);
+    if (n >= 0) sandbox_variant_set_string(ret, out, (size_t)n);
+}
+
 /* Registration is legal only while the host initializes the guest, which is when main runs. */
 void sandbox_register_api(void) {
     sandbox_add_function("persona_version", 15, (void *)persona_version, "String", "");
     sandbox_add_function("persona_ask", 11, (void *)persona_ask, "String", "String goal");
+    sandbox_add_function("persona_plan_jsonld", 19, (void *)persona_plan_jsonld, "String",
+                         "String domain, String problem, String goal");
+    sandbox_add_function("persona_plan", 12, (void *)persona_plan, "String", "String spec");
+    sandbox_add_function("persona_plan_shortest", 21, (void *)persona_plan_shortest, "String",
+                         "String domain, String problem, String limit");
+    sandbox_add_function("persona_goals", 13, (void *)persona_goals, "String", "String domain, String problem");
 }

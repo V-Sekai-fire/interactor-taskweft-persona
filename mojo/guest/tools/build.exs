@@ -39,7 +39,7 @@ defmodule Build do
   end
 
   defp mojo(src, name) do
-    flags = String.split(System.get_env("MOJO_FLAGS", "-I ../src"), " ", trim: true)
+    flags = String.split(System.get_env("MOJO_FLAGS", "-I ../src -I ../thirdparty/emberjson -I ../thirdparty/emberserde"), " ", trim: true)
 
     run(
       "mojo",
