@@ -1,3 +1,3 @@
 %{
-  "leanler": {:git, "https://github.com/V-Sekai-fire/leanler.git", "bbdd11e57a1751b56ff8eae3afde66ca0cf6f723", []},
+  "leanler": {:git, "https://github.com/V-Sekai-fire/leanler.git", "ae720a2f72d5fb359c3ced80345495f2de60967b", []},
 }
