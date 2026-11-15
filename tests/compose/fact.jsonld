@@ -1,0 +1,1 @@
+{"@context":{"VSEKAI":"https://v-sekai.org/","domain":"VSEKAI:planning/domain/"},"@type":"domain:Definition","name":"fact","variables":[{"name":"t","init":{"y":1}}],"actions":{},"methods":{}}
