@@ -2,3 +2,8 @@
 /build/
 *.olean
 *.ilean
+/_build/
+/deps/
+/priv/
+/mix.lock
+/_build_cnode/
