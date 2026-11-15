@@ -3,6 +3,7 @@ import Persona.Grid
 import Persona.Jsonld
 import Persona.Web
 import Persona.Khr
+import Persona.Compose
 
 open Persona
 open Persona.Demo
@@ -386,6 +387,27 @@ def gtpyhopChecks : IO (List Check) := do
                                     else ["putv-0", "getv-0", "getv-0"]) }]
   return out
 
+/-- Composition: several domain documents planned as one, in the order given. -/
+def composeChecks : IO (List Check) := do
+  let dir := "tests/compose/"
+  let rd := fun (n : String) => IO.FS.readFile (dir ++ n ++ ".jsonld")
+  let a ← rd "a"; let b ← rd "b"; let twice ← rd "twice"; let fact ← rd "fact"; let prob ← rd "problem"
+  let planOfMerge := fun (ds : List String) =>
+    match Persona.Compose.merge ds with
+    | .ok d => stepKeys (Persona.Jsonld.planOf d prob)
+    | .error e => ["ERROR:" ++ e]
+  let failed := fun (ds : List String) => match Persona.Compose.merge ds with | .error _ => true | .ok _ => false
+  let expectAB := ((← IO.FS.readFile (dir ++ "a-then-b.expect")).splitOn "\n").filter (· != "")
+  let expectBA := ((← IO.FS.readFile (dir ++ "b-then-a.expect")).splitOn "\n").filter (· != "")
+  return [
+    { name := "compose GOLDEN a then b: the first document's alternative is tried first", ok := planOfMerge [a, b] == expectAB },
+    { name := "compose GOLDEN b then a: swapping the order swaps the alternative", ok := planOfMerge [b, a] == expectBA },
+    { name := "compose CONTROL an action defined by two documents is refused", ok := failed [a, twice] },
+    { name := "compose CONTROL a fact set to two values is refused", ok := failed [a, fact] },
+    { name := "compose INVARIANT a fact with the same value in two documents is accepted", ok := !(failed [a, a.replace "\"name\":\"a\"" "\"name\":\"a2\"" |>.replace "\"actions\":{\"P\"" "\"actions\":{\"P2\"" ]) },
+    { name := "compose INVARIANT one document composes to the plan it gives alone", ok := planOfMerge [a] == stepKeys (Persona.Jsonld.planOf a prob) },
+    { name := "compose INVARIANT an empty list of documents composes to a refusal, not a crash", ok := failed [] || (planOfMerge [] != expectAB) }]
+
 def run : IO UInt32 := do
   let dom ← IO.FS.readFile "domains/campus-sample.jsonld"
   let prob ← IO.FS.readFile "problems/campus-sample.jsonld"
@@ -406,7 +428,8 @@ def run : IO UInt32 := do
   let us ← unigoalChecks "simple_htn"
   let uy ← unigoalChecks "simple_hgn"
   let ut ← unigoalChecks "pyhop_simple_travel_example"
-  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug ++ ul ++ us ++ uy ++ ut
+  let cc ← composeChecks
+  let checks := checks ++ campusChecks dom prob gold rdom rprob ++ g ++ pc ++ kc ++ ec ++ gc ++ vc ++ bc ++ bh ++ uh ++ ug ++ ul ++ us ++ uy ++ ut ++ cc
   for c in checks do
     let tag := if c.ok then "ok  " else "FAIL"
     IO.println s!"  [{tag}] {c.name}"

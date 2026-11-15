@@ -1,0 +1,1 @@
+{"@context":{"VSEKAI":"https://v-sekai.org/","domain":"VSEKAI:planning/domain/"},"@type":"domain:Problem","name":"p","todo_list":[{"goal":[{"pointer":"/t/y","eq":1}]}]}

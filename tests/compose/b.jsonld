@@ -1,0 +1,1 @@
+{"@context":{"VSEKAI":"https://v-sekai.org/","domain":"VSEKAI:planning/domain/"},"@type":"domain:Definition","name":"b","variables":[{"name":"t","init":{"y":0}}],"actions":{"Q":{"duration":"PT1S","body":[{"pointer/set":"/t/y","value":1}]}},"methods":{"/t/y":{"alternatives":[{"name":"by-q","subtasks":[["Q"]]}]}}}
