@@ -192,6 +192,31 @@ A Lean guest links static glibc, so the linker puts an ifunc trampoline in
 loads and its first call faults. That is the one thing between this ELF and the
 viewer; the translated-vs-interpreted gate lands with it.
 
+## Use it in a Mix app
+
+The persona is also an Elixir library. [Leanler](https://github.com/V-Sekai-fire/leanler), modelled
+on [thanos/mojoler](https://github.com/thanos/mojoler), builds the Lean planner into a NIF or a C
+node during `mix compile`, with no hand-written C.
+
+ {:persona, github: "V-Sekai-fire/interactor-taskweft-persona"}
+
+ {:ok, json} = Persona.Native.ask("") # the plan, or {"refused":"undeclared_goal"}
+ {:ok, json} = Persona.Native.plan_jsonld(domain, problem, "")
+
+Every function returns `{:ok, json}` or `{:error, reason}`; a bad argument is `{:error, :badarg}`.
+The exports (`ask`, `version`, `plan_grid`, `goals`, `plan_jsonld`, `plan_shortest`) are the
+`@[export]` functions of `Persona.Guest`, `Persona.Grid` and `Persona.Web`, declared in `mix.exs`.
+
+The default is a NIF. `PERSONA_NATIVE=cnode mix compile` builds a C node instead, so a Lean crash
+costs one OS process and not the VM. Start it under a supervisor with `children = [Persona.Native]`
+on a distributed node (`--sname`).
+
+ mix test # 9 tests: version, plan equals the gold file, refusal by name, Nat, bad argument, 16 callers
+ PERSONA_NATIVE=cnode MIX_BUILD_PATH=_build_cnode mix test
+
+It needs elan, a C compiler and OTP with `erl_interface` (C node only). `LEANLER_PATH` points the
+dependency at a local checkout.
+
 ## Agent-to-Agent
 
 The persona is an [A2A v1.0](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a)
