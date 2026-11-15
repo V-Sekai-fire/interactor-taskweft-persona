@@ -6,6 +6,15 @@ name = "persona"
 channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64", "win-64"]
 
+# conda-forge has no Erlang for win-64, so the Mix tasks are for macOS and Linux.
+[target.osx-arm64.dependencies]
+erlang = ">=28"
+elixir = ">=1.19"
+
+[target.linux-64.dependencies]
+erlang = ">=28"
+elixir = ">=1.19"
+
 [tasks]
 build = "lake build"
 test = { cmd = "lake exe persona_witness", depends-on = ["build"] }
@@ -13,3 +22,6 @@ ask = { cmd = "lake exe persona", depends-on = ["build"] }
 vocabulary = { cmd = "lake exe persona --vocabulary", depends-on = ["build"] }
 a2a = { cmd = "lake exe persona_a2a", depends-on = ["build"] }
 a2a-test = { cmd = "lake exe persona_a2a_witness", depends-on = ["build"] }
+mix-deps = "mix local.hex --force && mix local.rebar --force && mix deps.get"
+mix-test = { cmd = "epmd -daemon && mix test", depends-on = ["mix-deps"] }
+mix-test-cnode = { cmd = "epmd -daemon && mix test", env = { PERSONA_NATIVE = "cnode", MIX_BUILD_PATH = "_build_cnode" }, depends-on = ["mix-deps"] }
