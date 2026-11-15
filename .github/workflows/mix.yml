@@ -1,0 +1,36 @@
+# The persona as a Mix library. Leanler builds the Lean planner into a NIF, then into a C node,
+# and the same 9 tests run against each: the plan equals plans/campus-sample.jsonld, an undeclared
+# goal is refused by name, a bad argument is {:error, :badarg}, and 16 callers agree.
+# The steps live in ci/mix-steps.yml and run under samrose/beam-action, so they run locally too.
+# Erlang and Elixir come from pixi; Lean comes from elan (lean-toolchain pins the version).
+name: Mix
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.8.14
+        with:
+          cache: true
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Run ci/mix-steps.yml with beam-action
+        run: nix run github:samrose/beam-action -- ci/mix-steps.yml

@@ -1,0 +1,11 @@
+# The Mix library's checks as plain `run:` steps, for samrose/beam-action:
+#   nix run github:samrose/beam-action -- ci/mix-steps.yml
+# The same 9 tests run against the Lean planner built as a NIF, then as a C node. beam-action
+# runs the steps in order, stops at the first failure, and has no matrix or env, so each step
+# carries its own PATH. Needs pixi on PATH; Lean comes from elan, installed first.
+jobs:
+  mix:
+    steps:
+      - run: ls "$HOME/.elan/bin/elan" >/dev/null 2>&1 || (curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none)
+      - run: export PATH="$HOME/.elan/bin:$PATH" && pixi run mix-test
+      - run: export PATH="$HOME/.elan/bin:$PATH" && pixi run mix-test-cnode
