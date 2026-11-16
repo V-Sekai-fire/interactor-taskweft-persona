@@ -185,31 +185,38 @@ def pad (n w : Nat) : String :=
   let t := toString n
   String.mk (List.replicate (w - t.length) '0') ++ t
 
-/-- A datestamp `YYYY-MM-DDTHH:MM:SSZ` as seconds since the epoch, or none when it is not one. -/
+/-- A datestamp `YYYY-MM-DDTHH:MM:SSZ`, or with a three-digit fraction of a second `YYYY-MM-DDTHH:MM:SS.mmmZ`, as
+milliseconds since the epoch, or none when it is not one. Every time the planner holds is in milliseconds, so a step
+of 56 ms is 56 and not the second it used to be rounded to. -/
 def parseStamp (s : String) : Option Nat :=
   let c := s.toList
   let num := fun (a b : Nat) => (String.mk ((c.drop a).take (b - a))).toNat?
-  if c.length != 20 then none
+  let fracOk := c.length == 20 || (c.length == 24 && c[19]? == some '.' && (((c.drop 20).take 3).all Char.isDigit))
+  let ms : Nat := if c.length == 24 then ((num 20 23).getD 0) else 0
+  if !fracOk || c[c.length - 1]? != some 'Z' then none
   else
     match num 0 4, num 5 7, num 8 10, num 11 13, num 14 16, num 17 19 with
     | some y, some mo, some d, some h, some mi, some se =>
       if c[4]? == some '-' && c[7]? == some '-' && c[10]? == some 'T' && c[13]? == some ':'
-          && c[16]? == some ':' && c[19]? == some 'Z' && y ≥ 1970 && 1 ≤ mo && mo ≤ 12
+          && c[16]? == some ':' && y ≥ 1970 && 1 ≤ mo && mo ≤ 12
           && 1 ≤ d && d ≤ 31 && h < 24 && mi < 60 && se < 60 then
-        some ((daysFromCivil y mo d).toNat * 86400 + h * 3600 + mi * 60 + se)
+        some (((daysFromCivil y mo d).toNat * 86400 + h * 3600 + mi * 60 + se) * 1000 + ms)
       else none
     | _, _, _, _, _, _ => none
 
-def fmtStamp (t : Nat) : String :=
+/-- A datestamp from milliseconds: whole seconds as `YYYY-MM-DDTHH:MM:SSZ`, and `.mmm` before the Z only when the
+time is not a whole second, so a plan of whole seconds prints as it always did. -/
+def fmtStamp (tms : Nat) : String :=
+  let t := tms / 1000
   let (y, m, d) := civilFromDays (t / 86400 : Nat)
   pad y.toNat 4 ++ "-" ++ pad m.toNat 2 ++ "-" ++ pad d.toNat 2 ++ "T" ++ pad (t % 86400 / 3600) 2
-    ++ ":" ++ pad (t % 3600 / 60) 2 ++ ":" ++ pad (t % 60) 2 ++ "Z"
+    ++ ":" ++ pad (t % 3600 / 60) 2 ++ ":" ++ pad (t % 60) 2 ++ (if tms % 1000 == 0 then "" else "." ++ pad (tms % 1000) 3) ++ "Z"
 
-/-- An action's own duration in seconds. It is the ISO-8601 `duration` the action states, or else the
+/-- An action's own duration in milliseconds. It is the ISO-8601 `duration` the action states, or else the
 end minus the start when it states both, and an action that states neither is instantaneous. -/
 def durOf (j : Json) : Nat :=
   match Iso8601Duration.parse (str (j.getObjValD "duration")) with
-  | .ok cs => Iso8601Duration.totalSeconds cs
+  | .ok cs => Iso8601Duration.totalMilliseconds cs
   | .error _ =>
     match parseStamp (str (j.getObjValD "start")), parseStamp (str (j.getObjValD "end")) with
     | some a, some b => b - a
@@ -414,18 +421,24 @@ partial def run (sp : Spec) (bound : Nat) : List (Task × Nat) → St → Option
               | none => none
               | some tasks => run sp bound (tasks.map (fun u => (u, f)) ++ rest) s
 
-/-- Seconds as a canonical ISO-8601 duration: `PT0S`, `P3D`, `P1DT2H30M`. -/
-def fmtDur (s : Nat) : String :=
+/-- The fraction of a second, `.056`, with its trailing zeros dropped, and nothing for a whole second. -/
+def fracSecs (ms : Nat) : String :=
+  if ms == 0 then "" else "." ++ String.mk ((pad ms 3).toList.reverse.dropWhile (· == '0')).reverse
+
+/-- Milliseconds as a canonical ISO-8601 duration: `PT0S`, `PT0.056S`, `P3D`, `P1DT2H30M`. -/
+def fmtDur (tms : Nat) : String :=
+  let s := tms / 1000
   let d := s / 86400
   let h := s % 86400 / 3600
   let m := s % 3600 / 60
   let x := s % 60
-  if s == 0 then "PT0S"
+  let f := tms % 1000
+  if tms == 0 then "PT0S"
   else
     "P" ++ (if d > 0 then toString d ++ "D" else "")
-      ++ (if h + m + x > 0 then
+      ++ (if h + m + x + f > 0 then
             "T" ++ (if h > 0 then toString h ++ "H" else "") ++ (if m > 0 then toString m ++ "M" else "")
-              ++ (if x > 0 then toString x ++ "S" else "")
+              ++ (if x + f > 0 then toString x ++ fracSecs f ++ "S" else "")
           else "")
 
 /-- A start or an end: the datestamp at `offset` seconds from the origin, and none when the problem
