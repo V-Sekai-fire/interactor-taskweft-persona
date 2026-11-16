@@ -82,7 +82,7 @@ def chainProb (_n : Nat) : String :=
   "{\"name\":\"chain_problem\",\"variables\":[],\"todo_list\":[[\"c0\"]]}"
 
 def stampPlus (s : String) (k : Nat) : String :=
-  Persona.Jsonld.fmtStamp ((Persona.Jsonld.parseStamp s).getD 0 + k)
+  Persona.Jsonld.fmtStamp ((Persona.Jsonld.parseStamp s).getD 0 + k * 1000)
 
 def tempProb (origin : String) : String :=
   "{\"name\":\"temporal_problem\",\"origin\":\"" ++ origin ++ "\",\"variables\":[],\"todo_list\":[[\"m\"]]}"
@@ -228,8 +228,25 @@ def campusChecks (dom prob gold rdom rprob : String) : List Check :=
         && stampPlus "2028-02-27T00:00:00Z" 172800 == "2028-02-29T00:00:00Z"
         && stampPlus "2026-12-31T23:59:59Z" 1 == "2027-01-01T00:00:00Z" }
   , { name := "temporal: a duration is written in its canonical ISO-8601 form",
-      ok := Persona.Jsonld.fmtDur 0 == "PT0S" && Persona.Jsonld.fmtDur 90000 == "P1DT1H"
-        && Persona.Jsonld.fmtDur 3661 == "PT1H1M1S" && Persona.Jsonld.fmtDur 259200 == "P3D" }
+      ok := Persona.Jsonld.fmtDur 0 == "PT0S" && Persona.Jsonld.fmtDur 90000000 == "P1DT1H"
+        && Persona.Jsonld.fmtDur 3661000 == "PT1H1M1S" && Persona.Jsonld.fmtDur 259200000 == "P3D" }
+  , { name := "temporal: a duration under a second is kept in milliseconds, not rounded to a second",
+      ok := Persona.Jsonld.fmtDur 56 == "PT0.056S" && Persona.Jsonld.fmtDur 1500 == "PT1.5S" && Persona.Jsonld.fmtDur 1000 == "PT1S"
+        && Persona.Jsonld.fmtDur 61500 == "PT1M1.5S" && Persona.Jsonld.fmtDur 100 == "PT0.1S" && Persona.Jsonld.fmtDur 5 == "PT0.005S" }
+  , { name := "temporal: a step of PT0.056S starts at the origin, ends 56 ms later and lasts PT0.056S",
+      ok := let t := Persona.Jsonld.planOf ((tempDom.replace "\"duration\":\"P2D\"," "\"duration\":\"PT0.056S\",").replace "\"duration\":\"P3D\"," "\"duration\":\"PT0.5S\"," |>.replace "\"duration\":\"PT24H\"," "\"duration\":\"PT1S\",")
+                (tempProb "2026-11-02T00:00:00Z")
+        t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-02T00:00:00.056Z\",\"duration\":\"PT0.056S\""
+          && t.contains "\"action\":\"c\",\"params\":[],\"start\":\"2026-11-02T00:00:00.500Z\",\"end\":\"2026-11-02T00:00:01.500Z\",\"duration\":\"PT1S\""
+          && t.contains "\"total\":\"PT1.5S\"" }
+  , { name := "CONTROL temporal: that step does not read as PT0S or PT1S, which is what whole-second rounding gave",
+      ok := let t := Persona.Jsonld.planOf ((tempDom.replace "\"duration\":\"P2D\"," "\"duration\":\"PT0.056S\",").replace "\"duration\":\"P3D\"," "\"duration\":\"PT0.5S\"," |>.replace "\"duration\":\"PT24H\"," "\"duration\":\"PT1S\",")
+                (tempProb "2026-11-02T00:00:00Z")
+        !(t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-02T00:00:00Z\"")
+          && !(t.contains "\"action\":\"a\",\"params\":[],\"start\":\"2026-11-02T00:00:00Z\",\"end\":\"2026-11-02T00:00:01Z\"") }
+  , { name := "temporal: a datestamp with milliseconds reads back and writes the same, and one that is not a whole three digits is refused",
+      ok := (Persona.Jsonld.parseStamp "2026-11-02T00:00:00.056Z").map Persona.Jsonld.fmtStamp == some "2026-11-02T00:00:00.056Z"
+        && (Persona.Jsonld.parseStamp "2026-11-02T00:00:00.56Z").isNone && (Persona.Jsonld.parseStamp "2026-11-02T00:00:00.0x6Z").isNone }
   , { name := "gtn: the first decomposition found takes the long way",
       ok := let t := Persona.Jsonld.planOf gtnDom (gtnProb ["/v/y"])
         t.contains "\"action\":\"b\"" && !(t.contains "\"action\":\"c\"") }
