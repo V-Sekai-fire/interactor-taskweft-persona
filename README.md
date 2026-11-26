@@ -244,6 +244,10 @@ A refusal is an answer, not a transport error: an undeclared goal comes back as
 The guest ELF does not carry this surface. It links only `Init`, and the JSON
 parser lives in `Lean.Data`, so A2A is for the host executable.
 
+## The art director
+
+The guest also stages story beats: `director_ask("beat=reveal mood=night place=same")` answers with a shot list, and the browser module exports the same as `persona_direct`. The request, the grammar of each beat and how continuity changes the plan: [docs/director.md](docs/director.md).
+
 ## Licence
 
 MIT.

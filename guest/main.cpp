@@ -32,6 +32,7 @@ extern "C" {
 lean_object *initialize_persona_Persona_Guest(uint8_t builtin);
 lean_object *persona_ask_json(lean_object *request);
 lean_object *persona_version_text(lean_object *request);
+lean_object *persona_direct_json(lean_object *request);
 }
 
 static bool g_initialised = false;
@@ -74,6 +75,11 @@ static Variant persona_ask(String goal)
 	return answer(persona_ask_json, goal);
 }
 
+static Variant director_ask(String request)
+{
+	return answer(persona_direct_json, request);
+}
+
 int main()
 {
 	ADD_API_FUNCTION(persona_version, "String", "",
@@ -81,5 +87,8 @@ int main()
 	ADD_API_FUNCTION(persona_ask, "String", "String goal",
 		"The plan that reaches the named goal, as JSON, or the refusal by name. "
 		"An empty goal means the domain's own default.");
+	ADD_API_FUNCTION(director_ask, "String", "String request",
+		"The shot list for one beat, as JSON, or the refusal by name. "
+		"The request is \"beat=B mood=M [place=same] [light=M]\" (docs/director.md).");
 	halt();
 }
