@@ -1,0 +1,164 @@
+{
+  "nodes": {
+    "guest-runtime": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795376595,
+        "narHash": "sha256-ashGEmfOi4gwnaOnUXJQwgqCbJSk4u1MBINThDyQ/UM=",
+        "owner": "V-Sekai-fire",
+        "repo": "contract-guest-runtime",
+        "rev": "e093f7d2f7fe9c49899195810a765fc29f2f2c82",
+        "type": "github"
+      },
+      "original": {
+        "owner": "V-Sekai-fire",
+        "repo": "contract-guest-runtime",
+        "type": "github"
+      }
+    },
+    "lean-guest": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795376598,
+        "narHash": "sha256-aTmohzoNoGgPTXex9XEUWnOw6NNoMhf+9MDM1kzryjI=",
+        "owner": "V-Sekai-fire",
+        "repo": "interactor-lean-guest",
+        "rev": "55f8b5e4ff7302b387bf8e59fe7c1ec735f14838",
+        "type": "github"
+      },
+      "original": {
+        "owner": "V-Sekai-fire",
+        "repo": "interactor-lean-guest",
+        "type": "github"
+      }
+    },
+    "lean-toolchain": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790272277,
+        "narHash": "sha256-+FhafPsporJK4tOtCpeaVptfpcjcyTlCePaQY7nH9YM=",
+        "type": "tarball",
+        "url": "https://github.com/leanprover/lean4/releases/download/v4.34.1/lean-4.34.1-linux.tar.zst"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/leanprover/lean4/releases/download/v4.34.1/lean-4.34.1-linux.tar.zst"
+      }
+    },
+    "lean4-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790270847,
+        "narHash": "sha256-JO1pCqWeotC4zjiIQZccEPXfVHnuDQC0DugyuJvIMRs=",
+        "owner": "leanprover",
+        "repo": "lean4",
+        "rev": "5045d0056413266e57c625dcd7c365b10e377c52",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leanprover",
+        "ref": "v4.34.1",
+        "repo": "lean4",
+        "type": "github"
+      }
+    },
+    "libuv-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1707337207,
+        "narHash": "sha256-U68BmIQNpmIy3prS7LkYl+wvDJQNikoeFiKh50yQFoA=",
+        "owner": "libuv",
+        "repo": "libuv",
+        "rev": "e9f29cb984231524e3931aa0ae2c5dae1a32884e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "libuv",
+        "ref": "v1.48.0",
+        "repo": "libuv",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1795234589,
+        "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2786a2a72088ecf32aea5b3ec52099e6a7cff78f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "plausible": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789395058,
+        "narHash": "sha256-/ianaKsruF30J5tqK4vtbXsFd3mu4Xt8Ppj4ibHDEvg=",
+        "owner": "leanprover-community",
+        "repo": "plausible",
+        "rev": "118aa17ee84656b8bd727fef7c458ee8c833385c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leanprover-community",
+        "repo": "plausible",
+        "rev": "118aa17ee84656b8bd727fef7c458ee8c833385c",
+        "type": "github"
+      }
+    },
+    "plausible-witness-dag": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791637207,
+        "narHash": "sha256-///fgmw7emQ9xZzJ6XOFDIsGXniRyJujG2uRM2iXG4s=",
+        "owner": "V-Sekai-fire",
+        "repo": "plausible-witness-dag",
+        "rev": "f18818941e8914b110f85ec330889a4785c01bf1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "V-Sekai-fire",
+        "repo": "plausible-witness-dag",
+        "rev": "f18818941e8914b110f85ec330889a4785c01bf1",
+        "type": "github"
+      }
+    },
+    "riscv64-sysroot": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793572743,
+        "narHash": "sha256-+XN+RBKHCe6eYEkTWORlLSB8WjRiu8sF5D05Z8BGOjI=",
+        "owner": "V-Sekai-fire",
+        "repo": "repository-riscv64-sysroot",
+        "rev": "585de9e0cfe15fc14f9961083d857d609592de42",
+        "type": "github"
+      },
+      "original": {
+        "owner": "V-Sekai-fire",
+        "repo": "repository-riscv64-sysroot",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "guest-runtime": "guest-runtime",
+        "lean-guest": "lean-guest",
+        "lean-toolchain": "lean-toolchain",
+        "lean4-src": "lean4-src",
+        "libuv-src": "libuv-src",
+        "nixpkgs": "nixpkgs",
+        "plausible": "plausible",
+        "plausible-witness-dag": "plausible-witness-dag",
+        "riscv64-sysroot": "riscv64-sysroot"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
