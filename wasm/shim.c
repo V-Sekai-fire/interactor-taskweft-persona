@@ -6,6 +6,7 @@ void lean_io_mark_end_initialization(void);
 extern lean_object *initialize_persona_Persona_Grid(uint8_t builtin);
 extern lean_object *initialize_persona_Persona_Web(uint8_t builtin);
 extern lean_object *persona_plan_text(lean_object *spec);
+extern lean_object *persona_direct_json(lean_object *request);
 extern lean_object *persona_goals_text(lean_object *domain, lean_object *problem);
 extern lean_object *persona_plan_shortest_text(lean_object *domain, lean_object *problem, lean_object *limit);
 extern lean_object *persona_plan_jsonld_text(lean_object *domain, lean_object *problem, lean_object *goal);
@@ -32,6 +33,9 @@ int persona_init(void) {
   return 0;
 }
 /* A skill grid as text in, the activation order out. */
+const char *persona_direct(const char *request) {
+  return keep(persona_direct_json(lean_mk_string(request)));
+}
 const char *persona_plan(const char *spec) {
   return keep(persona_plan_text(lean_mk_string(spec)));
 }

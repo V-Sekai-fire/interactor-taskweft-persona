@@ -1,4 +1,5 @@
 import Persona.Demo
+import Persona.Director
 
 namespace Persona.Guest
 

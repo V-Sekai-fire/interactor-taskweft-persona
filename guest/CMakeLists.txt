@@ -58,6 +58,7 @@ set(GUEST_MODULES
   Persona.Guest
   Persona
   Persona.Demo
+  Persona.Director
   Planner.Types
   Planner.BlocksWorld
   Planner.UnifiedGTN)

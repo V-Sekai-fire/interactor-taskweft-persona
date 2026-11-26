@@ -4,6 +4,7 @@ import Persona.Jsonld
 import Persona.Web
 import Persona.Khr
 import Persona.Compose
+import Persona.Director
 
 open Persona
 open Persona.Demo
@@ -32,7 +33,18 @@ def gridSpec : String := "skill 1 1\nskill 2 0 1\nskill 3 0 2 1\nskill 4 0 3\ngo
 def gridOrdered : Bool :=
   Persona.Grid.planOf gridSpec == "{\"plan\":[\"activate-2\",\"activate-3\",\"activate-4\"],\"reached\":true}"
 
-def checks : List Check :=
+def directorChecks : List Check :=
+  [ { name := "director: beat=calm mood=dawn plans its gold shot list", ok := Persona.Director.direct "beat=calm mood=dawn" == "{\"beat\":\"calm\",\"mood\":\"dawn\",\"plan\":[\"establish-wide\",\"light-dawn\",\"medium-two-shot\",\"hold-long\",\"dissolve\",\"end-beat\"],\"reached\":true}" }
+  , { name := "director: beat=joke mood=day plans its gold shot list", ok := Persona.Director.direct "beat=joke mood=day" == "{\"beat\":\"joke\",\"mood\":\"day\",\"plan\":[\"medium-two-shot\",\"hold-beat\",\"smash-cut\",\"end-beat\"],\"reached\":true}" }
+  , { name := "director: beat=reveal mood=night place=same plans its gold shot list", ok := Persona.Director.direct "beat=reveal mood=night place=same" == "{\"beat\":\"reveal\",\"mood\":\"night\",\"plan\":[\"light-night\",\"close-up\",\"hold-beat\",\"push-in-reveal\",\"end-beat\"],\"reached\":true}" }
+  , { name := "director: beat=threat mood=dusk light=dusk plans its gold shot list", ok := Persona.Director.direct "beat=threat mood=dusk light=dusk" == "{\"beat\":\"threat\",\"mood\":\"dusk\",\"plan\":[\"low-angle\",\"hold-long\",\"hard-cut\",\"end-beat\"],\"reached\":true}" }
+  , { name := "director: beat=hit mood=night plans its gold shot list", ok := Persona.Director.direct "beat=hit mood=night" == "{\"beat\":\"hit\",\"mood\":\"night\",\"plan\":[\"over-shoulder\",\"impact-frame\",\"reaction-close\",\"end-beat\"],\"reached\":true}" }
+  , { name := "director: the same place and light skip the establishing shot and the relight", ok := Persona.Director.direct "beat=calm mood=dawn place=same light=dawn" == "{\"beat\":\"calm\",\"mood\":\"dawn\",\"plan\":[\"medium-two-shot\",\"hold-long\",\"dissolve\",\"end-beat\"],\"reached\":true}" }
+  , { name := "director: an undeclared beat is refused by name", ok := Persona.Director.direct "beat=dance mood=night" == "{\"refused\":\"undeclared_goal\"}" }
+  , { name := "director: an undeclared mood is refused by name", ok := Persona.Director.direct "beat=calm mood=noonish" == "{\"refused\":\"undeclared_goal\"}" }
+  , { name := "director (control): a gold with one shot changed does not match", ok := Persona.Director.direct "beat=joke mood=day" != "{\"beat\":\"joke\",\"mood\":\"day\",\"plan\":[\"medium-two-shot\",\"hold-long\",\"smash-cut\",\"end-beat\"],\"reached\":true}" } ]
+
+def checks : List Check := directorChecks ++
   [ { name := "codebook: eight levels over four dimensions is 4096 codes a stage",
       ok := stage.size == 4096 }
   , { name := "codebook: the basis is the prefix product",
